@@ -1,3 +1,4 @@
 test:
   override:
-    - python tests.py
+    - coverage run tests.py
+    - coverage report -m

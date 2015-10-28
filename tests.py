@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import gc
 import logging
 import unittest
 
@@ -49,7 +50,10 @@ class PublisherTestCase(unittest.TestCase):
 
         self.zsubscriber.setsockopt(zmq.SUBSCRIBE, '')
         self.publisher.send(test_message)
-        topic, msg = self.zsubscriber.recv_multipart()
+        if self.zsubscriber.poll(500):
+            topic, msg = self.zsubscriber.recv_multipart()
+        else:
+            topic, msg = None
 
         self.assertEqual(msg, test_message)
 
@@ -70,6 +74,10 @@ class PublisherTestCase(unittest.TestCase):
             self._publisher.close()
         if self._zmq_subscriber:
             self._zmq_subscriber.close()
+
+        self._publisher = None
+        self._zmq_subscriber = None
+        gc.collect()
 
 
 class SubscriberTestCase(unittest.TestCase):
@@ -118,7 +126,6 @@ class SubscriberTestCase(unittest.TestCase):
         self.subscriber.subscribe(self.TOPIC)
 
         self.zpublisher.send_multipart([self.TOPIC, self.MSG])
-
         topic, msg = self.subscriber.receive()
 
         self.assertEqual(topic, self.TOPIC)
@@ -144,6 +151,10 @@ class SubscriberTestCase(unittest.TestCase):
             self._subscriber.close()
         if self._zmq_publisher:
             self._zmq_publisher.close()
+
+        self._subscriber = None
+        self._zmq_publisher = None
+        gc.collect()
 
 
 if __name__ == "__main__":

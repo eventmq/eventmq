@@ -68,7 +68,7 @@ class Publisher(LoggerMixin):
         """
         Close the socket
         """
-        self.socket.close()
+        self.socket.close(linger=0)
         self.status = STATUS.ready
 
     def send(self, msg, topic=''):
