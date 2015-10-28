@@ -36,8 +36,6 @@ class PublisherTestCase(unittest.TestCase):
         self.publisher.send(test_message)
         if self.zsubscriber.poll(500):
             topic, msg = self.zsubscriber.recv_multipart()
-        else:
-            topic, msg = None
 
         self.assertEqual(msg, test_message)
 
