@@ -12,30 +12,14 @@ INPROC = "inproc://derp"
 class PublisherTestCase(unittest.TestCase):
     def setUp(self):
         self._zcontext = zmq.Context.instance()
-        self._zmq_subscriber = None
-        self._publisher = eventmq.Publisher()
-        self._publisher.logger.setLevel(logging.WARNING)
 
-    @property
-    def publisher(self):
-        """
-        property for `self._publisher` so testing `Publisher.__init__` doesn't
-        clog the INPROC tube.
-        """
-        if self._publisher.status == eventmq.STATUS.ready:
-            self._publisher.listen(INPROC)
-        return self._publisher
+        self.publisher = eventmq.Publisher()
+        self.publisher.logger.setLevel(logging.WARNING)
+        if self.publisher.status == eventmq.STATUS.ready:
+            self.publisher.listen(INPROC)
 
-    @property
-    def zsubscriber(self):
-        """
-        Your very own zmq subscriber socket
-        """
-        if not self._zmq_subscriber:
-            self._zmq_subscriber = self._zcontext.socket(zmq.SUB)
-            self._zmq_subscriber.connect(INPROC)
-
-        return self._zmq_subscriber
+        self.zsubscriber = self._zcontext.socket(zmq.SUB)
+        self.zsubscriber.connect(INPROC)
 
     def test_default_pub_creation(self):
         publisher = eventmq.Publisher()
@@ -70,13 +54,12 @@ class PublisherTestCase(unittest.TestCase):
                           topic=u'a')
 
     def tearDown(self):
-        if self._publisher:
-            self._publisher.close()
-        if self._zmq_subscriber:
-            self._zmq_subscriber.close()
+        self.publisher.close()
+        if self.zsubscriber:
+            self.zsubscriber.close()
 
-        self._publisher = None
-        self._zmq_subscriber = None
+        self.publisher = None
+        self.zsubscriber = None
         gc.collect()
 
 
@@ -88,31 +71,14 @@ class SubscriberTestCase(unittest.TestCase):
 
     def setUp(self):
         self._zcontext = zmq.Context.instance()
-        self._zmq_publisher = None
-        self._subscriber = eventmq.Subscriber()
-        self._subscriber.logger.setLevel(logging.WARNING)
+        self.subscriber = eventmq.Subscriber()
+        self.subscriber.logger.setLevel(logging.WARNING)
 
-    @property
-    def subscriber(self):
-        """
-        property for `self._subscriber` so testing `Subscriber`.__init__
-        doesn't clog the INPROC tubes.
+        self.zpublisher = self._zcontext.socket(zmq.PUB)
+        self.zpublisher.bind(INPROC)
 
-        Returns: :class:`Subscriber`
-        """
-        if self._subscriber.status == eventmq.STATUS.ready:
-            self._subscriber.connect(INPROC)
-        return self._subscriber
-
-    @property
-    def zpublisher(self):
-        """
-        Your very own zmq publisher socket
-        """
-        if not self._zmq_publisher:
-            self._zmq_publisher = self._zcontext.socket(zmq.PUB)
-            self._zmq_publisher.bind(INPROC)
-        return self._zmq_publisher
+        if self.subscriber.status == eventmq.STATUS.ready:
+            self.subscriber.connect(INPROC)
 
     def test_default_sub_creation(self):
         subscriber = eventmq.Subscriber()
@@ -147,13 +113,11 @@ class SubscriberTestCase(unittest.TestCase):
         self.assertRaises(ValueError, self.subscriber.subscribe, list('v'))
 
     def tearDown(self):
-        if self._subscriber:
-            self._subscriber.close()
-        if self._zmq_publisher:
-            self._zmq_publisher.close()
+        self.subscriber.close()
+        self.zpublisher.close(linger=0)
 
-        self._subscriber = None
-        self._zmq_publisher = None
+        self.subscriber = None
+        self.zpublisher = None
         gc.collect()
 
 

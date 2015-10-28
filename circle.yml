@@ -1,4 +1,4 @@
 test:
   override:
     - coverage run tests.py
-    - coverage report -m
+    - coverage html --omit "$VIRTUAL_ENV/lib/python2.7/site-packages/*" -d "$CIRCLE_ARTIFACTS/coverage"
