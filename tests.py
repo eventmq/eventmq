@@ -53,16 +53,22 @@ class PublisherTestCase(unittest.TestCase):
         self.assertEqual(msg, test_message)
 
     def test_valueerror_weird_topic(self):
-        self.assertRaises(ValueError, self.publisher.send, 'asdf',
+        self.assertRaises(ValueError,
+                          self.publisher.send,
+                          'asdf',
                           topic=3924.34)
 
     def test_unicodeerror_topic(self):
-        self.assertRaises(UnicodeError, self.publisher.send, 'asdf',
+        self.assertRaises(UnicodeError,
+                          self.publisher.send,
+                          'asdf',
                           topic=u'a')
 
     def tearDown(self):
-        del self._publisher
-        del self._zmq_subscriber
+        if self._publisher:
+            self._publisher.close()
+        if self._zmq_subscriber:
+            self._zmq_subscriber.close()
 
 
 class SubscriberTestCase(unittest.TestCase):
@@ -124,19 +130,19 @@ class SubscriberTestCase(unittest.TestCase):
         self.zpublisher.send_multipart([self.TOPIC, self.MSG])
 
         self.assertEqual(self.subscriber.socket.poll(100), 0)
-        
 
     def test_unicodeerror_unicode_topic(self):
-        self.assertRaises(UnicodeError, self.subscriber.subscribe,
-                          self.uTOPIC)
+        self.assertRaises(UnicodeError, self.subscriber.subscribe, self.uTOPIC)
 
     def test_valueerror_non_str_int_topic(self):
         self.assertRaises(ValueError, self.subscriber.subscribe, 1.39)
         self.assertRaises(ValueError, self.subscriber.subscribe, list('v'))
 
     def tearDown(self):
-        del self._zmq_publisher
-        del self._subscriber
+        if self._subscriber:
+            self._subscriber.close()
+        if self._zmq_publisher:
+            self._zmq_publisher.close()
 
 
 if __name__ == "__main__":

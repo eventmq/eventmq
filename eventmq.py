@@ -64,6 +64,13 @@ class Publisher(LoggerMixin):
         self.socket.bind(addr)
         self.status = STATUS.started
 
+    def close(self):
+        """
+        Close the socket
+        """
+        self.socket.close()
+        self.status = STATUS.ready
+
     def send(self, msg, topic=''):
         """
         Send a message to all subscribers of topic.
@@ -100,6 +107,13 @@ class Subscriber(LoggerMixin):
         """
         self.socket.connect(addr)
         self.status = STATUS.started
+
+    def close(self):
+        """
+        close the socket
+        """
+        self.socket.close()
+        self.status = STATUS.ready
 
     def subscribe(self, topic):
         """
