@@ -233,26 +233,40 @@ class Switch(LoggerMixin):
         start switching messages using `threading_model` to process them. This
         is a blocking action.
         """
-        self.poller.register(self.pub, zmq.POLLIN)
-        self.poller.register(self.sub, zmq.POLLIN)
+        import time
+
+        self.logger.debug('Starting...')
+
+        pub_thread = threading.Thread(target=Switch.publisher)
+        pub_thread.daemon = True
+        pub_thread.start()
+        self.logger.debug('Pub Thread started on %s' % pub_thread)
+
+        sub_thread = threading.Thread(target=Switch.subscriber)
+        sub_thread.daemon = True
+        sub_thread.start()
+        self.logger.debug('Sub Thread started on %s' % sub_thread)
 
         while True:
-            events = dict(self.poller.poll())
+            time.sleep(1)
 
-            if events.get(self.pub) == zmq.POLLIN:
-                msg = self.pub.socket.recv()
-                # if msg[0] == '\x01':
-                #     self.logger.debug('Subscribe request: "%s"' % msg)
-                # elif msg[0] == '\x00':
-                #     self.logger.debug('Unsubscribe request: "%s"' % msg)
+            # events = dict(self.poller.poll(1000))
 
-                self.sub.socket.send_multipart(msg)
+            # if events.get(self.pub) == zmq.POLLIN:
+            #     msg = self.pub.socket.recv()
+            #     # if msg[0] == '\x01':
+            #     #     self.logger.debug('Subscribe request: "%s"' % msg)
+            #     # elif msg[0] == '\x00':
+            #     #     self.logger.debug('Unsubscribe request: "%s"' % msg)
 
-            if events.get(self.sub) == zmq.POLLIN:
-                topic, msg = self.sub.receive()
-                # self.logger.debug('Received message on topic "%s": %s' %
-                #                   (topic, msg))
-                self.pub.send(msg, topic=topic)
+            #     self.sub.socket.send_multipart(msg)
+
+            # if events.get(self.sub) == zmq.POLLIN:
+            #     topic, msg = self.sub.receive()
+            #     self.logger.debug('Received message on topic "%s": %s' %
+            #                       (topic, msg))
+            #     self.pub.send(msg, topic=topic)
+
 
     def stop(self):
         self.status = STATUS.stopping
@@ -263,6 +277,55 @@ class Switch(LoggerMixin):
     @property
     def subscriptions(self):
         return list(self.sub.subscriptions)
+
+    @classmethod
+    def subscriber(cls):
+        sub = Subscriber(bidirectional=True)
+        sub.listen('tcp://127.0.0.1:47330')
+        zpub_peer = zmq.Context.instance().socket(zmq.PAIR)
+        zpub_peer.linger = 0
+        zpub_peer.sndhwm = zpub_peer.rcvhwm = 1
+        zpub_peer.connect('inproc://lala')
+
+        while True:
+            if sub.socket.poll(0):
+                msg = sub.receive()
+                # replicate message
+                zpub_peer.send_multipart(msg)
+
+            try:
+                msg = zpub_peer.recv_multipart(zmq.DONTWAIT)
+                print 'subscription received'
+                sub.socket.send_multipart(msg)
+            except zmq.ZMQError as e:
+                if e.errno == zmq.EAGAIN:
+                    pass
+                else:
+                    raise
+
+    @classmethod
+    def publisher(cls):  #, publisher, sub_pipe):
+        pub = Publisher(bidirectional=True)
+        pub.listen('tcp://127.0.0.1:47331')
+        zsub_peer = zmq.Context.instance().socket(zmq.PAIR)
+        zsub_peer.linger = 0
+        zsub_peer.sndhwm = zsub_peer.rcvhwm = 1
+        zsub_peer.bind('inproc://lala')
+
+        while True:
+            if pub.socket.poll(0):
+                msg = pub.socket.recv_multipart()
+                print "forwarding subscription"
+                zsub_peer.send_multipart(msg)
+
+            try:
+                msg = zsub_peer.recv(zmq.DONTWAIT)
+                pub.send(msg)
+            except zmq.ZMQError as e:
+                if e.errno == zmq.EAGAIN:
+                    pass
+                else:
+                    raise
 
 
 def validate_topic_type(topic):
