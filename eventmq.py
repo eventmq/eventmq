@@ -3,10 +3,12 @@ eventmq
 """
 import logging
 from multiprocessing import Process as Thread
+import time
+
 import zmq
 Context = zmq.Context
 
-LOG_LEVEL = logging.DEBUG
+LOG_LEVEL = logging.INFO
 PROTOCOLS = ('tcp', 'udp', 'pgm', 'epgm', 'inproc', 'ipc')
 VALID_TOPIC_TYPES = (int, str)
 
@@ -215,41 +217,28 @@ class Switch(LoggerMixin):
     """
     def __init__(self, *args, **kwargs):
         super(Switch, self).__init__(*args, **kwargs)
-        self.pub = Publisher(bidirectional=True)
-        self.sub = Subscriber(bidirectional=True)
         self.status = STATUS.ready
         self.poller = Poller()
-
-    def listen(self, pub_addr, sub_addr):
-        """
-        Starts listening on the provided addresses
-        """
-        self.pub.listen(pub_addr)
-        self.sub.listen(sub_addr)
-        self.status = STATUS.started
 
     def start(self, threading_model=None):
         """
         start switching messages using `threading_model` to process them. This
         is a blocking action.
         """
-        import time
-
-        self.logger.debug('Starting...')
-
-        pub_thread = Thread(target=Switch.publisher)
-        pub_thread.daemon = True
-        pub_thread.start()
-        self.logger.debug('Pub Thread started on %s' % pub_thread)
+        self.logger.info('Starting switch...')
 
         sub_thread = Thread(target=Switch.subscriber)
         sub_thread.daemon = True
         sub_thread.start()
-        self.logger.debug('Sub Thread started on %s' % sub_thread)
-        
-        # while True:
-        #     time.sleep(1)
+        self.logger.debug('Subscription-Thread started on %s' % sub_thread)
 
+        pub_thread = Thread(target=Switch.publisher)
+        pub_thread.daemon = True
+        pub_thread.start()
+        self.logger.debug('Publish-Thread started on %s' % pub_thread)
+        
+        while True:
+            time.sleep(.1)
             # events = dict(self.poller.poll(1000))
 
             # if events.get(self.pub) == zmq.POLLIN:
@@ -269,8 +258,6 @@ class Switch(LoggerMixin):
 
     def stop(self):
         self.status = STATUS.stopping
-        self.pub.close()
-        self.sub.close()
         self.status = STATUS.ready
 
     @property
@@ -279,38 +266,46 @@ class Switch(LoggerMixin):
 
     @classmethod
     def subscriber(cls, addr='tcp://127.0.0.1:47330'):
-        ctx = zmq.Context()
-        zpub_peer = ctx.socket(zmq.PAIR)
-        zpub_peer.connect('ipc:///tmp/eventmq-switch0.sock')
+        ctx = Context()
+        zpub_peer = ctx.socket(zmq.DEALER)
+        zpub_peer.bind('ipc:///tmp/eventmq-switch0.sock')
         sub = Subscriber(bidirectional=True, context=ctx)
         sub.listen(addr)
         print "Subscriber listening @ %s" % addr
 
+        count = 0
+        t1 = time.time()
         while True:
             if sub.socket.poll(0):
                 msg = sub.receive()
                 zpub_peer.send_multipart(msg)
+                count += 1
 
             try:
                 msg = zpub_peer.recv_multipart(zmq.DONTWAIT)
+                print 'got sub: "%s"' % msg
                 sub.socket.send_multipart(msg)
             except zmq.ZMQError as e:
                 if e.errno == zmq.EAGAIN:
                     pass
                 else:
                     raise
+            t2 = time.time()
+            if t2 - t1 > 10:
+                print "sss %d messages processed in %ss" % (count, t2-t1)
+                t1 = t2
+                count = 0
 
     @classmethod
     def publisher(cls, addr='tcp://127.0.0.1:47331'):
-        ctx = zmq.Context()
-        zsub_peer = ctx.socket(zmq.PAIR)
-        zsub_peer.bind('ipc:///tmp/eventmq-switch0.sock')
+        ctx = Context()
+        zsub_peer = ctx.socket(zmq.DEALER)
+        zsub_peer.connect('ipc:///tmp/eventmq-switch0.sock')
         pub = Publisher(bidirectional=True, context=ctx)
         pub.listen(addr)
         print "Publisher listening @ %s" % addr
 
         count = 0  # Counter used to see how many messages are re-published
-        import time
         t1 = time.time()
         while True:
             if pub.socket.poll(0):
@@ -330,9 +325,9 @@ class Switch(LoggerMixin):
 
             t2 = time.time()
             if t2 - t1 > 10:
-                break
-
-        print '!!! %d messages processed in %s' % (count, t2-t1)
+                print 'ppp %d messages forwarded in %ss' % (count, t2-t1)
+                t1 = t2
+                count = 0
 
 
 def validate_topic_type(topic):
