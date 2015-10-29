@@ -2,7 +2,7 @@
 eventmq
 """
 import logging
-import threading
+from multiprocessing import Process as Thread
 import zmq
 Context = zmq.Context
 
@@ -237,18 +237,18 @@ class Switch(LoggerMixin):
 
         self.logger.debug('Starting...')
 
-        pub_thread = threading.Thread(target=Switch.publisher)
+        pub_thread = Thread(target=Switch.publisher)
         pub_thread.daemon = True
         pub_thread.start()
         self.logger.debug('Pub Thread started on %s' % pub_thread)
 
-        sub_thread = threading.Thread(target=Switch.subscriber)
+        sub_thread = Thread(target=Switch.subscriber)
         sub_thread.daemon = True
         sub_thread.start()
         self.logger.debug('Sub Thread started on %s' % sub_thread)
-
-        while True:
-            time.sleep(1)
+        
+        # while True:
+        #     time.sleep(1)
 
             # events = dict(self.poller.poll(1000))
 
@@ -267,7 +267,6 @@ class Switch(LoggerMixin):
             #                       (topic, msg))
             #     self.pub.send(msg, topic=topic)
 
-
     def stop(self):
         self.status = STATUS.stopping
         self.pub.close()
@@ -279,23 +278,21 @@ class Switch(LoggerMixin):
         return list(self.sub.subscriptions)
 
     @classmethod
-    def subscriber(cls):
-        sub = Subscriber(bidirectional=True)
-        sub.listen('tcp://127.0.0.1:47330')
-        zpub_peer = zmq.Context.instance().socket(zmq.PAIR)
-        zpub_peer.linger = 0
-        zpub_peer.sndhwm = zpub_peer.rcvhwm = 1
-        zpub_peer.connect('inproc://lala')
+    def subscriber(cls, addr='tcp://127.0.0.1:47330'):
+        ctx = zmq.Context()
+        zpub_peer = ctx.socket(zmq.PAIR)
+        zpub_peer.connect('ipc:///tmp/eventmq-switch0.sock')
+        sub = Subscriber(bidirectional=True, context=ctx)
+        sub.listen(addr)
+        print "Subscriber listening @ %s" % addr
 
         while True:
             if sub.socket.poll(0):
                 msg = sub.receive()
-                # replicate message
                 zpub_peer.send_multipart(msg)
 
             try:
                 msg = zpub_peer.recv_multipart(zmq.DONTWAIT)
-                print 'subscription received'
                 sub.socket.send_multipart(msg)
             except zmq.ZMQError as e:
                 if e.errno == zmq.EAGAIN:
@@ -304,28 +301,38 @@ class Switch(LoggerMixin):
                     raise
 
     @classmethod
-    def publisher(cls):  #, publisher, sub_pipe):
-        pub = Publisher(bidirectional=True)
-        pub.listen('tcp://127.0.0.1:47331')
-        zsub_peer = zmq.Context.instance().socket(zmq.PAIR)
-        zsub_peer.linger = 0
-        zsub_peer.sndhwm = zsub_peer.rcvhwm = 1
-        zsub_peer.bind('inproc://lala')
+    def publisher(cls, addr='tcp://127.0.0.1:47331'):
+        ctx = zmq.Context()
+        zsub_peer = ctx.socket(zmq.PAIR)
+        zsub_peer.bind('ipc:///tmp/eventmq-switch0.sock')
+        pub = Publisher(bidirectional=True, context=ctx)
+        pub.listen(addr)
+        print "Publisher listening @ %s" % addr
 
+        count = 0  # Counter used to see how many messages are re-published
+        import time
+        t1 = time.time()
         while True:
             if pub.socket.poll(0):
                 msg = pub.socket.recv_multipart()
-                print "forwarding subscription"
+                print "forwarding subscription for '%s'" % msg
                 zsub_peer.send_multipart(msg)
 
             try:
-                msg = zsub_peer.recv(zmq.DONTWAIT)
-                pub.send(msg)
+                topic, msg = zsub_peer.recv_multipart(zmq.DONTWAIT)
+                pub.send(msg, topic=topic)
+                count += 1
             except zmq.ZMQError as e:
                 if e.errno == zmq.EAGAIN:
                     pass
                 else:
                     raise
+
+            t2 = time.time()
+            if t2 - t1 > 10:
+                break
+
+        print '!!! %d messages processed in %s' % (count, t2-t1)
 
 
 def validate_topic_type(topic):
