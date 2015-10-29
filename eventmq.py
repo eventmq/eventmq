@@ -129,7 +129,7 @@ class Subscriber(LoggerMixin):
         self.socket = self.context.socket(self.socket_type)
         self.status = STATUS.ready
 
-        self.subscriptions = ()
+        self.subscriptions = []
 
     def listen(self, addr="tcp://127.0.0.1:47330"):
         """
@@ -155,14 +155,20 @@ class Subscriber(LoggerMixin):
     def subscribe(self, topic):
         """
         """
+        if topic in self.subscriptions:
+            return
+
         validate_topic_type(topic)
         self.socket.setsockopt(zmq.SUBSCRIBE, topic)
+        self.subscriptions.append(topic)
 
     def unsubscribe(self, topic):
         """
         """
         validate_topic_type(topic)
         self.socket.setsockopt(zmq.UNSUBSCRIBE, topic)
+        if topic in self.subscriptions:
+            self.subscriptions.remove(topic)
 
     def receive(self):
         """
@@ -231,21 +237,21 @@ class Switch(LoggerMixin):
         self.poller.register(self.sub, zmq.POLLIN)
 
         while True:
-            events = dict(self.poller.poll(1000))
+            events = dict(self.poller.poll())
 
             if events.get(self.pub) == zmq.POLLIN:
                 msg = self.pub.socket.recv()
-                if msg[0] == '\x01':
-                    self.logger.debug('Subscribe request: "%s"' % msg)
-                elif msg[0] == '\x00':
-                    self.logger.debug('Unsubscribe request: "%s"' % msg)
+                # if msg[0] == '\x01':
+                #     self.logger.debug('Subscribe request: "%s"' % msg)
+                # elif msg[0] == '\x00':
+                #     self.logger.debug('Unsubscribe request: "%s"' % msg)
 
                 self.sub.socket.send_multipart(msg)
 
             if events.get(self.sub) == zmq.POLLIN:
                 topic, msg = self.sub.receive()
-                self.logger.debug('Received message on topic "%s": %s' %
-                                  (topic, msg))
+                # self.logger.debug('Received message on topic "%s": %s' %
+                #                   (topic, msg))
                 self.pub.send(msg, topic=topic)
 
     def stop(self):
@@ -253,6 +259,10 @@ class Switch(LoggerMixin):
         self.pub.close()
         self.sub.close()
         self.status = STATUS.ready
+
+    @property
+    def subscriptions(self):
+        return list(self.sub.subscriptions)
 
 
 def validate_topic_type(topic):
