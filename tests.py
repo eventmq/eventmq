@@ -26,7 +26,7 @@ class PublisherTestCase(unittest.TestCase):
         self.assertEqual(publisher.socket.socket_type, zmq.PUB)
 
     def test_xpub_creation(self):
-        publisher = eventmq.Publisher(xpub=True)
+        publisher = eventmq.Publisher(bidirectional=True)
         self.assertEqual(publisher.socket.socket_type, zmq.XPUB)
 
     def test_send_unicode(self):
@@ -83,7 +83,7 @@ class SubscriberTestCase(unittest.TestCase):
         self.assertEqual(subscriber.socket.socket_type, zmq.SUB)
 
     def test_xsub_creation(self):
-        subscriber = eventmq.Subscriber(xsub=True)
+        subscriber = eventmq.Subscriber(bidirectional=True)
         self.assertEqual(subscriber.socket.socket_type, zmq.XSUB)
 
     def test_subscribe(self):
@@ -109,6 +109,27 @@ class SubscriberTestCase(unittest.TestCase):
     def test_valueerror_non_str_int_topic(self):
         self.assertRaises(ValueError, self.subscriber.subscribe, 1.39)
         self.assertRaises(ValueError, self.subscriber.subscribe, list('v'))
+
+    def test_listen(self):
+        TEMP_INPROC = 'inproc://test_listen'
+        s = eventmq.Subscriber()
+        s.subscribe('')
+        s.listen(TEMP_INPROC)
+
+        p = zmq.Context.instance().socket(zmq.PUB)
+        p.connect(TEMP_INPROC)
+
+        # Poll the subscription so we don't miss the first message. Slow
+        # joiner syndrom
+        s.socket.poll(1)  # TODO: Sync these two some how
+
+        p.send('asdf')
+        self.assert_(s.socket.poll() != 0)
+        #topic, msg = s.socket.recv_multipart()
+        #self.assertEqual(msg, 'asdf')
+
+        s.close()
+        p.close(linger=0)
 
     def tearDown(self):
         self.subscriber.close()

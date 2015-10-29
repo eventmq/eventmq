@@ -2,12 +2,16 @@
 eventmq
 """
 import logging
+import threading
 import zmq
 Context = zmq.Context
 
 LOG_LEVEL = logging.DEBUG
 PROTOCOLS = ('tcp', 'udp', 'pgm', 'epgm', 'inproc', 'ipc')
 VALID_TOPIC_TYPES = (int, str)
+
+MSG_RUREADY = lambda t: [t, 'RUREADY']
+MSG_READ = lambda t: [t, 'READY']
 
 
 class STATUS(object):
@@ -38,6 +42,21 @@ class LoggerMixin(object):
         return self._logger
 
 
+class Message(object):
+    class FLAGS:
+        enquire = 'ready?'  # Are you ready?
+        acknowledge = 'ready!'  # Ready
+
+    def __init__(self, topic='', message=None):
+        self.topic = topic
+        self.message = message
+
+    @property
+    @classmethod
+    def ENQUIRE(cls):
+        return cls(message=cls.FLAGS.enquire)
+
+
 class Publisher(LoggerMixin):
     """
     Handles sockets for publishing messages
@@ -48,12 +67,12 @@ class Publisher(LoggerMixin):
         socket (:class:`zmq.Socket`): raw zmq socket
     """
 
-    def __init__(self, xpub=False, context=None):
+    def __init__(self, bidirectional=False, context=None):
         """
         """
         super(Publisher, self).__init__()
         self.context = context or zmq.Context.instance()
-        self.socket_type = zmq.XPUB if xpub else zmq.PUB
+        self.socket_type = zmq.XPUB if bidirectional else zmq.PUB
         self.socket = self.context.socket(self.socket_type)
         self.status = STATUS.ready
 
@@ -63,6 +82,11 @@ class Publisher(LoggerMixin):
         """
         self.socket.bind(addr)
         self.status = STATUS.started
+
+    def connect(self, addr='tcp://127.0.0.1:47330'):
+        self.socket.connect(addr)
+        if self.socket_type == zmq.XPUB:
+            self.socket.send_multipart(['', Message.FLAGS.enquire])
 
     def close(self):
         """
@@ -84,22 +108,34 @@ class Publisher(LoggerMixin):
         validate_topic_type(topic)
         self.socket.send_multipart([topic, msg])
 
+    def receive(self):
+        """
+        """
+        msg = self.socket.recv()
+        return msg
+
 
 class Subscriber(LoggerMixin):
     """
     Handles sockets for subscribing to messages
     """
 
-    def __init__(self, xsub=False, context=None):
+    def __init__(self, bidirectional=False, context=None):
         """
         """
         super(Subscriber, self).__init__()
         self.context = context or zmq.Context.instance()
-        self.socket_type = zmq.XSUB if xsub else zmq.SUB
+        self.socket_type = zmq.XSUB if bidirectional else zmq.SUB
         self.socket = self.context.socket(self.socket_type)
         self.status = STATUS.ready
 
         self.subscriptions = ()
+
+    def listen(self, addr="tcp://127.0.0.1:47330"):
+        """
+        """
+        self.socket.bind(addr)
+        self.status = STATUS.started
 
     def connect(self, addr="tcp://127.0.0.1:47331"):
         """
@@ -112,7 +148,8 @@ class Subscriber(LoggerMixin):
         """
         close the socket
         """
-        self.socket.close()
+        self.status = STATUS.stopping
+        self.socket.close(linger=0)
         self.status = STATUS.ready
 
     def subscribe(self, topic):
@@ -132,6 +169,90 @@ class Subscriber(LoggerMixin):
         """
         topic, msg = self.socket.recv_multipart()
         return topic, msg
+
+
+class Poller(LoggerMixin):
+    def __init__(self):
+        super(Poller, self).__init__()
+        self.zpoller = zmq.Poller()
+        self.sockets = []
+
+    def register(self, socket, flag=0):
+        self.logger.debug('Registering %s with flag: %d' % (socket, flag))
+        self.sockets.append(socket)
+        self.zpoller.register(socket.socket, flag)
+
+    def unregister(self, socket):
+        self.logger.debug('Unregistering %s' % socket)
+        self.sockets.remove(socket)
+        self.zpoller.unregister(socket.socket)
+
+    def poll(self, timeout=None):
+        events = dict(self.zpoller.poll(timeout))
+        ret_events = {}
+        for s in self.sockets:
+            if s.socket not in events:
+                continue
+            ret_events[s] = events[s.socket]
+
+        return ret_events
+
+
+class Switch(LoggerMixin):
+    """
+    The Message Broker. Think of this more as a switch or HTTP proxy
+
+    .. note::
+       If you're using this with inproc:// order matters. Don't try to connect
+       PUB/SUB sockets to XPUB/XSUB without first listening on the X variant
+       first.
+    """
+    def __init__(self, *args, **kwargs):
+        super(Switch, self).__init__(*args, **kwargs)
+        self.pub = Publisher(bidirectional=True)
+        self.sub = Subscriber(bidirectional=True)
+        self.status = STATUS.ready
+        self.poller = Poller()
+
+    def listen(self, pub_addr, sub_addr):
+        """
+        Starts listening on the provided addresses
+        """
+        self.pub.listen(pub_addr)
+        self.sub.listen(sub_addr)
+        self.status = STATUS.started
+
+    def start(self, threading_model=None):
+        """
+        start switching messages using `threading_model` to process them. This
+        is a blocking action.
+        """
+        self.poller.register(self.pub, zmq.POLLIN)
+        self.poller.register(self.sub, zmq.POLLIN)
+
+        while True:
+            events = dict(self.poller.poll(1000))
+
+            if events.get(self.pub) == zmq.POLLIN:
+                msg = self.pub.socket.recv()
+                if msg[0] == '\x01':
+                    self.logger.debug('Subscribe request: "%s"' % msg)
+                elif msg[0] == '\x00':
+                    self.logger.debug('Unsubscribe request: "%s"' % msg)
+
+                self.sub.socket.send_multipart(msg)
+
+            if events.get(self.sub) == zmq.POLLIN:
+                topic, msg = self.sub.receive()
+                self.logger.debug('Received message on topic "%s": %s' %
+                                  (topic, msg))
+                self.pub.send(msg, topic=topic)
+
+    def stop(self):
+        self.status = STATUS.stopping
+        self.pub.close()
+        self.sub.close()
+        self.status = STATUS.ready
 
 
 def validate_topic_type(topic):
