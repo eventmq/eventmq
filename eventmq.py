@@ -238,7 +238,7 @@ class Switch(LoggerMixin):
         self.logger.debug('Publish-Thread started on %s' % pub_thread)
         
         while True:
-            time.sleep(.1)
+            time.sleep(600)
             # events = dict(self.poller.poll(1000))
 
             # if events.get(self.pub) == zmq.POLLIN:
@@ -271,25 +271,29 @@ class Switch(LoggerMixin):
         zpub_peer.bind('ipc:///tmp/eventmq-switch0.sock')
         sub = Subscriber(bidirectional=True, context=ctx)
         sub.listen(addr)
-        print "Subscriber listening @ %s" % addr
+
+        poller = zmq.Poller()
+        poller.register(zpub_peer, zmq.POLLIN)
+        poller.register(sub.socket, zmq.POLLIN)
 
         count = 0
         t1 = time.time()
         while True:
-            if sub.socket.poll(0):
+            events = dict(poller.poll())
+            if events.get(sub.socket) == zmq.POLLIN:
                 msg = sub.receive()
                 zpub_peer.send_multipart(msg)
                 count += 1
 
-            try:
-                msg = zpub_peer.recv_multipart(zmq.DONTWAIT)
-                print 'got sub: "%s"' % msg
-                sub.socket.send_multipart(msg)
-            except zmq.ZMQError as e:
-                if e.errno == zmq.EAGAIN:
-                    pass
-                else:
-                    raise
+            if events.get(zpub_peer) == zmq.POLLIN:
+                try:
+                    msg = zpub_peer.recv_multipart(zmq.DONTWAIT)
+                    sub.socket.send_multipart(msg)
+                except zmq.ZMQError as e:
+                    if e.errno == zmq.EAGAIN:
+                        pass
+                    else:
+                        raise
             t2 = time.time()
             if t2 - t1 > 10:
                 print "sss %d messages processed in %ss" % (count, t2-t1)
@@ -304,28 +308,31 @@ class Switch(LoggerMixin):
         pub = Publisher(bidirectional=True, context=ctx)
         pub.listen(addr)
         print "Publisher listening @ %s" % addr
+        poller = zmq.Poller()
+        poller.register(zsub_peer, zmq.POLLIN)
+        poller.register(pub.socket, zmq.POLLIN)
 
         count = 0  # Counter used to see how many messages are re-published
         t1 = time.time()
         while True:
-            if pub.socket.poll(0):
+            events = dict(poller.poll())
+            if events.get(pub.socket) == zmq.POLLIN:
                 msg = pub.socket.recv_multipart()
-                print "forwarding subscription for '%s'" % msg
                 zsub_peer.send_multipart(msg)
 
-            try:
-                topic, msg = zsub_peer.recv_multipart(zmq.DONTWAIT)
-                pub.send(msg, topic=topic)
-                count += 1
-            except zmq.ZMQError as e:
-                if e.errno == zmq.EAGAIN:
-                    pass
-                else:
-                    raise
+            if events.get(zsub_peer) == zmq.POLLIN:
+                try:
+                    topic, msg = zsub_peer.recv_multipart(zmq.DONTWAIT)
+                    pub.send(msg, topic=topic)
+                    count += 1
+                except zmq.ZMQError as e:
+                    if e.errno == zmq.EAGAIN:
+                        pass
+                    else:
+                        raise
 
             t2 = time.time()
             if t2 - t1 > 10:
-                print 'ppp %d messages forwarded in %ss' % (count, t2-t1)
                 t1 = t2
                 count = 0
 
