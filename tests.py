@@ -161,7 +161,7 @@ class RouterTestCase(unittest.TestCase):
         BE_ADDR = 'ipc://outgoing'
 
         r = router.Router()
-        r.listen(frontend_addr=FE_ADDR, backend_addr=BE_ADDR)
+        r.start(frontend_addr=FE_ADDR, backend_addr=BE_ADDR)
 
         self.assertEqual(r.status, router.STATUS.started)
 
