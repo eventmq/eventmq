@@ -21,12 +21,12 @@ Routes messages to workers (that are in named queues).
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
 import uuid
 
-import zmq
-from zmq.eventloop import ioloop, zmqstream
-
+from zmq.eventloop import ioloop
 from eventmq import STATUS
+
 import log
 import receiver
+import sender
 
 logger = log.get_logger(__file__)
 
@@ -39,9 +39,9 @@ class Router(object):
     def __init__(self, *args, **kwargs):
         self.name = uuid.uuid4()
         self.logger = logger
-        self.incoming = receiver.Receiver(callable=self.on_receive_request)
 
-        # self.outgoing = zmqstream.ZMQStream(self.socket_ctx.socket(zmq.DEALER))
+        self.incoming = receiver.Receiver(callable=self.on_receive_request)
+        self.outgoing = sender.Sender()
 
         self.status = STATUS.ready
         self.logger.info('Initialized Router...')
@@ -60,7 +60,7 @@ class Router(object):
         self.status = STATUS.starting
 
         self.incoming.listen(frontend_addr)
-        # self.outgoing.bind(backend_addr)
+        self.outgoing.listen(backend_addr)
 
         self.status = STATUS.listening
         self.logger.info('Listening for requests on %s' % frontend_addr)

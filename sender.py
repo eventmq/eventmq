@@ -1,7 +1,7 @@
 """
-:mod:`receiver` -- Receiver
-===========================
-The receiver is responsible for receiveing messages
+:mod:`sender` -- Sender
+=======================
+The sender is responsible for sending messages
 """
 # This file is part of eventmq.
 #
@@ -28,46 +28,40 @@ import log
 logger = log.get_logger(__file__)
 
 
-class Receiver(object):
+class Sender(object):
     """
-    Receives messages and pass them to a callable.
+    Sends messages to a particular socket
 
     .. note::
-       Polling with this reciever is currently only available via an eventloop
-       (:mod:`zmq.eventloop`).
+       Polling with this sender is currently only available via an eventloop
+       (:mod:`zmq.eventloop`)
 
     Attributes:
         name (str): Name of this socket
-        zcontext (:class:`zmq.Context`): socket context
+        zcontext (:class`zmq.Context`): socket context
         zsocket (:class:`zmq.Socket`): socket wrapped up in a
             :class:`zmqstream.ZMQStream`
     """
-
     def __init__(self, *args, **kwargs):
         """
         .. note::
            All args are optional unless otherwise noted.
 
         Args:
-            callable: REQUIRED A function or method to call when a message is
-                received
             name (str): name of this socket. By default a uuid will be
                 generated
-            context (:class:`zmq.Context`): Context to use when buliding the
+            context (:class:`zmq.Context`): Context to use when building the
                 socket
-            socket (:class:`zmq.Socket`): Should be one of :attr:`zmq.REP` or
-                :attr:`zmq.ROUTER`. By default a `ROUTER` is used
+            socket (:class:`zmq.Socket`): Should be one of :attr:`zmq.REQ` or
+                :attr:`zmq.DEALER`. By default a `DEALER` is used
+
         """
         self.name = kwargs.get('name', uuid.uuid4())
         self.zcontext = kwargs.get('context', zmq.Context.instance())
 
-        self.zsocket = kwargs.get('socket', self.zcontext.socket(zmq.ROUTER))
+        self.zsocket = kwargs.get('socket', self.zcontext.socket(zmq.DEALER))
         self.zsocket = zmqstream.ZMQStream(self.zsocket)
 
-        self.callable = kwargs.get('callable')
-        if not callable(self.callable):
-            raise TypeError('Required argument "callable" is not actually '
-                            'callable')
         self.status = eventmq.STATUS.ready
 
     def listen(self, addr=None):
@@ -116,3 +110,25 @@ class Receiver(object):
                 False
         """
         return self.status == eventmq.STATUS.ready
+
+    def send_raw(self, raw_message):
+        """
+        Send a message directly to the 0mq socket
+
+        Args:
+            raw_message (tuple, list): Raw message to send.
+        """
+        self.zsocket.send(raw_message)
+
+    def send(self, message, queue=None):
+        """
+        Sends a message
+
+        Args:
+            message: message to send to something
+            queue (str): queue topic
+        """
+        if not queue:
+            queue = 'default_queue'
+        logger.debug('Sending message to queue "%s": %s' % queue, str(message))
+        self.send_raw([queue, message])
