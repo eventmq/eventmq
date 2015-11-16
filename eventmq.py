@@ -100,7 +100,7 @@ class Publisher(LoggerMixin):
         Starts listening on an address
         """
         self.socket.bind(addr)
-        self.status = STATUS.started
+        self.status = STATUS.listening
 
     def connect(self, addr='tcp://127.0.0.1:47330'):
         self.socket.connect(addr)
@@ -154,14 +154,14 @@ class Subscriber(LoggerMixin):
         """
         """
         self.socket.bind(addr)
-        self.status = STATUS.started
+        self.status = STATUS.listening
 
     def connect(self, addr="tcp://127.0.0.1:47331"):
         """
         Connects to a publisher at `addr`
         """
         self.socket.connect(addr)
-        self.status = STATUS.started
+        self.status = STATUS.connected
 
     def close(self):
         """
