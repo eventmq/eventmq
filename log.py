@@ -29,7 +29,7 @@ class handlers(object):
 
 
 def get_logger(name, formatter=FORMAT_STANDARD,
-               handler=handlers.PUBLISH_HANDLER):
+               handler=handlers.STREAM_HANDLER):
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
 
