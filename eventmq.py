@@ -6,8 +6,22 @@ from multiprocessing import Process as Thread
 import time
 
 import zmq
+
+from envelope import create_message
+
 Context = zmq.Context
 
+
+def send_msg(msg, queue='default'):
+    """
+    """
+    # Connect to router
+    s = Context.instance().socket(zmq.DEALER)
+    s.connect('tcp://127.0.0.1:47290')
+
+    s.send_multipart(create_message(queue, msg))
+
+############ blah
 LOG_LEVEL = logging.INFO
 PROTOCOLS = ('tcp', 'udp', 'pgm', 'epgm', 'inproc', 'ipc')
 VALID_TOPIC_TYPES = (int, str)
@@ -17,9 +31,12 @@ MSG_READ = lambda t: [t, 'READY']
 
 
 class STATUS(object):
-    ready = 0
-    started = 2
-    stopping = 3
+    wtf = -1
+    ready = 100
+    starting = 101
+    listening = 201
+    connected = 202
+    stopping = 300
 
 
 class LoggerMixin(object):
@@ -236,7 +253,7 @@ class Switch(LoggerMixin):
         pub_thread.daemon = True
         pub_thread.start()
         self.logger.debug('Publish-Thread started on %s' % pub_thread)
-        
+
         while True:
             time.sleep(600)
             # events = dict(self.poller.poll(1000))
@@ -296,7 +313,7 @@ class Switch(LoggerMixin):
                         raise
             t2 = time.time()
             if t2 - t1 > 10:
-                print "sss %d messages processed in %ss" % (count, t2-t1)
+                print "%d messages processed in %s" % (count, t2-t1)
                 t1 = t2
                 count = 0
 

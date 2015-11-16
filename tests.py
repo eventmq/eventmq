@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 import gc
-import logging
 import unittest
 
 import zmq
-import eventmq
+import eventmq, router
 
 INPROC = "inproc://derp"
 
@@ -14,7 +13,6 @@ class PublisherTestCase(unittest.TestCase):
         self._zcontext = zmq.Context.instance()
 
         self.publisher = eventmq.Publisher()
-        self.publisher.logger.setLevel(logging.WARNING)
         if self.publisher.status == eventmq.STATUS.ready:
             self.publisher.listen(INPROC)
 
@@ -70,7 +68,6 @@ class SubscriberTestCase(unittest.TestCase):
     def setUp(self):
         self._zcontext = zmq.Context.instance()
         self.subscriber = eventmq.Subscriber()
-        self.subscriber.logger.setLevel(logging.WARNING)
 
         self.zpublisher = self._zcontext.socket(zmq.PUB)
         self.zpublisher.bind(INPROC)
@@ -139,6 +136,40 @@ class SubscriberTestCase(unittest.TestCase):
         self.zpublisher = None
         gc.collect()
 
+
+class RouterTestCase(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_init(self):
+        r = router.Router()
+
+        self.assertEqual(r.status, router.STATUS.ready)
+        self.assertNotEqual(r.socket_ctx, None)
+        self.assertNotEqual(r.incoming, None)
+        self.assertNotEqual(r.outgoing, None)
+
+    def test_same_ctx_instance(self):
+        ctx = zmq.Context.instance()
+        r = router.Router()
+
+        self.assertEqual(r.socket_ctx, ctx)
+
+    def test_listen(self):
+        ctx = zmq.Context.instance()
+        FE_ADDR = 'ipc://incoming'
+        BE_ADDR = 'ipc://outgoing'
+
+        r = router.Router()
+        r.listen(frontend_addr=FE_ADDR, backend_addr=BE_ADDR)
+
+        self.assertEqual(r.status, router.STATUS.started)
+
+        req_sock = ctx.socket(zmq.REQ)
+        rep_sock = ctx.socket(zmq.REP)
+
+        req_sock.connect(FE_ADDR)
+        rep_sock.connect(BE_ADDR)
 
 if __name__ == "__main__":
     unittest.main()

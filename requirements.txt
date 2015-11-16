@@ -1,2 +1,4 @@
 pyzmq
 coverage
+Sphinx
+six
