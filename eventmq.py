@@ -22,7 +22,7 @@ def send_msg(msg, queue='default'):
     s.send_multipart(create_message(queue, msg))
 
 ############ blah
-LOG_LEVEL = logging.INFO
+LOG_LEVEL = logging.DEBUG
 PROTOCOLS = ('tcp', 'udp', 'pgm', 'epgm', 'inproc', 'ipc')
 VALID_TOPIC_TYPES = (int, str)
 

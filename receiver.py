@@ -64,7 +64,7 @@ class Receiver(object):
         """
         self.zcontext = kwargs.get('context', zmq.Context.instance())
         self.name = kwargs.get('name', str(uuid.uuid4()))
-        self.skip_zmqstream = kwargs.get('skip_zmqstream', False)
+        self.skip_zmqstream = kwargs.get('skip_zmqstream', True)
         self.callable = kwargs.get('callable')
 
         self.zsocket = kwargs.get('socket', self.zcontext.socket(zmq.ROUTER))
@@ -74,7 +74,7 @@ class Receiver(object):
             raise TypeError('Required argument "callable" is not actually '
                             'callable')
 
-        if not self.skip_zmqstream:
+        if self.skip_zmqstream:
             logger.debug('Using ZMQStream')
             self.zsocket = zmqstream.ZMQStream(self.zsocket)
 

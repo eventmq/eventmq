@@ -2,8 +2,6 @@
 :mod:`router` -- Router
 =======================
 Routes messages to workers (that are in named queues).
-
-
 """
 # This file is part of eventmq.
 #
@@ -38,10 +36,12 @@ class Router(object):
 
     def __init__(self, *args, **kwargs):
         logger.info('Initializing Router...')
+        ioloop.install()
         self.name = str(uuid.uuid4())
 
-        self.incoming = receiver.Receiver(callable=self.on_receive_request)
-        self.outgoing = sender.Sender()
+        self.incoming = receiver.Receiver(callable=self.on_receive_request,
+                                          skip_zmqstream=False)
+        self.outgoing = sender.Sender(skip_zmqstream=False)
 
         self.status = STATUS.ready
         logger.info('Done initializing Router')
@@ -70,11 +70,8 @@ class Router(object):
 
     def on_receive_request(self, msg):
         logger.debug(msg)
+        self.outgoing.send_raw(msg)
 
 if __name__ == "__main__":
-    ioloop.install()
     r = Router()
     r.start()
-
-    # import eventmq
-    # eventmq.send_msg('test')

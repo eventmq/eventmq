@@ -66,8 +66,9 @@ class Sender(object):
         self.zsocket = kwargs.get('socket', self.zcontext.socket(zmq.DEALER))
         self.zsocket.setsockopt(zmq.IDENTITY, self.name)
 
-        if not kwargs.get('skip_zmqstream', False):
+        if not kwargs.get('skip_zmqstream', True):
             self.zsocket = zmqstream.ZMQStream(self.zsocket)
+            self.zsocket.on_recv(kwargs.get('on_recv'))
 
         self.status = eventmq.STATUS.ready
 
