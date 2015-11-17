@@ -1,0 +1,2 @@
+.. automodule:: router
+   :members:

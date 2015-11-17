@@ -1,0 +1,236 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>receiver – Receiver &mdash; EventMQ 0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="EventMQ 0 documentation" href="index.html" />
+    <link rel="next" title="router – Router" href="router.html" />
+    <link rel="prev" title="Welcome to EventMQ’s documentation!" href="index.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="router.html" title="router – Router"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to EventMQ’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">EventMQ 0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <span class="target" id="module-receiver"></span><div class="section" id="receiver-receiver">
+<h1><a class="reference internal" href="#module-receiver" title="receiver"><code class="xref py py-mod docutils literal"><span class="pre">receiver</span></code></a> &#8211; Receiver<a class="headerlink" href="#receiver-receiver" title="Permalink to this headline">¶</a></h1>
+<p>The receiver is responsible for receiveing messages</p>
+<dl class="class">
+<dt id="receiver.Receiver">
+<em class="property">class </em><code class="descclassname">receiver.</code><code class="descname">Receiver</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#receiver.Receiver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Receives messages and pass them to a callable.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Polling with this reciever is currently only available via an eventloop
+(<code class="xref py py-mod docutils literal"><span class="pre">zmq.eventloop</span></code>).</p>
+</div>
+<dl class="attribute">
+<dt id="receiver.Receiver.name">
+<code class="descname">name</code><a class="headerlink" href="#receiver.Receiver.name" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> &#8211; Name of this socket</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="receiver.Receiver.zcontext">
+<code class="descname">zcontext</code><a class="headerlink" href="#receiver.Receiver.zcontext" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference external" href="http://pyzmq.readthedocs.org/en/v15.0.0/api/zmq.html#zmq.Context" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Context</span></code></a> &#8211; socket context</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="receiver.Receiver.zsocket">
+<code class="descname">zsocket</code><a class="headerlink" href="#receiver.Receiver.zsocket" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference external" href="http://pyzmq.readthedocs.org/en/v15.0.0/api/zmq.html#zmq.Socket" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Socket</span></code></a> &#8211; socket wrapped up in a
+<code class="xref py py-class docutils literal"><span class="pre">zmqstream.ZMQStream</span></code></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="receiver.Receiver.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#receiver.Receiver.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">All args are optional unless otherwise noted.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>callable</strong> &#8211; REQUIRED A function or method to call when a message is
+received</li>
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of this socket. By default a uuid will be
+generated</li>
+<li><strong>context</strong> (<a class="reference external" href="http://pyzmq.readthedocs.org/en/v15.0.0/api/zmq.html#zmq.Context" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Context</span></code></a>) &#8211; Context to use when buliding the
+socket</li>
+<li><strong>socket</strong> (<a class="reference external" href="http://pyzmq.readthedocs.org/en/v15.0.0/api/zmq.html#zmq.Socket" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Socket</span></code></a>) &#8211; Should be one of <code class="xref py py-attr docutils literal"><span class="pre">zmq.REP</span></code> or
+<code class="xref py py-attr docutils literal"><span class="pre">zmq.ROUTER</span></code>. By default a <cite>ROUTER</cite> is used</li>
+<li><strong>skip_zmqstream</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; If set to true, skip creating the zmqstream
+socket. Callable is unused and optional when this is True</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-class docutils literal"><span class="pre">TypeError</span></code> &#8211; when <cite>callable</cite> is not callable</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="receiver.Receiver.__weakref__">
+<code class="descname">__weakref__</code><a class="headerlink" href="#receiver.Receiver.__weakref__" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of weak references to the object (if defined)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="receiver.Receiver.connect">
+<code class="descname">connect</code><span class="sig-paren">(</span><em>addr=None</em><span class="sig-paren">)</span><a class="headerlink" href="#receiver.Receiver.connect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connect to address defined by <cite>addr</cite></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>addr</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Address to connect to as a connection string</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-class docutils literal"><span class="pre">Exception</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="receiver.Receiver.listen">
+<code class="descname">listen</code><span class="sig-paren">(</span><em>addr=None</em><span class="sig-paren">)</span><a class="headerlink" href="#receiver.Receiver.listen" title="Permalink to this definition">¶</a></dt>
+<dd><p>start listening on <cite>addr</cite></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>addr</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Address to listen on as a connction string</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-class docutils literal"><span class="pre">Exception</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="receiver.Receiver.ready">
+<code class="descname">ready</code><a class="headerlink" href="#receiver.Receiver.ready" title="Permalink to this definition">¶</a></dt>
+<dd><p>Property used to check if this receiver is ready.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the receiver is ready to connect or listen, otherwise
+False</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/library/functions.html#bool" title="(in Python v2.7)">bool</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to EventMQ&#8217;s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="router.html"
+                        title="next chapter"><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/receiver.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="router.html" title="router – Router"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to EventMQ’s documentation!"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">EventMQ 0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2015, eventboard.io.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.3.1.
+    </div>
+  </body>
+</html>
