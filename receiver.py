@@ -57,17 +57,29 @@ class Receiver(object):
                 socket
             socket (:class:`zmq.Socket`): Should be one of :attr:`zmq.REP` or
                 :attr:`zmq.ROUTER`. By default a `ROUTER` is used
+            skip_zmqstream (bool): If set to true, skip creating the zmqstream
+                socket. Callable is unused and optional when this is True
+        Raises:
+            :class:`TypeError`: when `callable` is not callable
         """
-        self.name = kwargs.get('name', uuid.uuid4())
         self.zcontext = kwargs.get('context', zmq.Context.instance())
+        self.name = kwargs.get('name', str(uuid.uuid4()))
+        self.skip_zmqstream = kwargs.get('skip_zmqstream', False)
+        self.callable = kwargs.get('callable')
 
         self.zsocket = kwargs.get('socket', self.zcontext.socket(zmq.ROUTER))
-        self.zsocket = zmqstream.ZMQStream(self.zsocket)
+        self.zsocket.setsockopt(zmq.IDENTITY, self.name)
 
-        self.callable = kwargs.get('callable')
-        if not callable(self.callable):
+        if not self.skip_zmqstream and not callable(self.callable):
             raise TypeError('Required argument "callable" is not actually '
                             'callable')
+
+        if not self.skip_zmqstream:
+            logger.debug('Using ZMQStream')
+            self.zsocket = zmqstream.ZMQStream(self.zsocket)
+
+            self.zsocket.on_recv(self.callable)
+
         self.status = eventmq.STATUS.ready
 
     def listen(self, addr=None):

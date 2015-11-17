@@ -37,20 +37,20 @@ class Router(object):
     """
 
     def __init__(self, *args, **kwargs):
-        self.name = uuid.uuid4()
-        self.logger = logger
+        logger.info('Initializing Router...')
+        self.name = str(uuid.uuid4())
 
         self.incoming = receiver.Receiver(callable=self.on_receive_request)
         self.outgoing = sender.Sender()
 
         self.status = STATUS.ready
-        self.logger.info('Initialized Router...')
+        logger.info('Done initializing Router')
 
     def start(self,
               frontend_addr='tcp://127.0.0.1:47290',
               backend_addr='tcp://127.0.0.1:47291'):
         """
-        Being listening for connections on the provided connection strings
+        Begin listening for connections on the provided connection strings
 
         :param frontend_addr: connection string to listen for requests
         :type incoming: str
@@ -60,22 +60,21 @@ class Router(object):
         self.status = STATUS.starting
 
         self.incoming.listen(frontend_addr)
-        self.outgoing.listen(backend_addr)
+        # self.outgoing.listen(backend_addr)
 
         self.status = STATUS.listening
-        self.logger.info('Listening for requests on %s' % frontend_addr)
-        self.logger.info('Listening for workers on %s' % backend_addr)
+        logger.info('Listening for requests on %s' % frontend_addr)
+        logger.info('Listening for workers on %s' % backend_addr)
+
+        ioloop.IOLoop.instance().start()
 
     def on_receive_request(self, msg):
-        print('recvd')
-        self.logger.debug(msg)
-
+        logger.debug(msg)
 
 if __name__ == "__main__":
     ioloop.install()
     r = Router()
     r.start()
 
-    import eventmq
-    eventmq.send_msg('test')
-    ioloop.IOLoop.instance().start()
+    # import eventmq
+    # eventmq.send_msg('test')
