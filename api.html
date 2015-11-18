@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>EventMQ Documentation &mdash; EventMQ 0 documentation</title>
+  <title>API Documentation &mdash; EventMQ 0 documentation</title>
   
 
   
@@ -30,8 +30,9 @@
   
 
   
-    <link rel="top" title="EventMQ 0 documentation" href="#"/>
-        <link rel="next" title="API Documentation" href="api.html"/> 
+    <link rel="top" title="EventMQ 0 documentation" href="index.html"/>
+        <link rel="next" title="jobmanager – Job Manager" href="jobmanager.html"/>
+        <link rel="prev" title="EventMQ Documentation" href="index.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -49,7 +50,7 @@
           
 
           
-            <a href="#" class="icon icon-home"> EventMQ
+            <a href="index.html" class="icon icon-home"> EventMQ
           
 
           
@@ -80,8 +81,14 @@
           
             
             
-                <ul>
-<li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
+                <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="">API Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="jobmanager.html"><code class="docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="receiver.html"><code class="docutils literal"><span class="pre">receiver</span></code> &#8211; Receiver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="router.html"><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sender.html"><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to EventMQ</a></li>
 </ul>
 
@@ -96,7 +103,7 @@
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
         <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="#">EventMQ</a>
+        <a href="index.html">EventMQ</a>
       </nav>
 
 
@@ -111,13 +118,13 @@
 
 <div role="navigation" aria-label="breadcrumbs navigation">
   <ul class="wy-breadcrumbs">
-    <li><a href="#">Docs</a> &raquo;</li>
+    <li><a href="index.html">Docs</a> &raquo;</li>
       
-    <li>EventMQ Documentation</li>
+    <li>API Documentation</li>
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="_sources/index.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/api.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -127,29 +134,14 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="eventmq-documentation">
-<h1>EventMQ Documentation<a class="headerlink" href="#eventmq-documentation" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="api-documentation">
+<h1>API Documentation<a class="headerlink" href="#api-documentation" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="jobmanager.html"><code class="docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager</a></li>
-<li class="toctree-l2"><a class="reference internal" href="receiver.html"><code class="docutils literal"><span class="pre">receiver</span></code> &#8211; Receiver</a></li>
-<li class="toctree-l2"><a class="reference internal" href="router.html"><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</a></li>
-<li class="toctree-l2"><a class="reference internal" href="sender.html"><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to EventMQ</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="protocol.html">EventMQ Protocol Specification</a></li>
-</ul>
-</li>
-</ul>
-</div>
-<div class="section" id="indices-and-tables">
-<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li><a class="reference internal" href="genindex.html"><span>Index</span></a></li>
-<li><a class="reference internal" href="py-modindex.html"><span>Module Index</span></a></li>
-<li><a class="reference internal" href="search.html"><span>Search Page</span></a></li>
+<li class="toctree-l1"><a class="reference internal" href="jobmanager.html"><code class="docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager</a></li>
+<li class="toctree-l1"><a class="reference internal" href="receiver.html"><code class="docutils literal"><span class="pre">receiver</span></code> &#8211; Receiver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="router.html"><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sender.html"><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></li>
 </ul>
 </div>
 </div>
@@ -161,8 +153,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="api.html" class="btn btn-neutral float-right" title="API Documentation" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="jobmanager.html" class="btn btn-neutral float-right" title="jobmanager – Job Manager" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
+      
+        <a href="index.html" class="btn btn-neutral" title="EventMQ Documentation" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

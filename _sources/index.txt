@@ -1,17 +1,12 @@
-Welcome to EventMQ's documentation!
-===================================
-
-:doc:`protocol`
-
-Contents:
+#####################
+EventMQ Documentation
+#####################
 
 .. toctree::
    :maxdepth: 2
 
-   jobmanager
-   receiver
-   router
-   sender
+   api
+   contributing
 
 
 Indices and tables
