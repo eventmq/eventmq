@@ -54,7 +54,7 @@ FRAME  Value          Description
 ====== ============== ===========
 0      _EMPTY_        leave empty
 1      eMQP/1.0       Protocol version
-2      READY          Command
+2      READY          command
 3      _MSGID_        A unique id for the msg
 4      _QUEUE_NAME_   the name of the queue the worker belongs to
 5      _HEADERS_      dictionary of headers. can be an empty set
@@ -70,9 +70,9 @@ FRAME   Value         Description
 ====== ============== ===========
 0      _EMPTY_        leave empty
 1      eMQP/1.0       Protocol version
-2      INFORM        
+2      INFORM         command
 3      _MSGID_        A unique id for the msg
-4      _QUEUE_NAME_   the name of the queue the worker belongs to
+4      _QUEUE_NAME_   csv seperated names of queue the worker belongs to
 ====== ============== ===========
 
 A **READY** frame consists of a 4-frame multipart message, formatted as follows.
@@ -82,7 +82,7 @@ FRAME  Value          Description
 ====== ============== ===========
 0      _EMPTY_        leave empty
 1      eMQP/1.0       Protocol version
-2      READY         
+2      READY          command
 3      _MSGID_        A unique id for the msg
 ====== ============== ===========
 
@@ -93,7 +93,37 @@ FRAME  Value          Description
 ====== ============== ===========
 0      _EMPTY_        leave empty
 1      eMQP/1.0       Protocol version
-2      REPLY         
+2      REPLY          command
 3      _MSGID_        A unique id for the msg
 4      _MSG_          The reply to respond with
 ====== ============== ===========
+
+A **HEARTBEAT** frame consists of a
+
+====== ============== ===========
+FRAME  Value          Description
+====== ============== ===========
+0      _EMPTY_        leave empty
+1      eMQP/1.0       Protocol version
+2      HEARTBEAT      command
+3      _MSGID_        A unique id for the msg
+====== ============== ===========
+
+A **DISCONNECT** frame consists of
+
+====== ============== ===========
+FRAME  Value          Description
+====== ============== ===========
+0      _EMPTY_        leave empty
+1      eMQP/1.0       Protocol version
+2      DISCONNECT     command
+3      _MSGID_        A unique id for the msg
+====== ============== ===========
+
+Heartbeating
+------------
+ * HEARTBEAT commands are valid at any time after an INFORM command
+ * Any command except DISCONNECT act as a heartbeat. Peers SHOULD NOT send HEARTBEAT commands while sending other commands.
+ * Both worker and broker MUST send heartbeats at regular and agreed-upon intervals.
+ * If the worker detects that the broker disconnected it SHOULD restart the conversation.
+ * If the broker detects that a worker has disconnected it should stop sending it a message of any type.
