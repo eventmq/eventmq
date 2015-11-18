@@ -1,4 +1,4 @@
 test:
   override:
-    - coverage run tests.py
-    - coverage html --omit "$VIRTUAL_ENV/lib/python2.7/site-packages/*" -d "$CIRCLE_ARTIFACTS/coverage"
+    - nosetests --with-coverage --cover-inclusive --cover-package=eventmq --cover-tests
+    - coverage html -d "$CIRCLE_ARTIFACTS/coverage"

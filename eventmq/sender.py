@@ -1,8 +1,3 @@
-"""
-:mod:`sender` -- Sender
-=======================
-The sender is responsible for sending messages
-"""
 # This file is part of eventmq.
 #
 # eventmq is free software: you can redistribute it and/or modify
@@ -17,14 +12,19 @@ The sender is responsible for sending messages
 #
 # You should have received a copy of the GNU General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
+"""
+:mod:`sender` -- Sender
+=======================
+The sender is responsible for sending messages
+"""
 import uuid
 
 import zmq
 from zmq.eventloop import zmqstream
 
-import eventmq
-import exceptions
-import log
+from . import eventmq
+from . import exceptions
+from . import log
 
 logger = log.get_logger(__file__)
 
@@ -119,36 +119,56 @@ class Sender(object):
         """
         return self.status == eventmq.STATUS.ready
 
-    def send_raw(self, raw_message):
+    def send_multipart(self, message, protocol_version):
         """
-        Send a message directly to the 0mq socket
+        Send a message directly to the 0mq socket. Automatically inserts some
+        frames for your convience. The sent frame ends up looking something
+        like this
+
+            (identity, '', protocol_version) + (your, tuple)
 
         Args:
-            raw_message (tuple, list): Raw message to send.
+            message (tuple): Raw message to send.
+            protocol_version (str): protocol version. it's good practice but
+                you may explicitly specify None to skip adding the version
         """
         supported_msg_types = (tuple, list)
 
-        if not isinstance(raw_message, supported_msg_types):
+        if not isinstance(message, supported_msg_types):
             raise exceptions.MessageError(
                 '%s message type not one of %s' %
-                (type(raw_message), str(supported_msg_types)))
+                (type(message), str(supported_msg_types)))
 
-        if not isinstance(raw_message, list):
-            raw_message = list(raw_message)
+        if isinstance(message, tuple):
+            message = tuple(message)
 
-        raw_message.insert(0, self.name)
-        self.zsocket.send_multipart(raw_message)
+        headers = (self.name, '')
+        if protocol_version:
+            headers += (protocol_version, )
+        message = headers + message
 
-    def send(self, message, queue=None):
+        self.zsocket.send_multipart(message)
+
+    def send(self, message, protocol_version):
         """
         Sends a message
 
         Args:
             message: message to send to something
-            queue (str): queue topic
+            protocol_version (str): protocol version. it's good practice, but
+                you may explicitly specify None to skip adding the version
         """
-        if not queue:
-            queue = 'default_queue'
-        logger.debug('Sending message to queue "%s": %s' %
-                     (queue, str(message)))
-        self.send_raw([queue, message])
+        logger.debug('Sending message: %s' % str(message))
+        self.send_multipart((message, ), protocol_version)
+
+    def recv(self):
+        """
+        Receive a message
+        """
+        return self.zsocket.recv()
+
+    def recv_multipart(self):
+        """
+        Receive a multipart message
+        """
+        return self.zsocket.recv_multipart

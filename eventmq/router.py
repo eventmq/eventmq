@@ -1,8 +1,3 @@
-"""
-:mod:`router` -- Router
-=======================
-Routes messages to workers (that are in named queues).
-"""
 # This file is part of eventmq.
 #
 # eventmq is free software: you can redistribute it and/or modify
@@ -17,14 +12,19 @@ Routes messages to workers (that are in named queues).
 #
 # You should have received a copy of the GNU General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
+"""
+:mod:`router` -- Router
+=======================
+Routes messages to workers (that are in named queues).
+"""
 import uuid
 
 from zmq.eventloop import ioloop
-from eventmq import STATUS
 
-import log
-import receiver
-import sender
+from .eventmq import STATUS
+from . import log
+from . import receiver
+from . import sender
 
 logger = log.get_logger(__file__)
 
@@ -32,19 +32,21 @@ logger = log.get_logger(__file__)
 class Router(object):
     """
     A simple router of messages
+
+    This router uses tornado's eventloop.
     """
 
     def __init__(self, *args, **kwargs):
-        logger.info('Initializing Router...')
         ioloop.install()
         self.name = str(uuid.uuid4())
+        logger.info('Initializing Router %s...' % self.name)
 
         self.incoming = receiver.Receiver(callable=self.on_receive_request,
                                           skip_zmqstream=False)
         self.outgoing = sender.Sender(skip_zmqstream=False)
 
         self.status = STATUS.ready
-        logger.info('Done initializing Router')
+        logger.info('Done initializing Router %s' % self.name)
 
     def start(self,
               frontend_addr='tcp://127.0.0.1:47290',
@@ -52,10 +54,9 @@ class Router(object):
         """
         Begin listening for connections on the provided connection strings
 
-        :param frontend_addr: connection string to listen for requests
-        :type incoming: str
-        :param backend_addr: connection string to listen for workers
-        :type outgoing: str
+        Args:
+            frontend_addr (str): connection string to listen for requests
+            backend_addr (str): connection string to listen for workers
         """
         self.status = STATUS.starting
 
@@ -70,8 +71,4 @@ class Router(object):
 
     def on_receive_request(self, msg):
         logger.debug(msg)
-        self.outgoing.send_raw(msg)
-
-if __name__ == "__main__":
-    r = Router()
-    r.start()
+        self.outgoing.send_multipart(msg)

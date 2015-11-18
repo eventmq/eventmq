@@ -7,7 +7,7 @@ import time
 
 import zmq
 
-from envelope import create_message
+from .utils import create_message
 
 Context = zmq.Context
 
