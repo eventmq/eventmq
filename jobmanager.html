@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>router – Router &mdash; EventMQ 0 documentation</title>
+    <title>jobmanager – Job Manager &mdash; EventMQ 0 documentation</title>
     
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -24,8 +24,8 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="EventMQ 0 documentation" href="index.html" />
-    <link rel="next" title="sender – Sender" href="sender.html" />
-    <link rel="prev" title="receiver – Receiver" href="receiver.html" /> 
+    <link rel="next" title="receiver – Receiver" href="receiver.html" />
+    <link rel="prev" title="Welcome to EventMQ’s documentation!" href="index.html" /> 
   </head>
   <body role="document">
     <div class="related" role="navigation" aria-label="related navigation">
@@ -38,10 +38,10 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="sender.html" title="sender – Sender"
+          <a href="receiver.html" title="receiver – Receiver"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="receiver.html" title="receiver – Receiver"
+          <a href="index.html" title="Welcome to EventMQ’s documentation!"
              accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">EventMQ 0 documentation</a> &raquo;</li> 
       </ul>
@@ -52,36 +52,38 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <span class="target" id="module-eventmq.router"></span><div class="section" id="router-router">
-<h1><code class="xref py py-mod docutils literal"><span class="pre">router</span></code> &#8211; Router<a class="headerlink" href="#router-router" title="Permalink to this headline">¶</a></h1>
-<p>Routes messages to workers (that are in named queues).</p>
+  <span class="target" id="module-eventmq.jobmanager"></span><div class="section" id="jobmanager-job-manager">
+<h1><code class="xref py py-mod docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager<a class="headerlink" href="#jobmanager-job-manager" title="Permalink to this headline">¶</a></h1>
+<p>Ensures things about jobs
+Spawns and manages workers</p>
 <dl class="class">
-<dt id="eventmq.router.Router">
-<em class="property">class </em><code class="descclassname">eventmq.router.</code><code class="descname">Router</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router" title="Permalink to this definition">¶</a></dt>
-<dd><p>A simple router of messages</p>
-<p>This router uses tornado&#8217;s eventloop.</p>
-<dl class="attribute">
-<dt id="eventmq.router.Router.__weakref__">
-<code class="descname">__weakref__</code><a class="headerlink" href="#eventmq.router.Router.__weakref__" title="Permalink to this definition">¶</a></dt>
-<dd><p>list of weak references to the object (if defined)</p>
-</dd></dl>
-
+<dt id="eventmq.jobmanager.JobManager">
+<em class="property">class </em><code class="descclassname">eventmq.jobmanager.</code><code class="descname">JobManager</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>The exposed portion of the worker. The job manager&#8217;s main responsibility is
+to manage the resources on the server it&#8217;s running.</p>
+<p>This job manager uses tornado&#8217;s eventloop.</p>
 <dl class="method">
-<dt id="eventmq.router.Router.start">
-<code class="descname">start</code><span class="sig-paren">(</span><em>frontend_addr='tcp://127.0.0.1:47290'</em>, <em>backend_addr='tcp://127.0.0.1:47291'</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.start" title="Permalink to this definition">¶</a></dt>
-<dd><p>Begin listening for connections on the provided connection strings</p>
+<dt id="eventmq.jobmanager.JobManager.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">All args are optional unless otherwise noted.</p>
+</div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>frontend_addr</strong> &#8211; connection string to listen for requests</li>
-<li><strong>backend_addr</strong> &#8211; connection string to listen for workers</li>
-</ul>
-</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; unique name of this instance. By default a uuid will be
+generated.</td>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="eventmq.jobmanager.JobManager.__weakref__">
+<code class="descname">__weakref__</code><a class="headerlink" href="#eventmq.jobmanager.JobManager.__weakref__" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of weak references to the object (if defined)</p>
 </dd></dl>
 
 </dd></dl>
@@ -95,15 +97,15 @@
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="receiver.html"
-                        title="previous chapter"><code class="docutils literal"><span class="pre">receiver</span></code> &#8211; Receiver</a></p>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to EventMQ&#8217;s documentation!</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="sender.html"
-                        title="next chapter"><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></p>
+  <p class="topless"><a href="receiver.html"
+                        title="next chapter"><code class="docutils literal"><span class="pre">receiver</span></code> &#8211; Receiver</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="_sources/router.txt"
+      <li><a href="_sources/jobmanager.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -134,10 +136,10 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="sender.html" title="sender – Sender"
+          <a href="receiver.html" title="receiver – Receiver"
              >next</a> |</li>
         <li class="right" >
-          <a href="receiver.html" title="receiver – Receiver"
+          <a href="index.html" title="Welcome to EventMQ’s documentation!"
              >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="index.html">EventMQ 0 documentation</a> &raquo;</li> 
       </ul>

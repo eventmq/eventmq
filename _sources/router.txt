@@ -1,2 +1,3 @@
-.. automodule:: router
+.. automodule:: eventmq.router
    :members:
+   :special-members:
