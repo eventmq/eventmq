@@ -21,8 +21,10 @@ import uuid
 
 from zmq.eventloop import ioloop
 
-from .eventmq import STATUS
+from . import constants
 from . import log
+from . import utils
+from .eventmq import STATUS
 from .sender import Sender
 
 logger = log.get_logger(__file__)
@@ -45,25 +47,25 @@ class JobManager(object):
             name (str): unique name of this instance. By default a uuid will be
                  generated.
         """
-        ioloop.install()
+        #ioloop.install()
         self.name = kwargs.get('name', str(uuid.uuid4()))
-        self.incoming = Sender(on_recv=self.process_job,
-                               skip_zmqstream=False)
+        self.incoming = Sender()
 
         self.status = STATUS.ready
 
-    def start(self, addr='tcp://127.0.0.1:47292'):
+    def start(self, addr='tcp://127.0.0.1:47291'):
         """
         Begin listening for job requests
 
         Args:
-            args (str): connection string to listen on
+            args (str): connection string to connect to
         """
         self.incoming.connect(addr)
         self.status = STATUS.listening
-
+        import time; time.sleep(1)
         self.send_inform()
-        ioloop.IOLoop.instance().start()
+        time.sleep(1)
+        #ioloop.IOLoop.instance().start()
 
     def process_job(self, msg):
         pass
@@ -71,11 +73,30 @@ class JobManager(object):
     def sync(self):
         pass
 
+    def send_message(self, command, message):
+        """
+        send a message to `self.incoming`
+        Args:
+            message: a msg tuple to send
+        Raises:
+
+        Returns
+        """
+        msg = (str(command).upper(), utils.generate_msgid())
+        if isinstance(message, (tuple, list)):
+            msg += message
+        else:
+            msg += (message,)
+
+        logger.debug('Sending message: %s' % str(msg))
+        self.incoming.send_multipart(msg, constants.PROTOCOL_VERSION)
+
     def send_inform(self):
         """
         Send an INFORM frame
         """
-        self.incoming.send_multipart()
+        self.send_message('INFORM', 'default_queuename')
+
 
     def respond(self):
         pass

@@ -67,6 +67,7 @@ class Sender(object):
         self.zsocket.setsockopt(zmq.IDENTITY, self.name)
 
         if not kwargs.get('skip_zmqstream', True):
+            logger.debug('Using ZMQStream')
             self.zsocket = zmqstream.ZMQStream(self.zsocket)
             self.zsocket.on_recv(kwargs.get('on_recv'))
 
@@ -123,9 +124,9 @@ class Sender(object):
         """
         Send a message directly to the 0mq socket. Automatically inserts some
         frames for your convience. The sent frame ends up looking something
-        like this
+        like identity
 
-            (identity, '', protocol_version) + (your, tuple)
+            (this, '', protocol_version) + (your, tuple)
 
         Args:
             message (tuple): Raw message to send.
@@ -133,20 +134,18 @@ class Sender(object):
                 you may explicitly specify None to skip adding the version
         """
         supported_msg_types = (tuple, list)
-
         if not isinstance(message, supported_msg_types):
             raise exceptions.MessageError(
                 '%s message type not one of %s' %
                 (type(message), str(supported_msg_types)))
 
-        if isinstance(message, tuple):
+        if isinstance(message, list):
             message = tuple(message)
 
-        headers = (self.name, '')
-        if protocol_version:
-            headers += (protocol_version, )
-        message = headers + message
+        headers = ('', protocol_version, )
 
+        message = headers + message
+        print message
         self.zsocket.send_multipart(message)
 
     def send(self, message, protocol_version):

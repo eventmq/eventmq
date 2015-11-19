@@ -1,8 +1,3 @@
-"""
-:mod:`receiver` -- Receiver
-===========================
-The receiver is responsible for receiveing messages
-"""
 # This file is part of eventmq.
 #
 # eventmq is free software: you can redistribute it and/or modify
@@ -17,6 +12,11 @@ The receiver is responsible for receiveing messages
 #
 # You should have received a copy of the GNU General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
+"""
+:mod:`receiver` -- Receiver
+===========================
+The receiver is responsible for receiveing messages
+"""
 import uuid
 
 import zmq
@@ -30,7 +30,7 @@ logger = log.get_logger(__file__)
 
 class Receiver(object):
     """
-    Receives messages and pass them to a callable.
+    Receives messages and pass them to a on_recv.
 
     .. note::
        Polling with this reciever is currently only available via an eventloop
@@ -49,8 +49,6 @@ class Receiver(object):
            All args are optional unless otherwise noted.
 
         Args:
-            callable: REQUIRED A function or method to call when a message is
-                received
             name (str): name of this socket. By default a uuid will be
                 generated
             context (:class:`zmq.Context`): Context to use when buliding the
@@ -59,26 +57,28 @@ class Receiver(object):
                 :attr:`zmq.ROUTER`. By default a `ROUTER` is used
             skip_zmqstream (bool): If set to true, skip creating the zmqstream
                 socket. Callable is unused and optional when this is True
+            on_recv: REQUIRED for zmqstream mode. A function or method to call
+                when a message is received
         Raises:
             :class:`TypeError`: when `callable` is not callable
         """
         self.zcontext = kwargs.get('context', zmq.Context.instance())
         self.name = kwargs.get('name', str(uuid.uuid4()))
         self.skip_zmqstream = kwargs.get('skip_zmqstream', True)
-        self.callable = kwargs.get('callable')
+        self.on_recv = kwargs.get('on_recv')
 
         self.zsocket = kwargs.get('socket', self.zcontext.socket(zmq.ROUTER))
         self.zsocket.setsockopt(zmq.IDENTITY, self.name)
+        self.zsocket.setsockopt(zmq.ROUTER_MANDATORY, 1)
 
-        if not self.skip_zmqstream and not callable(self.callable):
-            raise TypeError('Required argument "callable" is not actually '
-                            'callable')
+        if not self.skip_zmqstream:
+            if not callable(self.on_recv):
+                raise TypeError('Required argument "on_recv" is not actually '
+                                'callable')
 
-        if self.skip_zmqstream:
             logger.debug('Using ZMQStream')
             self.zsocket = zmqstream.ZMQStream(self.zsocket)
-
-            self.zsocket.on_recv(self.callable)
+            self.zsocket.on_recv(self.on_recv)
 
         self.status = eventmq.STATUS.ready
 

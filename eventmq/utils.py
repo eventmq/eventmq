@@ -18,6 +18,15 @@
 This module contains a handful of utility classes to make dealing with things
 like creating message more simple.
 """
+import uuid
+
+
+def generate_msgid():
+    """
+    Returns a (universally) unique id to be used for messages
+    """
+    return str(uuid.uuid4())
+
 
 def create_message(queue_name, message,
                    reply_requested=False, fail_quota=0, retry_count=0):

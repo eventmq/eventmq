@@ -41,9 +41,10 @@ class Router(object):
         self.name = str(uuid.uuid4())
         logger.info('Initializing Router %s...' % self.name)
 
-        self.incoming = receiver.Receiver(callable=self.on_receive_request,
+        self.incoming = receiver.Receiver(on_recv=self.on_receive_request,
                                           skip_zmqstream=False)
-        self.outgoing = sender.Sender(skip_zmqstream=False)
+        self.outgoing = receiver.Receiver(skip_zmqstream=False,
+                                          on_recv=self.on_receive_reply)
 
         self.status = STATUS.ready
         logger.info('Done initializing Router %s' % self.name)
@@ -61,7 +62,7 @@ class Router(object):
         self.status = STATUS.starting
 
         self.incoming.listen(frontend_addr)
-        # self.outgoing.listen(backend_addr)
+        self.outgoing.listen(backend_addr)
 
         self.status = STATUS.listening
         logger.info('Listening for requests on %s' % frontend_addr)
@@ -72,3 +73,6 @@ class Router(object):
     def on_receive_request(self, msg):
         logger.debug(msg)
         self.outgoing.send_multipart(msg)
+
+    def on_receive_reply(self, msg):
+        logger.debug(msg)

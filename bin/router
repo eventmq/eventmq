@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+# -*- mode: python -*-
+
+from eventmq.router import Router
+
+if __name__ == "__main__":
+    r = Router()
+    r.start()
