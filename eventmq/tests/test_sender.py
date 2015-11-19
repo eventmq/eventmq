@@ -27,7 +27,7 @@ class TestCase(unittest.TestCase):
 
     def test_send_multipart(self):
         # Test that multipart installs the correct headers
-        socket = self.zcontext.socket(zmq.DEALER)
+        socket = self.zcontext.socket(zmq.ROUTER)
         socket.bind('inproc://test_send_multipart')
         self.sender.connect('inproc://test_send_multipart')
 
