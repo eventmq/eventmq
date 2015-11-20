@@ -154,5 +154,5 @@ Header          REQUEST PUBLISH Default Description
 =============== ======= ======= ======= ===========
 reply-requested X               False     Once the job is finished, send a reply back with information from the job. If there is no information reply with a True value.
 retry-count:#   X               0       Retry a failed job this many times before accepting defeat.
-guarentee       X               False     Ensure the job completes by letting someone else worry about a success reply.
+guarantee       X               False     Ensure the job completes by letting someone else worry about a success reply.
 =============== ======= ======= ======= ===========
