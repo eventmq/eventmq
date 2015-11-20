@@ -6,3 +6,5 @@ Contributing to EventMQ
    :maxdepth: 1
    
    protocol
+   Source Code <https://github.com/enderlabs/eventmq>
+   Issues <https://github.com/enderlabs/eventmq/issues>
