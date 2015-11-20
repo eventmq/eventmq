@@ -24,7 +24,7 @@ from zmq.eventloop import ioloop
 from .eventmq import STATUS
 from . import log
 from . import receiver
-from . import sender
+from . import utils
 
 logger = log.get_logger(__file__)
 
@@ -71,8 +71,20 @@ class Router(object):
         ioloop.IOLoop.instance().start()
 
     def on_receive_request(self, msg):
-        logger.debug(msg)
+        """
+        This function is called when a message comes in from the client socket.
+        It then calls `on_command`. If `on_command` isn't found, then a
+        warning is created.
+        """
+        logger.info(str(utils.parse_message(msg)))
+
+        # do some things and forward it to the workers
         self.outgoing.send_multipart(msg)
 
     def on_receive_reply(self, msg):
-        logger.debug(msg)
+        """
+        This method is called when a message comes in from the worker socket.
+        It then calls `on_command`. If `on_command` isn't found, then a warning
+        is created.
+        """
+        logger.info(str(utils.parse_message(msg)))

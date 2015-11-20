@@ -20,6 +20,8 @@ like creating message more simple.
 """
 import uuid
 
+from . import exceptions
+
 
 def generate_msgid():
     """
@@ -28,9 +30,27 @@ def generate_msgid():
     return str(uuid.uuid4())
 
 
-def create_message(queue_name, message,
-                   reply_requested=False, fail_quota=0, retry_count=0):
-    return (queue_name, message)
+def parse_message(message):
+    """
+    Parses the generic format of an eMQP/1.0 message and returns the
+    parts.
 
-if __name__ == "__main__":
-    pass
+    Args:
+        message: the message you wish to have parsed
+
+    Returns (tuple) (sender_id, command, message_id, (message_body, and_data))
+    """
+    try:
+        sender = message[0]
+        # noop = message[1]
+        # protocol_version = message[2]
+        command = message[3]
+        msgid = message[4]
+    except IndexError:
+        raise exceptions.InvalidMessageError('Invalid Message Encountered: %s'
+                                             % str(message))
+    if len(message) > 5:
+        msg = message[5:]
+    else:
+        msg = ()
+    return (sender, command, msgid, msg)

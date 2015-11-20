@@ -47,7 +47,7 @@ class JobManager(object):
             name (str): unique name of this instance. By default a uuid will be
                  generated.
         """
-        #ioloop.install()
+        ioloop.install()
         self.name = kwargs.get('name', str(uuid.uuid4()))
         self.incoming = Sender()
 
@@ -64,8 +64,7 @@ class JobManager(object):
         self.status = STATUS.listening
         import time; time.sleep(1)
         self.send_inform()
-        time.sleep(1)
-        #ioloop.IOLoop.instance().start()
+        ioloop.IOLoop.instance().start()
 
     def process_job(self, msg):
         pass
