@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Python Module Index &mdash; EventMQ 0 documentation</title>
+  <title>utils – Utilities &mdash; EventMQ 0 documentation</title>
   
 
   
@@ -31,9 +31,9 @@
 
   
     <link rel="top" title="EventMQ 0 documentation" href="index.html"/>
- 
-
-
+        <link rel="up" title="API Documentation" href="api.html"/>
+        <link rel="next" title="&lt;no title&gt;" href="exceptions.html"/>
+        <link rel="prev" title="sender – Sender" href="sender.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -82,8 +82,14 @@
           
             
             
-                <ul>
-<li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
+                <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="api.html">API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="jobmanager.html"><code class="docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="receiver.html"><code class="docutils literal"><span class="pre">receiver</span></code> &#8211; Receiver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sender.html"><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to EventMQ</a></li>
 </ul>
 
@@ -115,9 +121,13 @@
   <ul class="wy-breadcrumbs">
     <li><a href="index.html">Docs</a> &raquo;</li>
       
-    <li></li>
+          <li><a href="api.html">API Documentation</a> &raquo;</li>
+      
+    <li><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</li>
       <li class="wy-breadcrumbs-aside">
         
+          
+            <a href="_sources/utils.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -127,59 +137,47 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
+  <span class="target" id="module-eventmq.utils"></span><div class="section" id="utils-utilities">
+<h1><code class="xref py py-mod docutils literal"><span class="pre">utils</span></code> &#8211; Utilities<a class="headerlink" href="#utils-utilities" title="Permalink to this headline">¶</a></h1>
+<p>This module contains a handful of utility classes to make dealing with things
+like creating message more simple.</p>
+<dl class="function">
+<dt id="eventmq.utils.generate_msgid">
+<code class="descclassname">eventmq.utils.</code><code class="descname">generate_msgid</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.generate_msgid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a (universally) unique id to be used for messages</p>
+</dd></dl>
 
-   <h1>Python Module Index</h1>
+<dl class="function">
+<dt id="eventmq.utils.parse_message">
+<code class="descclassname">eventmq.utils.</code><code class="descname">parse_message</code><span class="sig-paren">(</span><em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.parse_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parses the generic format of an eMQP/1.0 message and returns the
+parts.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>message</strong> &#8211; the message you wish to have parsed</td>
+</tr>
+</tbody>
+</table>
+<p>Returns (tuple) (sender_id, command, message_id, (message_body, and_data))</p>
+</dd></dl>
 
-   <div class="modindex-jumpbox">
-   <a href="#cap-e"><strong>e</strong></a>
-   </div>
-
-   <table class="indextable modindextable" cellspacing="0" cellpadding="2">
-     <tr class="pcap"><td></td><td>&nbsp;</td><td></td></tr>
-     <tr class="cap" id="cap-e"><td></td><td>
-       <strong>e</strong></td><td></td></tr>
-     <tr>
-       <td><img src="_static/minus.png" class="toggler"
-              id="toggle-1" style="display: none" alt="-" /></td>
-       <td>
-       <code class="xref">eventmq</code></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&nbsp;&nbsp;&nbsp;
-       <a href="exceptions.html#module-eventmq.exceptions"><code class="xref">eventmq.exceptions</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&nbsp;&nbsp;&nbsp;
-       <a href="jobmanager.html#module-eventmq.jobmanager"><code class="xref">eventmq.jobmanager</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&nbsp;&nbsp;&nbsp;
-       <a href="receiver.html#module-eventmq.receiver"><code class="xref">eventmq.receiver</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&nbsp;&nbsp;&nbsp;
-       <a href="router.html#module-eventmq.router"><code class="xref">eventmq.router</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&nbsp;&nbsp;&nbsp;
-       <a href="sender.html#module-eventmq.sender"><code class="xref">eventmq.sender</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&nbsp;&nbsp;&nbsp;
-       <a href="utils.html#module-eventmq.utils"><code class="xref">eventmq.utils</code></a></td><td>
-       <em></em></td></tr>
-   </table>
+</div>
 
 
            </div>
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="exceptions.html" class="btn btn-neutral float-right" title="&lt;no title&gt;" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="sender.html" class="btn btn-neutral" title="sender – Sender" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>

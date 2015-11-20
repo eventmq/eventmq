@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>jobmanager – Job Manager &mdash; EventMQ 0 documentation</title>
+  <title>exceptions – Exceptions &mdash; EventMQ 0 documentation</title>
   
 
   
@@ -32,8 +32,8 @@
   
     <link rel="top" title="EventMQ 0 documentation" href="index.html"/>
         <link rel="up" title="API Documentation" href="api.html"/>
-        <link rel="next" title="receiver – Receiver" href="receiver.html"/>
-        <link rel="prev" title="API Documentation" href="api.html"/> 
+        <link rel="next" title="Contributing to EventMQ" href="contributing.html"/>
+        <link rel="prev" title="utils – Utilities" href="utils.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -84,11 +84,12 @@
             
                 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">API Documentation</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href=""><code class="docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jobmanager.html"><code class="docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager</a></li>
 <li class="toctree-l2"><a class="reference internal" href="receiver.html"><code class="docutils literal"><span class="pre">receiver</span></code> &#8211; Receiver</a></li>
 <li class="toctree-l2"><a class="reference internal" href="router.html"><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sender.html"><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html"><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""><code class="docutils literal"><span class="pre">exceptions</span></code> &#8211; Exceptions</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to EventMQ</a></li>
@@ -124,11 +125,11 @@
       
           <li><a href="api.html">API Documentation</a> &raquo;</li>
       
-    <li><code class="docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager</li>
+    <li><code class="docutils literal"><span class="pre">exceptions</span></code> &#8211; Exceptions</li>
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="_sources/jobmanager.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/exceptions.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -138,68 +139,32 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <span class="target" id="module-eventmq.jobmanager"></span><div class="section" id="jobmanager-job-manager">
-<h1><code class="xref py py-mod docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager<a class="headerlink" href="#jobmanager-job-manager" title="Permalink to this headline">¶</a></h1>
-<p>Ensures things about jobs and spawns the actual tasks</p>
-<dl class="class">
-<dt id="eventmq.jobmanager.JobManager">
-<em class="property">class </em><code class="descclassname">eventmq.jobmanager.</code><code class="descname">JobManager</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager" title="Permalink to this definition">¶</a></dt>
-<dd><p>The exposed portion of the worker. The job manager&#8217;s main responsibility is
-to manage the resources on the server it&#8217;s running.</p>
-<p>This job manager uses tornado&#8217;s eventloop.</p>
-<dl class="method">
-<dt id="eventmq.jobmanager.JobManager.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">All args are optional unless otherwise noted.</p>
-</div>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; unique name of this instance. By default a uuid will be
-generated.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
+  <span class="target" id="module-eventmq.exceptions"></span><div class="section" id="exceptions-exceptions">
+<h1><a class="reference external" href="https://docs.python.org/library/exceptions.html#module-exceptions" title="(in Python v2.7)"><code class="xref py py-mod docutils literal"><span class="pre">exceptions</span></code></a> &#8211; Exceptions<a class="headerlink" href="#exceptions-exceptions" title="Permalink to this headline">¶</a></h1>
+<p>These are the exceptions that are raised by EventMQ. All exceptions should
+be subclasses of <a class="reference internal" href="#eventmq.exceptions.EventMQError" title="eventmq.exceptions.EventMQError"><code class="xref py py-class docutils literal"><span class="pre">EventMQError</span></code></a></p>
+<dl class="exception">
+<dt id="eventmq.exceptions.EventMQError">
+<em class="property">exception </em><code class="descclassname">eventmq.exceptions.</code><code class="descname">EventMQError</code><a class="headerlink" href="#eventmq.exceptions.EventMQError" title="Permalink to this definition">¶</a></dt>
+<dd><p>All exceptions raised by EventMQ inherit from this base exception</p>
 <dl class="attribute">
-<dt id="eventmq.jobmanager.JobManager.__weakref__">
-<code class="descname">__weakref__</code><a class="headerlink" href="#eventmq.jobmanager.JobManager.__weakref__" title="Permalink to this definition">¶</a></dt>
+<dt id="eventmq.exceptions.EventMQError.__weakref__">
+<code class="descname">__weakref__</code><a class="headerlink" href="#eventmq.exceptions.EventMQError.__weakref__" title="Permalink to this definition">¶</a></dt>
 <dd><p>list of weak references to the object (if defined)</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="eventmq.jobmanager.JobManager.send_inform">
-<code class="descname">send_inform</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.send_inform" title="Permalink to this definition">¶</a></dt>
-<dd><p>Send an INFORM frame</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="eventmq.jobmanager.JobManager.send_message">
-<code class="descname">send_message</code><span class="sig-paren">(</span><em>command</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.send_message" title="Permalink to this definition">¶</a></dt>
-<dd><p>send a message to <cite>self.incoming</cite>
-:param message: a msg tuple to send</p>
-<p>Raises:</p>
-<p>Returns</p>
+<dl class="exception">
+<dt id="eventmq.exceptions.InvalidMessageError">
+<em class="property">exception </em><code class="descclassname">eventmq.exceptions.</code><code class="descname">InvalidMessageError</code><a class="headerlink" href="#eventmq.exceptions.InvalidMessageError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raise when EventMQ encounters a malformed message is encountered.</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="eventmq.jobmanager.JobManager.start">
-<code class="descname">start</code><span class="sig-paren">(</span><em>addr='tcp://127.0.0.1:47291'</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.start" title="Permalink to this definition">¶</a></dt>
-<dd><p>Begin listening for job requests</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>args</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; connection string to connect to</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
+<dl class="exception">
+<dt id="eventmq.exceptions.MessageError">
+<em class="property">exception </em><code class="descclassname">eventmq.exceptions.</code><code class="descname">MessageError</code><a class="headerlink" href="#eventmq.exceptions.MessageError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raised when there is a problem with the structure of the message</p>
 </dd></dl>
 
 </div>
@@ -211,10 +176,10 @@ generated.</td>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="receiver.html" class="btn btn-neutral float-right" title="receiver – Receiver" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="contributing.html" class="btn btn-neutral float-right" title="Contributing to EventMQ" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="api.html" class="btn btn-neutral" title="API Documentation" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="utils.html" class="btn btn-neutral" title="utils – Utilities" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
