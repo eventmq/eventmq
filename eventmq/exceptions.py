@@ -14,6 +14,7 @@
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
 """
 :mod:`exceptions` -- Exceptions
+===============================
 These are the exceptions that are raised by EventMQ. All exceptions should
 be subclasses of :class:`EventMQError`
 """

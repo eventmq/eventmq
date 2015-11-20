@@ -21,7 +21,7 @@ import uuid
 
 from zmq.eventloop import ioloop
 
-from .eventmq import STATUS
+from .constants import STATUS
 from . import log
 from . import receiver
 from . import utils

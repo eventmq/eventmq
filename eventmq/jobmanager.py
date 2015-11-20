@@ -24,7 +24,6 @@ from zmq.eventloop import ioloop
 from . import constants
 from . import log
 from . import utils
-from .eventmq import STATUS
 from .sender import Sender
 
 logger = log.get_logger(__file__)
@@ -51,7 +50,7 @@ class JobManager(object):
         self.name = kwargs.get('name', str(uuid.uuid4()))
         self.incoming = Sender()
 
-        self.status = STATUS.ready
+        self.status = constants.STATUS.ready
 
     def start(self, addr='tcp://127.0.0.1:47291'):
         """
@@ -61,8 +60,8 @@ class JobManager(object):
             args (str): connection string to connect to
         """
         self.incoming.connect(addr)
-        self.status = STATUS.listening
-        import time; time.sleep(1)
+        self.status = constants.STATUS.listening
+
         self.send_inform()
         ioloop.IOLoop.instance().start()
 

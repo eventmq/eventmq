@@ -1,17 +1,17 @@
-# This file is part of eventmq.
+# This file is part of constants.
 #
-# eventmq is free software: you can redistribute it and/or modify
+# constants is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# eventmq is distributed in the hope that it will be useful,
+# constants is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
+# along with constants.  If not, see <http://www.gnu.org/licenses/>.
 """
 :mod:`sender` -- Sender
 =======================
@@ -22,7 +22,7 @@ import uuid
 import zmq
 from zmq.eventloop import zmqstream
 
-from . import eventmq
+from . import constants
 from . import exceptions
 from . import log
 
@@ -71,7 +71,7 @@ class Sender(object):
             self.zsocket = zmqstream.ZMQStream(self.zsocket)
             self.zsocket.on_recv(kwargs.get('on_recv'))
 
-        self.status = eventmq.STATUS.ready
+        self.status = constants.STATUS.ready
 
     def listen(self, addr=None):
         """
@@ -85,7 +85,7 @@ class Sender(object):
         """
         if self.ready:
             self.zsocket.bind(addr)
-            self.status = eventmq.STATUS.listening
+            self.status = constants.STATUS.listening
             logger.info('Receiver %s: Listening on %s' % (self.name, addr))
         else:
             raise exceptions.EventMQError('Receiver %s not ready. status=%s' %
@@ -103,7 +103,7 @@ class Sender(object):
         """
         if self.ready:
             self.zsocket.connect(addr)
-            self.status = eventmq.STATUS.connected
+            self.status = constants.STATUS.connected
             logger.info('Receiver %s: Connected to %s' % (self.name, addr))
         else:
             raise exceptions.EventMQError('Receiver %s not ready. status=%s' %
@@ -118,7 +118,7 @@ class Sender(object):
             bool: True if the receiver is ready to connect or listen, otherwise
                 False
         """
-        return self.status == eventmq.STATUS.ready
+        return self.status == constants.STATUS.ready
 
     def send_multipart(self, message, protocol_version):
         """
