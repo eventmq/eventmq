@@ -94,6 +94,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#emqp-client">eMQP / Client</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#emqp-worker">eMQP / Worker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#heartbeating">Heartbeating</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#request-headers">Request Headers</a></li>
 </ul>
 </li>
 </ul>
@@ -189,7 +190,7 @@
 </div>
 <div class="section" id="emqp-client">
 <h3>eMQP / Client<a class="headerlink" href="#emqp-client" title="Permalink to this headline">¶</a></h3>
-<p>A <strong>REQUEST</strong> command consists of 7-frame multipart message, formatted as follows.</p>
+<p>A <strong>REQUEST</strong> command consists of a 7-frame multipart message, formatted as follows.</p>
 <table border="1" class="docutils">
 <colgroup>
 <col width="10%" />
@@ -221,6 +222,50 @@
 </tr>
 <tr class="row-even"><td>4</td>
 <td>_QUEUE_NAME_</td>
+<td>the name of the queue the worker belongs to</td>
+</tr>
+<tr class="row-odd"><td>5</td>
+<td>_HEADERS_</td>
+<td>dictionary of headers. can be an empty set</td>
+</tr>
+<tr class="row-even"><td>6</td>
+<td>_MSG_</td>
+<td>The message to send</td>
+</tr>
+</tbody>
+</table>
+<p>A <strong>PUBLISH</strong> command consists of a 7-frame multipart messag, formatted as follows.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="10%" />
+<col width="22%" />
+<col width="68%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">FRAME</th>
+<th class="head">Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>0</td>
+<td>_EMPTY_</td>
+<td>leave empty</td>
+</tr>
+<tr class="row-odd"><td>1</td>
+<td>eMQP/1.0</td>
+<td>Protocol version</td>
+</tr>
+<tr class="row-even"><td>2</td>
+<td>PUBLISH</td>
+<td>command</td>
+</tr>
+<tr class="row-odd"><td>3</td>
+<td>_MSGID_</td>
+<td>A unique id for the msg</td>
+</tr>
+<tr class="row-even"><td>4</td>
+<td>_TOPIC_NAME_</td>
 <td>the name of the queue the worker belongs to</td>
 </tr>
 <tr class="row-odd"><td>5</td>
@@ -416,6 +461,48 @@
 <li>If the broker detects that a worker has disconnected it should stop sending it a message of any type.</li>
 </ul>
 </div></blockquote>
+</div>
+<div class="section" id="request-headers">
+<h3>Request Headers<a class="headerlink" href="#request-headers" title="Permalink to this headline">¶</a></h3>
+<p>Headers MUST be 0 to many comma seperated values inserted into the header field. If there are no headers requried, send an empty string MUST be sent where headers are required.</p>
+<p>Below is a table which defines and describes the headers.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="9%" />
+<col width="4%" />
+<col width="4%" />
+<col width="4%" />
+<col width="78%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Header</th>
+<th class="head">REQUEST</th>
+<th class="head">PUBLISH</th>
+<th class="head">Default</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>reply-requested</td>
+<td>X</td>
+<td>&nbsp;</td>
+<td>False</td>
+<td>Once the job is finished, send a reply back with information from the job. If there is no information reply with a True value.</td>
+</tr>
+<tr class="row-odd"><td>retry-count:#</td>
+<td>X</td>
+<td>&nbsp;</td>
+<td>0</td>
+<td>Retry a failed job this many times before accepting defeat.</td>
+</tr>
+<tr class="row-even"><td>guarentee</td>
+<td>X</td>
+<td>&nbsp;</td>
+<td>False</td>
+<td>Ensure the job completes by letting someone else worry about a success reply.</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 </div>

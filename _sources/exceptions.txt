@@ -1,3 +1,2 @@
 .. automodule:: eventmq.exceptions
    :members:
-   :special-members:
