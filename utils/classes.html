@@ -1,0 +1,304 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>classes – Utility Classes &mdash; EventMQ 0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="EventMQ 0 documentation" href="../index.html"/>
+        <link rel="up" title="utils – Utilities" href="../utils.html"/>
+        <link rel="next" title="utils.messages – Message Utilities" href="messages.html"/>
+        <link rel="prev" title="utils – Utilities" href="../utils.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> EventMQ
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../exceptions.html"><code class="docutils literal"><span class="pre">exceptions</span></code> &#8211; Exceptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../jobmanager.html"><code class="docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../poller.html"><code class="docutils literal"><span class="pre">poller</span></code> &#8211; Poller</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../receiver.html"><code class="docutils literal"><span class="pre">receiver</span></code> &#8211; Receiver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../router.html"><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sender.html"><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../utils.html"><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href=""><code class="docutils literal"><span class="pre">classes</span></code> &#8211; Utility Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="messages.html"><code class="docutils literal"><span class="pre">utils.messages</span></code> &#8211; Message Utilities</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing to EventMQ</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">EventMQ</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../api.html">API Documentation</a> &raquo;</li>
+      
+          <li><a href="../utils.html"><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</a> &raquo;</li>
+      
+    <li><code class="docutils literal"><span class="pre">classes</span></code> &#8211; Utility Classes</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/utils/classes.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <span class="target" id="module-eventmq.utils.classes"></span><div class="section" id="classes-utility-classes">
+<h1><code class="xref py py-mod docutils literal"><span class="pre">classes</span></code> &#8211; Utility Classes<a class="headerlink" href="#classes-utility-classes" title="Permalink to this headline">¶</a></h1>
+<p>Defines some classes to use when implementing ZMQ devices</p>
+<dl class="class">
+<dt id="eventmq.utils.classes.ZMQReceiveMixin">
+<em class="property">class </em><code class="descclassname">eventmq.utils.classes.</code><code class="descname">ZMQReceiveMixin</code><a class="headerlink" href="#eventmq.utils.classes.ZMQReceiveMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines some methods for receiving messages. This class will not work if
+used on it&#8217;s own</p>
+<dl class="attribute">
+<dt id="eventmq.utils.classes.ZMQReceiveMixin.__weakref__">
+<code class="descname">__weakref__</code><a class="headerlink" href="#eventmq.utils.classes.ZMQReceiveMixin.__weakref__" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of weak references to the object (if defined)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.utils.classes.ZMQReceiveMixin.recv">
+<code class="descname">recv</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.classes.ZMQReceiveMixin.recv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Receive a message</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.utils.classes.ZMQReceiveMixin.recv_multipart">
+<code class="descname">recv_multipart</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.classes.ZMQReceiveMixin.recv_multipart" title="Permalink to this definition">¶</a></dt>
+<dd><p>Receive a multipart message</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="eventmq.utils.classes.ZMQSendMixin">
+<em class="property">class </em><code class="descclassname">eventmq.utils.classes.</code><code class="descname">ZMQSendMixin</code><a class="headerlink" href="#eventmq.utils.classes.ZMQSendMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines some methods for sending messages. This class will not work if used
+on it&#8217;s own</p>
+<dl class="attribute">
+<dt id="eventmq.utils.classes.ZMQSendMixin.__weakref__">
+<code class="descname">__weakref__</code><a class="headerlink" href="#eventmq.utils.classes.ZMQSendMixin.__weakref__" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of weak references to the object (if defined)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.utils.classes.ZMQSendMixin.send">
+<code class="descname">send</code><span class="sig-paren">(</span><em>message</em>, <em>protocol_version</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.classes.ZMQSendMixin.send" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sends a message</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>message</strong> &#8211; message to send to something</li>
+<li><strong>protocol_version</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; protocol version. it&#8217;s good practice, but
+you may explicitly specify None to skip adding the version</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.utils.classes.ZMQSendMixin.send_multipart">
+<code class="descname">send_multipart</code><span class="sig-paren">(</span><em>message</em>, <em>protocol_version</em>, <em>_recipient_id=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.classes.ZMQSendMixin.send_multipart" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a message directly to the 0mq socket. Automatically inserts some
+frames for your convience. The sent frame ends up looking something
+like identity</p>
+<blockquote>
+<div>(this, &#8216;&#8217;, protocol_version) + (your, tuple)</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>message</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) &#8211; Raw message to send.</li>
+<li><strong>protocol_version</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; protocol version. it&#8217;s good practice but
+you may explicitly specify None to skip adding the version</li>
+<li><strong>_recipient_id</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#object" title="(in Python v2.7)"><em>object</em></a>) &#8211; When using a <code class="xref py py-attr docutils literal"><span class="pre">zmq.ROUTER</span></code> you must
+specify the the recipient id of the</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="messages.html" class="btn btn-neutral float-right" title="utils.messages – Message Utilities" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../utils.html" class="btn btn-neutral" title="utils – Utilities" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015, eventboard.io.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

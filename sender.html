@@ -84,7 +84,9 @@
             
                 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="exceptions.html"><code class="docutils literal"><span class="pre">exceptions</span></code> &#8211; Exceptions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="jobmanager.html"><code class="docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="poller.html"><code class="docutils literal"><span class="pre">poller</span></code> &#8211; Poller</a></li>
 <li class="toctree-l2"><a class="reference internal" href="receiver.html"><code class="docutils literal"><span class="pre">receiver</span></code> &#8211; Receiver</a></li>
 <li class="toctree-l2"><a class="reference internal" href="router.html"><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href=""><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></li>
@@ -157,9 +159,9 @@
 </dd></dl>
 
 <dl class="attribute">
-<dt>
-<code class="descname">zcontext (</code></dt>
-<dd><p>class`zmq.Context`): socket context</p>
+<dt id="eventmq.sender.Sender.zcontext">
+<code class="descname">zcontext</code><a class="headerlink" href="#eventmq.sender.Sender.zcontext" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference external" href="http://pyzmq.readthedocs.org/en/v15.0.0/api/zmq.html#zmq.Context" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Context</span></code></a> &#8211; socket context</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -194,12 +196,6 @@ socket</li>
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="eventmq.sender.Sender.__weakref__">
-<code class="descname">__weakref__</code><a class="headerlink" href="#eventmq.sender.Sender.__weakref__" title="Permalink to this definition">¶</a></dt>
-<dd><p>list of weak references to the object (if defined)</p>
 </dd></dl>
 
 <dl class="method">
@@ -246,60 +242,6 @@ socket</li>
 False</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/library/functions.html#bool" title="(in Python v2.7)">bool</a></td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="eventmq.sender.Sender.recv">
-<code class="descname">recv</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.sender.Sender.recv" title="Permalink to this definition">¶</a></dt>
-<dd><p>Receive a message</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="eventmq.sender.Sender.recv_multipart">
-<code class="descname">recv_multipart</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.sender.Sender.recv_multipart" title="Permalink to this definition">¶</a></dt>
-<dd><p>Receive a multipart message</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="eventmq.sender.Sender.send">
-<code class="descname">send</code><span class="sig-paren">(</span><em>message</em>, <em>protocol_version</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.sender.Sender.send" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sends a message</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>message</strong> &#8211; message to send to something</li>
-<li><strong>protocol_version</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; protocol version. it&#8217;s good practice, but
-you may explicitly specify None to skip adding the version</li>
-</ul>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="eventmq.sender.Sender.send_multipart">
-<code class="descname">send_multipart</code><span class="sig-paren">(</span><em>message</em>, <em>protocol_version</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.sender.Sender.send_multipart" title="Permalink to this definition">¶</a></dt>
-<dd><p>Send a message directly to the 0mq socket. Automatically inserts some
-frames for your convience. The sent frame ends up looking something
-like identity</p>
-<blockquote>
-<div>(this, &#8216;&#8217;, protocol_version) + (your, tuple)</div></blockquote>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>message</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) &#8211; Raw message to send.</li>
-<li><strong>protocol_version</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; protocol version. it&#8217;s good practice but
-you may explicitly specify None to skip adding the version</li>
-</ul>
-</td>
 </tr>
 </tbody>
 </table>

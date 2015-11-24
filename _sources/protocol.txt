@@ -46,6 +46,19 @@ From the 0MQ manual[[2](http://api.zeromq.org/master:zmq-socket)]
 
 This extra frame is not shown in the specifications below.
 
+Global Frames
+-------------
+An **ACK** command consists of a 4-frame multipart message, formatted as follows.
+
+====== ============== ===========
+FRAME  Value          Description
+====== ============== ===========
+0      _EMPTY_        leave empty
+1      eMQP/1.0       Protocol version
+2      ACK            command
+3      _MSGID_        A unique id for the msg
+====== ============== ===========
+
 eMQP / Client
 -------------
 A **REQUEST** command consists of a 7-frame multipart message, formatted as follows.

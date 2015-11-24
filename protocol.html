@@ -91,6 +91,7 @@
 <li class="toctree-l3"><a class="reference internal" href="#architecture">Architecture</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#topology">Topology</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#router-addressing">ROUTER Addressing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#global-frames">Global Frames</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#emqp-client">eMQP / Client</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#emqp-worker">eMQP / Worker</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#heartbeating">Heartbeating</a></li>
@@ -189,6 +190,41 @@
 <p>From the 0MQ manual[[2](<a class="reference external" href="http://api.zeromq.org/master:zmq-socket">http://api.zeromq.org/master:zmq-socket</a>)]
 &gt; When receiving messages a ROUTER socket shall prepend a message part containing the identity of the originating peer to the message before passing it to the application. When sending messages a ROUTER socket shall remove the first part of the message and use it to determine the identity of the peer the message shall be routed to.</p>
 <p>This extra frame is not shown in the specifications below.</p>
+</div>
+<div class="section" id="global-frames">
+<h3>Global Frames<a class="headerlink" href="#global-frames" title="Permalink to this headline">¶</a></h3>
+<p>An <strong>ACK</strong> command consists of a 4-frame multipart message, formatted as follows.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="33%" />
+<col width="53%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">FRAME</th>
+<th class="head">Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>0</td>
+<td>_EMPTY_</td>
+<td>leave empty</td>
+</tr>
+<tr class="row-odd"><td>1</td>
+<td>eMQP/1.0</td>
+<td>Protocol version</td>
+</tr>
+<tr class="row-even"><td>2</td>
+<td>ACK</td>
+<td>command</td>
+</tr>
+<tr class="row-odd"><td>3</td>
+<td>_MSGID_</td>
+<td>A unique id for the msg</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section" id="emqp-client">
 <h3>eMQP / Client<a class="headerlink" href="#emqp-client" title="Permalink to this headline">¶</a></h3>

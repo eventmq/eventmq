@@ -32,7 +32,7 @@
   
     <link rel="top" title="EventMQ 0 documentation" href="index.html"/>
         <link rel="up" title="API Documentation" href="api.html"/>
-        <link rel="next" title="exceptions – Exceptions" href="exceptions.html"/>
+        <link rel="next" title="classes – Utility Classes" href="utils/classes.html"/>
         <link rel="prev" title="sender – Sender" href="sender.html"/> 
 
   
@@ -84,12 +84,17 @@
             
                 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="exceptions.html"><code class="docutils literal"><span class="pre">exceptions</span></code> &#8211; Exceptions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="jobmanager.html"><code class="docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="poller.html"><code class="docutils literal"><span class="pre">poller</span></code> &#8211; Poller</a></li>
 <li class="toctree-l2"><a class="reference internal" href="receiver.html"><code class="docutils literal"><span class="pre">receiver</span></code> &#8211; Receiver</a></li>
 <li class="toctree-l2"><a class="reference internal" href="router.html"><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sender.html"><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href=""><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="exceptions.html"><code class="docutils literal"><span class="pre">exceptions</span></code> &#8211; Exceptions</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="utils/classes.html"><code class="docutils literal"><span class="pre">classes</span></code> &#8211; Utility Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="utils/messages.html"><code class="docutils literal"><span class="pre">messages</span></code> &#8211; Message Utilities</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to EventMQ</a></li>
@@ -143,26 +148,16 @@
 <h1><code class="xref py py-mod docutils literal"><span class="pre">utils</span></code> &#8211; Utilities<a class="headerlink" href="#utils-utilities" title="Permalink to this headline">¶</a></h1>
 <p>This module contains a handful of utility classes to make dealing with things
 like creating message more simple.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="utils/classes.html"><code class="docutils literal"><span class="pre">classes</span></code> &#8211; Utility Classes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils/messages.html"><code class="docutils literal"><span class="pre">messages</span></code> &#8211; Message Utilities</a></li>
+</ul>
+</div>
 <dl class="function">
-<dt id="eventmq.utils.generate_msgid">
-<code class="descclassname">eventmq.utils.</code><code class="descname">generate_msgid</code><span class="sig-paren">(</span><em>prefix=''</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.generate_msgid" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns a (universally) unique id to be used for messages</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="eventmq.utils.parse_message">
-<code class="descclassname">eventmq.utils.</code><code class="descname">parse_message</code><span class="sig-paren">(</span><em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.parse_message" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parses the generic format of an eMQP/1.0 message and returns the
-parts.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>message</strong> &#8211; the message you wish to have parsed</td>
-</tr>
-</tbody>
-</table>
-<p>Returns (tuple) (sender_id, command, message_id, (message_body, and_data))</p>
+<dt id="eventmq.utils.random_characters">
+<code class="descclassname">eventmq.utils.</code><code class="descname">random_characters</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.random_characters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns some random characters of a specified length</p>
 </dd></dl>
 
 </div>
@@ -174,7 +169,7 @@ parts.</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="exceptions.html" class="btn btn-neutral float-right" title="exceptions – Exceptions" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="utils/classes.html" class="btn btn-neutral float-right" title="classes – Utility Classes" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="sender.html" class="btn btn-neutral" title="sender – Sender" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>

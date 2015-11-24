@@ -142,6 +142,7 @@
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
+ | <a href="#U"><strong>U</strong></a>
  | <a href="#Z"><strong>Z</strong></a>
  
 </div>
@@ -153,6 +154,10 @@
   </dt>
 
       <dd><dl>
+        
+  <dt><a href="poller.html#eventmq.poller.Poller.__init__">(eventmq.poller.Poller method)</a>
+  </dt>
+
         
   <dt><a href="receiver.html#eventmq.receiver.Receiver.__init__">(eventmq.receiver.Receiver method)</a>
   </dt>
@@ -170,15 +175,15 @@
 
       <dd><dl>
         
-  <dt><a href="receiver.html#eventmq.receiver.Receiver.__weakref__">(eventmq.receiver.Receiver attribute)</a>
-  </dt>
-
-        
   <dt><a href="router.html#eventmq.router.Router.__weakref__">(eventmq.router.Router attribute)</a>
   </dt>
 
         
-  <dt><a href="sender.html#eventmq.sender.Sender.__weakref__">(eventmq.sender.Sender attribute)</a>
+  <dt><a href="utils/classes.html#eventmq.utils.classes.ZMQReceiveMixin.__weakref__">(eventmq.utils.classes.ZMQReceiveMixin attribute)</a>
+  </dt>
+
+        
+  <dt><a href="utils/classes.html#eventmq.utils.classes.ZMQSendMixin.__weakref__">(eventmq.utils.classes.ZMQSendMixin attribute)</a>
   </dt>
 
       </dl></dd>
@@ -213,6 +218,10 @@
   </dt>
 
       
+  <dt><a href="poller.html#module-eventmq.poller">eventmq.poller (module)</a>
+  </dt>
+
+      
   <dt><a href="receiver.html#module-eventmq.receiver">eventmq.receiver (module)</a>
   </dt>
 
@@ -231,6 +240,14 @@
   </dt>
 
       
+  <dt><a href="utils/classes.html#module-eventmq.utils.classes">eventmq.utils.classes (module)</a>
+  </dt>
+
+      
+  <dt><a href="utils/messages.html#module-eventmq.utils.messages">eventmq.utils.messages (module)</a>
+  </dt>
+
+      
   <dt><a href="exceptions.html#eventmq.exceptions.EventMQError">EventMQError</a>
   </dt>
 
@@ -241,7 +258,7 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="utils.html#eventmq.utils.generate_msgid">generate_msgid() (in module eventmq.utils)</a>
+  <dt><a href="utils/messages.html#eventmq.utils.messages.generate_msgid">generate_msgid() (in module eventmq.utils.messages)</a>
   </dt>
 
   </dl></td>
@@ -313,15 +330,19 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="router.html#eventmq.router.Router.on_inform">on_inform() (eventmq.router.Router method)</a>
+  <dt><a href="jobmanager.html#eventmq.jobmanager.JobManager.on_ack">on_ack() (eventmq.jobmanager.JobManager method)</a>
   </dt>
 
       
-  <dt><a href="router.html#eventmq.router.Router.on_receive_reply">on_receive_reply() (eventmq.router.Router method)</a>
+  <dt><a href="router.html#eventmq.router.Router.on_inform">on_inform() (eventmq.router.Router method)</a>
   </dt>
 
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="router.html#eventmq.router.Router.on_receive_reply">on_receive_reply() (eventmq.router.Router method)</a>
+  </dt>
+
       
   <dt><a href="router.html#eventmq.router.Router.on_receive_request">on_receive_request() (eventmq.router.Router method)</a>
   </dt>
@@ -333,7 +354,25 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="utils.html#eventmq.utils.parse_message">parse_message() (in module eventmq.utils)</a>
+  <dt><a href="utils/messages.html#eventmq.utils.messages.parse_message">parse_message() (in module eventmq.utils.messages)</a>
+  </dt>
+
+      
+  <dt><a href="utils/messages.html#eventmq.utils.messages.parse_router_message">parse_router_message() (in module eventmq.utils.messages)</a>
+  </dt>
+
+      
+  <dt><a href="poller.html#eventmq.poller.Poller.poll">poll() (eventmq.poller.Poller method)</a>
+  </dt>
+
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="poller.html#eventmq.poller.Poller">Poller (class in eventmq.poller)</a>
+  </dt>
+
+      
+  <dt><a href="jobmanager.html#eventmq.jobmanager.JobManager.process_message">process_message() (eventmq.jobmanager.JobManager method)</a>
   </dt>
 
   </dl></td>
@@ -342,6 +381,10 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="utils.html#eventmq.utils.random_characters">random_characters() (in module eventmq.utils)</a>
+  </dt>
+
       
   <dt><a href="receiver.html#eventmq.receiver.Receiver.ready">ready (eventmq.receiver.Receiver attribute)</a>
   </dt>
@@ -357,13 +400,17 @@
   </dt>
 
       
-  <dt><a href="sender.html#eventmq.sender.Sender.recv">recv() (eventmq.sender.Sender method)</a>
+  <dt><a href="utils/classes.html#eventmq.utils.classes.ZMQReceiveMixin.recv">recv() (eventmq.utils.classes.ZMQReceiveMixin method)</a>
   </dt>
 
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="sender.html#eventmq.sender.Sender.recv_multipart">recv_multipart() (eventmq.sender.Sender method)</a>
+  <dt><a href="utils/classes.html#eventmq.utils.classes.ZMQReceiveMixin.recv_multipart">recv_multipart() (eventmq.utils.classes.ZMQReceiveMixin method)</a>
+  </dt>
+
+      
+  <dt><a href="poller.html#eventmq.poller.Poller.register">register() (eventmq.poller.Poller method)</a>
   </dt>
 
       
@@ -377,21 +424,29 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="sender.html#eventmq.sender.Sender.send">send() (eventmq.sender.Sender method)</a>
+  <dt><a href="utils/classes.html#eventmq.utils.classes.ZMQSendMixin.send">send() (eventmq.utils.classes.ZMQSendMixin method)</a>
   </dt>
 
       
-  <dt><a href="jobmanager.html#eventmq.jobmanager.JobManager.send_inform">send_inform() (eventmq.jobmanager.JobManager method)</a>
+  <dt><a href="router.html#eventmq.router.Router.send_ack">send_ack() (eventmq.router.Router method)</a>
   </dt>
 
       
-  <dt><a href="jobmanager.html#eventmq.jobmanager.JobManager.send_message">send_message() (eventmq.jobmanager.JobManager method)</a>
+  <dt><a href="utils/messages.html#eventmq.utils.messages.send_emqp_message">send_emqp_message() (in module eventmq.utils.messages)</a>
+  </dt>
+
+      
+  <dt><a href="utils/messages.html#eventmq.utils.messages.send_emqp_router_message">send_emqp_router_message() (in module eventmq.utils.messages)</a>
   </dt>
 
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="sender.html#eventmq.sender.Sender.send_multipart">send_multipart() (eventmq.sender.Sender method)</a>
+  <dt><a href="jobmanager.html#eventmq.jobmanager.JobManager.send_inform">send_inform() (eventmq.jobmanager.JobManager method)</a>
+  </dt>
+
+      
+  <dt><a href="utils/classes.html#eventmq.utils.classes.ZMQSendMixin.send_multipart">send_multipart() (eventmq.utils.classes.ZMQSendMixin method)</a>
   </dt>
 
       
@@ -411,6 +466,16 @@
   </dl></td>
 </tr></table>
 
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="poller.html#eventmq.poller.Poller.unregister">unregister() (eventmq.poller.Poller method)</a>
+  </dt>
+
+  </dl></td>
+</tr></table>
+
 <h2 id="Z">Z</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
@@ -418,8 +483,22 @@
   <dt><a href="receiver.html#eventmq.receiver.Receiver.zcontext">zcontext (eventmq.receiver.Receiver attribute)</a>
   </dt>
 
+      <dd><dl>
+        
+  <dt><a href="sender.html#eventmq.sender.Sender.zcontext">(eventmq.sender.Sender attribute)</a>
+  </dt>
+
+      </dl></dd>
+      
+  <dt><a href="utils/classes.html#eventmq.utils.classes.ZMQReceiveMixin">ZMQReceiveMixin (class in eventmq.utils.classes)</a>
+  </dt>
+
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="utils/classes.html#eventmq.utils.classes.ZMQSendMixin">ZMQSendMixin (class in eventmq.utils.classes)</a>
+  </dt>
+
       
   <dt><a href="receiver.html#eventmq.receiver.Receiver.zsocket">zsocket (eventmq.receiver.Receiver attribute)</a>
   </dt>

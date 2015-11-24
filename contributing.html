@@ -135,6 +135,12 @@
             
   <div class="section" id="contributing-to-eventmq">
 <h1>Contributing to EventMQ<a class="headerlink" href="#contributing-to-eventmq" title="Permalink to this headline">¶</a></h1>
+<p>A few tips when working on the code</p>
+<blockquote>
+<div><ul class="simple">
+<li>Use relative imports. If you use absolute imports then when you <cite>import eventmq.exceptions</cite> it&#8217;s possible that you receive in return a different version of eventmq. exceptions installed somewhere else on the system.</li>
+</ul>
+</div></blockquote>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="protocol.html">EventMQ Protocol Specification</a></li>

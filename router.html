@@ -84,12 +84,13 @@
             
                 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="exceptions.html"><code class="docutils literal"><span class="pre">exceptions</span></code> &#8211; Exceptions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="jobmanager.html"><code class="docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="poller.html"><code class="docutils literal"><span class="pre">poller</span></code> &#8211; Poller</a></li>
 <li class="toctree-l2"><a class="reference internal" href="receiver.html"><code class="docutils literal"><span class="pre">receiver</span></code> &#8211; Receiver</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href=""><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sender.html"><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils.html"><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</a></li>
-<li class="toctree-l2"><a class="reference internal" href="exceptions.html"><code class="docutils literal"><span class="pre">exceptions</span></code> &#8211; Exceptions</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to EventMQ</a></li>
@@ -155,8 +156,8 @@
 
 <dl class="method">
 <dt id="eventmq.router.Router.on_inform">
-<code class="descname">on_inform</code><span class="sig-paren">(</span><em>sender</em>, <em>msg_id</em>, <em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.on_inform" title="Permalink to this definition">¶</a></dt>
-<dd><p>Handles a new worker coming online</p>
+<code class="descname">on_inform</code><span class="sig-paren">(</span><em>sender</em>, <em>msgid</em>, <em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.on_inform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles an INFORM message. Usually when new worker coming online</p>
 </dd></dl>
 
 <dl class="method">
@@ -177,6 +178,12 @@ is created.</p>
 <dd><p>This function is called when a message comes in from the client socket.
 It then calls <cite>on_command</cite>. If <cite>on_command</cite> isn&#8217;t found, then a
 warning is created.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.router.Router.send_ack">
+<code class="descname">send_ack</code><span class="sig-paren">(</span><em>socket</em>, <em>recipient</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.send_ack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sends an ACK response</p>
 </dd></dl>
 
 <dl class="method">

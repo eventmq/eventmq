@@ -32,8 +32,8 @@
   
     <link rel="top" title="EventMQ 0 documentation" href="index.html"/>
         <link rel="up" title="API Documentation" href="api.html"/>
-        <link rel="next" title="receiver – Receiver" href="receiver.html"/>
-        <link rel="prev" title="API Documentation" href="api.html"/> 
+        <link rel="next" title="poller – Poller" href="poller.html"/>
+        <link rel="prev" title="exceptions – Exceptions" href="exceptions.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -84,7 +84,9 @@
             
                 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="exceptions.html"><code class="docutils literal"><span class="pre">exceptions</span></code> &#8211; Exceptions</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href=""><code class="docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="poller.html"><code class="docutils literal"><span class="pre">poller</span></code> &#8211; Poller</a></li>
 <li class="toctree-l2"><a class="reference internal" href="receiver.html"><code class="docutils literal"><span class="pre">receiver</span></code> &#8211; Receiver</a></li>
 <li class="toctree-l2"><a class="reference internal" href="router.html"><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sender.html"><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></li>
@@ -172,24 +174,27 @@ generated.</td>
 </dd></dl>
 
 <dl class="method">
+<dt id="eventmq.jobmanager.JobManager.on_ack">
+<code class="descname">on_ack</code><span class="sig-paren">(</span><em>msgid</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.on_ack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets <code class="xref py py-attr docutils literal"><span class="pre">awaiting_ack</span></code> to False</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.jobmanager.JobManager.process_message">
+<code class="descname">process_message</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.process_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Processes a message</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="eventmq.jobmanager.JobManager.send_inform">
 <code class="descname">send_inform</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.send_inform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Send an INFORM frame</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="eventmq.jobmanager.JobManager.send_message">
-<code class="descname">send_message</code><span class="sig-paren">(</span><em>command</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.send_message" title="Permalink to this definition">¶</a></dt>
-<dd><p>send a message to <cite>self.incoming</cite>
-:param message: a msg tuple to send</p>
-<p>Raises:</p>
-<p>Returns</p>
-</dd></dl>
-
-<dl class="method">
 <dt id="eventmq.jobmanager.JobManager.start">
 <code class="descname">start</code><span class="sig-paren">(</span><em>addr='tcp://127.0.0.1:47291'</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.start" title="Permalink to this definition">¶</a></dt>
-<dd><p>Begin listening for job requests</p>
+<dd><p>Connect to <cite>addr</cite> and begin listening for job requests</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -211,10 +216,10 @@ generated.</td>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="receiver.html" class="btn btn-neutral float-right" title="receiver – Receiver" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="poller.html" class="btn btn-neutral float-right" title="poller – Poller" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="api.html" class="btn btn-neutral" title="API Documentation" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="exceptions.html" class="btn btn-neutral" title="exceptions – Exceptions" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
