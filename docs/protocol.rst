@@ -46,9 +46,22 @@ From the 0MQ manual[[2](http://api.zeromq.org/master:zmq-socket)]
 
 This extra frame is not shown in the specifications below.
 
+Global Frames
+-------------
+An **ACK** command consists of a 4-frame multipart message, formatted as follows.
+
+====== ============== ===========
+FRAME  Value          Description
+====== ============== ===========
+0      _EMPTY_        leave empty
+1      eMQP/1.0       Protocol version
+2      ACK            command
+3      _MSGID_        A unique id for the msg
+====== ============== ===========
+
 eMQP / Client
 -------------
-A **REQUEST** command consists of 7-frame multipart message, formatted as follows. 
+A **REQUEST** command consists of a 7-frame multipart message, formatted as follows.
 
 ====== ============== ===========
 FRAME  Value          Description
@@ -58,6 +71,20 @@ FRAME  Value          Description
 2      READY          command
 3      _MSGID_        A unique id for the msg
 4      _QUEUE_NAME_   the name of the queue the worker belongs to
+5      _HEADERS_      dictionary of headers. can be an empty set
+6      _MSG_          The message to send
+====== ============== ===========
+
+A **PUBLISH** command consists of a 7-frame multipart messag, formatted as follows.
+
+====== ============== ===========
+FRAME  Value          Description
+====== ============== ===========
+0      _EMPTY_        leave empty
+1      eMQP/1.0       Protocol version
+2      PUBLISH        command
+3      _MSGID_        A unique id for the msg
+4      _TOPIC_NAME_   the name of the queue the worker belongs to
 5      _HEADERS_      dictionary of headers. can be an empty set
 6      _MSG_          The message to send
 ====== ============== ===========
@@ -128,3 +155,17 @@ Heartbeating
  * Both worker and broker MUST send heartbeats at regular and agreed-upon intervals.
  * If the worker detects that the broker disconnected it SHOULD restart the conversation.
  * If the broker detects that a worker has disconnected it should stop sending it a message of any type.
+
+Request Headers
+---------------
+Headers MUST be 0 to many comma seperated values inserted into the header field. If there are no headers requried, send an empty string MUST be sent where headers are required.
+
+Below is a table which defines and describes the headers.
+
+=============== ======= ======= ======= ===========
+Header          REQUEST PUBLISH Default Description
+=============== ======= ======= ======= ===========
+reply-requested X               False     Once the job is finished, send a reply back with information from the job. If there is no information reply with a True value.
+retry-count:#   X               0       Retry a failed job this many times before accepting defeat.
+guarantee       X               False     Ensure the job completes by letting someone else worry about a success reply.
+=============== ======= ======= ======= ===========

@@ -17,40 +17,18 @@
 =========================
 This module contains a handful of utility classes to make dealing with things
 like creating message more simple.
+
+.. toctree ::
+   :maxdepth: 2
+
+   utils/classes
+   utils/messages
 """
 import uuid
 
-from . import exceptions
-
-
-def generate_msgid():
+def random_characters():
     """
-    Returns a (universally) unique id to be used for messages
+    Returns some random characters of a specified length
     """
+    # TODO: Pull out the random_chars function from eb.io code
     return str(uuid.uuid4())
-
-
-def parse_message(message):
-    """
-    Parses the generic format of an eMQP/1.0 message and returns the
-    parts.
-
-    Args:
-        message: the message you wish to have parsed
-
-    Returns (tuple) (sender_id, command, message_id, (message_body, and_data))
-    """
-    try:
-        sender = message[0]
-        # noop = message[1]
-        # protocol_version = message[2]
-        command = message[3]
-        msgid = message[4]
-    except IndexError:
-        raise exceptions.InvalidMessageError('Invalid Message Encountered: %s'
-                                             % str(message))
-    if len(message) > 5:
-        msg = message[5:]
-    else:
-        msg = ()
-    return (sender, command, msgid, msg)

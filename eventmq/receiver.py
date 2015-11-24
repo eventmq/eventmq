@@ -22,13 +22,14 @@ import uuid
 import zmq
 from zmq.eventloop import zmqstream
 
-import eventmq
-import log
+from . import constants, log
+from .utils.classes import ZMQReceiveMixin, ZMQSendMixin
+
 
 logger = log.get_logger(__file__)
 
 
-class Receiver(object):
+class Receiver(ZMQReceiveMixin, ZMQSendMixin):
     """
     Receives messages and pass them to a on_recv.
 
@@ -72,6 +73,8 @@ class Receiver(object):
         self.zsocket.setsockopt(zmq.ROUTER_MANDATORY, 1)
 
         if not self.skip_zmqstream:
+            # To use the built in ioloop, we have to wrap the socket in this
+            # ZMQStream object
             if not callable(self.on_recv):
                 raise TypeError('Required argument "on_recv" is not actually '
                                 'callable')
@@ -80,7 +83,7 @@ class Receiver(object):
             self.zsocket = zmqstream.ZMQStream(self.zsocket)
             self.zsocket.on_recv(self.on_recv)
 
-        self.status = eventmq.STATUS.ready
+        self.status = constants.STATUS.ready
 
     def listen(self, addr=None):
         """
@@ -94,7 +97,7 @@ class Receiver(object):
         """
         if self.ready:
             self.zsocket.bind(addr)
-            self.status = eventmq.STATUS.listening
+            self.status = constants.STATUS.listening
             logger.info('Receiver %s: Listening on %s' % (self.name, addr))
         else:
             raise Exception('Receiver %s not ready. status=%s' %
@@ -112,8 +115,8 @@ class Receiver(object):
         """
         if self.ready:
             self.zsocket.connect(addr)
-            self.status = eventmq.STATUS.connected
-            logger.info('Receiver %s: Connected to %s' % (self.name, addr))
+            self.status = constants.STATUS.connected
+            logger.debug('Receiver %s: Connected to %s' % (self.name, addr))
         else:
             raise Exception('Receiver %s not ready. status=%s' %
                             (self.name, self.status))
@@ -127,4 +130,4 @@ class Receiver(object):
             bool: True if the receiver is ready to connect or listen, otherwise
                 False
         """
-        return self.status == eventmq.STATUS.ready
+        return self.status == constants.STATUS.ready

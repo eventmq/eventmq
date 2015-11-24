@@ -8,7 +8,9 @@ import zmq.log.handlers
 
 
 FORMAT_STANDARD = logging.Formatter(
-    '%(asctime)s - %(name)s  %(levelname)s - "%(message)s')
+    '%(asctime)s - %(name)s  %(levelname)s - %(message)s')
+FORMAT_NAMELESS = logging.Formatter(
+    '%(asctime)s - %(levelname)s - %(message)s')
 
 
 class PUBHandler(zmq.log.handlers.PUBHandler):
@@ -28,10 +30,12 @@ class handlers(object):
     STREAM_HANDLER = logging.StreamHandler
 
 
-def get_logger(name, formatter=FORMAT_STANDARD,
+def get_logger(name, formatter=FORMAT_NAMELESS,
                handler=handlers.STREAM_HANDLER):
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
+    for h in logger.handlers:
+        logger.removeHandler(h)
 
     if handler == handlers.PUBLISH_HANDLER:
         _handler_sock = zmq.Context.instance().socket(zmq.PUB)

@@ -17,14 +17,17 @@
 ================================
 Ensures things about jobs and spawns the actual tasks
 """
+from time import sleep
 import uuid
 
-from zmq.eventloop import ioloop
-
 from . import constants
+from . import exceptions
 from . import log
 from . import utils
+from .poller import Poller, POLLIN
 from .sender import Sender
+from .utils.messages import send_emqp_message as sendmsg
+import utils.messages
 
 logger = log.get_logger(__file__)
 
@@ -46,24 +49,64 @@ class JobManager(object):
             name (str): unique name of this instance. By default a uuid will be
                  generated.
         """
-        ioloop.install()
         self.name = kwargs.get('name', str(uuid.uuid4()))
         self.incoming = Sender()
+        self.poller = Poller()
+
+        # Alert us of both incoming and outgoing events
+        self.poller.register(self.incoming, POLLIN)
 
         self.status = constants.STATUS.ready
 
+        # Are we waiting for an acknowledgment for something?
+        self.awaiting_ack = False
+
     def start(self, addr='tcp://127.0.0.1:47291'):
         """
-        Begin listening for job requests
+        Connect to `addr` and begin listening for job requests
 
         Args:
             args (str): connection string to connect to
         """
+        self.status = constants.STATUS.connecting
         self.incoming.connect(addr)
-        self.status = constants.STATUS.listening
 
+        self.awaiting_ack = True
+
+        #while self.awaiting_ack:
         self.send_inform()
-        ioloop.IOLoop.instance().start()
+        #    sleep(5)
+
+        self.status = constants.STATUS.connected
+
+        while True:
+            events = self.poller.poll(1000)
+
+            if events.get(self.incoming) == POLLIN:
+                msg = self.incoming.recv_multipart()
+                self.process_message(msg)
+
+    def process_message(self, msg):
+        """
+        Processes a message
+        """
+        try:
+            message = utils.messages.parse_message(msg)
+        except exceptions.InvalidMessageError:
+            logger.error('Invalid message: %s' % str(msg))
+            return
+
+        command = message[0]
+        msgid = message[1]
+        message = message[2]
+
+        if hasattr(self, "on_%s" % command.lower()):
+            logger.debug('Calling on_%s' % command.lower())
+            func = getattr(self, "on_%s" % command.lower())
+            func(msgid, message)
+        else:
+            logger.warning('No handler for %s found (tried: %s)' %
+                           (command, ('on_%s' % command.lower)))
 
     def process_job(self, msg):
         pass
@@ -71,30 +114,15 @@ class JobManager(object):
     def sync(self):
         pass
 
-    def send_message(self, command, message):
-        """
-        send a message to `self.incoming`
-        Args:
-            message: a msg tuple to send
-        Raises:
-
-        Returns
-        """
-        msg = (str(command).upper(), utils.generate_msgid())
-        if isinstance(message, (tuple, list)):
-            msg += message
-        else:
-            msg += (message,)
-
-        logger.debug('Sending message: %s' % str(msg))
-        self.incoming.send_multipart(msg, constants.PROTOCOL_VERSION)
-
     def send_inform(self):
         """
         Send an INFORM frame
         """
-        self.send_message('INFORM', 'default_queuename')
+        sendmsg(self.incoming, 'INFORM', 'default_queuename')
 
-
-    def respond(self):
-        pass
+    def on_ack(self, msgid, message):
+        """
+        Sets :attr:`awaiting_ack` to False
+        """
+        logger.info('Recieved ACK')
+        self.awaiting_ack = False

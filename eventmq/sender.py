@@ -25,11 +25,12 @@ from zmq.eventloop import zmqstream
 from . import constants
 from . import exceptions
 from . import log
+from .utils.classes import ZMQReceiveMixin, ZMQSendMixin
 
 logger = log.get_logger(__file__)
 
 
-class Sender(object):
+class Sender(ZMQSendMixin, ZMQReceiveMixin):
     """
     Sends messages to a particular socket
 
@@ -39,7 +40,7 @@ class Sender(object):
 
     Attributes:
         name (str): Name of this socket
-        zcontext (:class`zmq.Context`): socket context
+        zcontext (:class:`zmq.Context`): socket context
         zsocket (:class:`zmq.Socket`): socket wrapped up in a
             :class:`zmqstream.ZMQStream`
     """
@@ -67,7 +68,7 @@ class Sender(object):
         self.zsocket.setsockopt(zmq.IDENTITY, self.name)
 
         if not kwargs.get('skip_zmqstream', True):
-            logger.debug('Using ZMQStream')
+            logger.info('Using ZMQStream')
             self.zsocket = zmqstream.ZMQStream(self.zsocket)
             self.zsocket.on_recv(kwargs.get('on_recv'))
 
@@ -86,10 +87,10 @@ class Sender(object):
         if self.ready:
             self.zsocket.bind(addr)
             self.status = constants.STATUS.listening
-            logger.info('Receiver %s: Listening on %s' % (self.name, addr))
+            logger.info('Listening on %s' % (addr))
         else:
-            raise exceptions.EventMQError('Receiver %s not ready. status=%s' %
-                                          (self.name, self.status))
+            raise exceptions.EventMQError('Not ready. status=%s' %
+                                          (self.status))
 
     def connect(self, addr=None):
         """
@@ -104,10 +105,10 @@ class Sender(object):
         if self.ready:
             self.zsocket.connect(addr)
             self.status = constants.STATUS.connected
-            logger.info('Receiver %s: Connected to %s' % (self.name, addr))
+            logger.debug('Connecting to %s' % (addr))
         else:
-            raise exceptions.EventMQError('Receiver %s not ready. status=%s' %
-                                          (self.name, self.status))
+            raise exceptions.EventMQError('Not ready. status=%s' %
+                                          (self.status))
 
     @property
     def ready(self):
@@ -119,55 +120,3 @@ class Sender(object):
                 False
         """
         return self.status == constants.STATUS.ready
-
-    def send_multipart(self, message, protocol_version):
-        """
-        Send a message directly to the 0mq socket. Automatically inserts some
-        frames for your convience. The sent frame ends up looking something
-        like identity
-
-            (this, '', protocol_version) + (your, tuple)
-
-        Args:
-            message (tuple): Raw message to send.
-            protocol_version (str): protocol version. it's good practice but
-                you may explicitly specify None to skip adding the version
-        """
-        supported_msg_types = (tuple, list)
-        if not isinstance(message, supported_msg_types):
-            raise exceptions.MessageError(
-                '%s message type not one of %s' %
-                (type(message), str(supported_msg_types)))
-
-        if isinstance(message, list):
-            message = tuple(message)
-
-        headers = ('', protocol_version, )
-
-        message = headers + message
-        print message
-        self.zsocket.send_multipart(message)
-
-    def send(self, message, protocol_version):
-        """
-        Sends a message
-
-        Args:
-            message: message to send to something
-            protocol_version (str): protocol version. it's good practice, but
-                you may explicitly specify None to skip adding the version
-        """
-        logger.debug('Sending message: %s' % str(message))
-        self.send_multipart((message, ), protocol_version)
-
-    def recv(self):
-        """
-        Receive a message
-        """
-        return self.zsocket.recv()
-
-    def recv_multipart(self):
-        """
-        Receive a multipart message
-        """
-        return self.zsocket.recv_multipart

@@ -22,9 +22,11 @@ import uuid
 from zmq.eventloop import ioloop
 
 from .constants import STATUS
-from . import log
-from . import receiver
-from . import utils
+from . import exceptions, log, receiver, utils
+from .utils.messages import (
+    send_emqp_router_message as sendmsg,
+    parse_router_message
+)
 
 logger = log.get_logger(__file__)
 
@@ -48,6 +50,7 @@ class Router(object):
 
         self.status = STATUS.ready
         logger.info('Done initializing Router %s' % self.name)
+        self.queues = {}
 
     def start(self,
               frontend_addr='tcp://127.0.0.1:47290',
@@ -70,21 +73,67 @@ class Router(object):
 
         ioloop.IOLoop.instance().start()
 
+    def send_ack(self, socket, recipient):
+        """
+        Sends an ACK response
+        """
+        logger.info('Sending ACK to %s' % recipient)
+        sendmsg(socket, recipient, 'ACK')
+
+    def on_inform(self, sender, msgid, msg):
+        """
+        Handles an INFORM message. Usually when new worker coming online
+        """
+        logger.info('Received INFORM request from %s')
+        queue_name = msg[0]
+
+        if queue_name in self.queues:
+            self.queues[queue_name] += (sender,)
+        else:
+            self.queues[queue_name] = (sender,)
+
+        self.send_ack(self.outgoing, sender)
+
     def on_receive_request(self, msg):
         """
         This function is called when a message comes in from the client socket.
         It then calls `on_command`. If `on_command` isn't found, then a
         warning is created.
         """
-        logger.info(str(utils.parse_message(msg)))
+        try:
+            message = parse_router_message(msg)
+        except exceptions.InvalidMessageError:
+            logger.exception('Invalid message from clients: %s' % str(msg))
+
+        queue_name = message[3][0]
 
         # do some things and forward it to the workers
         self.outgoing.send_multipart(msg)
+
+        # If we have no workers for the queue TODO something about it
+        if queue_name not in self.queues:
+            logger.warning("Received REQUEST with a queue I don't recognize")
 
     def on_receive_reply(self, msg):
         """
         This method is called when a message comes in from the worker socket.
         It then calls `on_command`. If `on_command` isn't found, then a warning
         is created.
+
+        def on_inform(msg):
+            pass
         """
-        logger.info(str(utils.parse_message(msg)))
+        try:
+            message = parse_router_message(msg)
+        except exceptions.InvalidMessageError:
+            logger.exception('Invalid message from workers: %s' % str(msg))
+            return
+
+        sender = message[0]
+        command = message[1]
+        msgid = message[2]
+        message = message[3]
+
+        if hasattr(self, "on_%s" % command.lower()):
+            func = getattr(self, "on_%s" % command.lower())
+            func(sender, msgid, message)
