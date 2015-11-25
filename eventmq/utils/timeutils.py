@@ -13,24 +13,23 @@
 # You should have received a copy of the GNU General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
 """
-:mod:`utils` -- Utilities
-=========================
-This module contains a handful of utility classes to make dealing with things
-like creating message more simple.
-
-.. toctree ::
-   :maxdepth: 2
-
-   utils/classes
-   utils/messages
-   utils/timeutils
+:mod:`timeutils` -- Time Utilites
+=================================
 """
-import uuid
+try:
+    from time import monotonic  as _monotonic  # Python3
+except ImportError:
+    from monotonic import monotonic as _monotonic
+from time import time as _time
 
 
-def random_characters():
+def timestamp():
     """
-    Returns some random characters of a specified length
     """
-    # TODO: Pull out the random_chars function from eb.io code
-    return str(uuid.uuid4())
+    return _time()
+
+
+def monotonic():
+    """
+    """
+    return _monotonic()

@@ -18,10 +18,73 @@
 Defines some classes to use when implementing ZMQ devices
 """
 
-from .. import exceptions
-from .. import log
+from .. import conf, exceptions, log
+from ..utils.messages import send_emqp_message as sendmsg
+from ..utils.timeutils import monotonic, timestamp
 
 logger = log.get_logger(__file__)
+
+
+class HeartbeatMixin(object):
+    """
+    Provides methods for implementing heartbeats
+    """
+    def __init__(self, *args, **kwargs):
+        """
+        Sets up some variables to track the state of heartbeaty things
+        """
+        if not hasattr(self, '_meta'):
+            self._meta = {}
+
+        self.reset_heartbeat_counters()
+
+    def reset_heartbeat_counters(self):
+        """
+        Resets all the counters for heartbeats back to 0
+        """
+        # the monotonic clock is used for the interval values like
+        # 'last_sent_heartbeat'
+        self._meta['last_sent_heartbeat'] = 0
+        self._meta['last_received_heartbeat'] = 0
+        self._meta['heartbeat_miss_count'] = 0
+
+    def send_heartbeat(self, socket):
+        """
+        Send a HEARTBEAT command to the specified socket
+
+        Args:
+            socket (socket): The eMQP socket to send the message to
+        """
+        # Note: When updating this function, also make sure the custom versions
+        # acts as expected in router.py
+        sendmsg(socket, 'HEARTBEAT', str(timestamp()))
+        self._meta['last_sent_heartbeat'] = monotonic()
+
+    def is_dead(self, now=None):
+        """
+        Checks the counters for the heartbeats to find out if the thresholds
+        have been met.
+
+        Args:
+            now (float): The time to use to check if death has occurred. If
+            this value is None, then :func:`utils.timeutils.monotonic` is used.
+
+        Returns (bool) True if the connection to the peer has died, otherwise
+            False
+        """
+        if not now:
+            now = monotonic()
+
+        if now - self._meta['last_received_heartbeat'] >= \
+           conf.HEARTBEAT_TIMEOUT:
+            self._meta['heartbeat_miss_count'] += 1
+            self._meta['last_received_heartbeat'] = now
+
+            if self._meta['heartbeat_miss_count'] >= \
+               conf.HEARTBEAT_LIVENESS:
+                return True
+
+        return False
 
 
 class ZMQReceiveMixin(object):

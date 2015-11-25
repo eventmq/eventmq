@@ -22,6 +22,7 @@ import uuid
 from . import conf, constants, exceptions, log, utils
 from .poller import Poller, POLLIN
 from .sender import Sender
+from .utils.classes import HeartbeatMixin
 from .utils.messages import send_emqp_message as sendmsg
 import utils.messages
 from .utils.timeutils import monotonic, timestamp
@@ -29,7 +30,7 @@ from .utils.timeutils import monotonic, timestamp
 logger = log.get_logger(__file__)
 
 
-class JobManager(object):
+class JobManager(HeartbeatMixin):
     """
     The exposed portion of the worker. The job manager's main responsibility is
     to manage the resources on the server it's running.
@@ -46,7 +47,10 @@ class JobManager(object):
             name (str): unique name of this instance. By default a uuid will be
                  generated.
         """
+        super(JobManager, self).__init__(*args, **kwargs)
+        print self._meta
         self.name = kwargs.get('name', str(uuid.uuid4()))
+        logger.info('Initializing JobManager %s...' % self.name)
         self.incoming = Sender()
         self.poller = Poller()
 
@@ -60,13 +64,6 @@ class JobManager(object):
         self.poller.register(self.incoming, POLLIN)
         self.awaiting_startup_ack = False
 
-        # Meta data such as times, and counters are stored here
-        self._meta = {
-            'last_sent_heartbeat': 0,
-            'last_received_heartbeat': 0,
-            'heartbeat_miss_count': 0,
-        }
-
         self.status = constants.STATUS.ready
 
     def start(self, addr='tcp://127.0.0.1:47291'):
@@ -76,30 +73,36 @@ class JobManager(object):
         Args:
             addr (str): connection string to connect to
         """
-        self.status = constants.STATUS.connecting
-        self.incoming.connect(addr)
+        while True:
+            self.status = constants.STATUS.connecting
+            self.incoming.connect(addr)
 
-        self.awaiting_startup_ack = True
+            self.awaiting_startup_ack = True
 
-        while self.awaiting_startup_ack:
-            self.send_inform()
-            # Poller timeout is in ms so we multiply it to get seconds
-            events = self.poller.poll(conf.RECONNECT_TIMEOUT * 1000)
-            if self.incoming in events:
-                msg = self.incoming.recv_multipart()
-                # We don't want to accidentally start processing jobs before
-                # our conenction has been setup completely and acknowledged.
-                if msg[2] != "ACK":
-                    continue
-                self.process_message(msg)
+            while self.awaiting_startup_ack:
+                self.send_inform()
+                # Poller timeout is in ms so we multiply it to get seconds
+                events = self.poller.poll(conf.RECONNECT_TIMEOUT * 1000)
+                if self.incoming in events:
+                    msg = self.incoming.recv_multipart()
+                    # We don't want to accidentally start processing jobs before
+                    # our conenction has been setup completely and acknowledged.
+                    if msg[2] != "ACK":
+                        # TODO This will silently drop messages that aren't ACK
+                        continue
+                    self.process_message(msg)
 
-        if not self.awaiting_startup_ack:
-            logger.info('Starting to listen for jobs')
-            self._start_event_loop()
+            if not self.awaiting_startup_ack:
+                logger.info('Starting to listen for jobs')
+                self.status = constants.STATUS.connected
+                self._start_event_loop()
+                # When we return, soemthing has gone wrong and we should try to
+                # reconnect
+                self.reset()
 
-    def restart(self):
+    def reset(self):
         """
-        Restarts the current connection by closing and reopening the socket
+        Resets the current connection by closing and reopening the socket
         """
         # Unregister the old socket from the poller
         self.poller.unregister(self.incoming)
@@ -110,14 +113,10 @@ class JobManager(object):
         # Prepare the device to connect again
         self._setup()
 
-        self.start()
-
     def _start_event_loop(self):
         """
         Starts the actual eventloop. Usually called by :meth:`JobManager.start`
         """
-        self.status = constants.STATUS.connected
-
         while True:
             now = monotonic()
             events = self.poller.poll()
@@ -129,25 +128,16 @@ class JobManager(object):
             if not conf.DISABLE_HEARTBEATS:
                 # Send a HEARTBEAT if necessary
                 if now - self._meta['last_sent_heartbeat'] >= \
-                conf.HEARTBEAT_INTERVAL:
-                    if conf.SUPER_DEBUG:
-                        logger.debug(now - self._meta['last_sent_heartbeat'])
-                    self.send_heartbeat()
+                   conf.HEARTBEAT_INTERVAL:
+                    self.send_heartbeat(self.incoming)
 
-                # Do something about any missed HEARTBEAT
-                if now - self._meta['last_received_heartbeat'] >= \
-                conf.HEARTBEAT_TIMEOUT:
-                    # Update as if we got the last heartbeat so we can check in
-                    # interval again
-                    self._meta['heartbeat_miss_count'] += 1
-                    self._meta['last_received_heartbeat'] = monotonic()
-                    if self._meta['heartbeat_miss_count'] >= \
-                    conf.HEARTBEAT_LIVENESS:
-                        logger.critical(
-                            'The broker appears to have gone away. '
-                            'Reconnecting...')
-                        break
-        self.restart()
+                # Do something about any missed HEARTBEAT, if we have nothing
+                # waiting on the socket
+                if self.is_dead() and not events:
+                    logger.critical(
+                        'The broker appears to have gone away. '
+                        'Reconnecting...')
+                    break
 
     def process_message(self, msg):
         """
@@ -181,19 +171,13 @@ class JobManager(object):
             func(msgid, message)
         else:
             logger.warning('No handler for %s found (tried: %s)' %
-                           (command, ('on_%s' % command.lower)))
+                           (command, ('on_%s' % command.lower())))
 
     def send_inform(self):
         """
         Send an INFORM command
         """
         sendmsg(self.incoming, 'INFORM', 'default_queuename')
-
-    def send_heartbeat(self):
-        """
-        Send a HEARTBEAT command to the connected broker
-        """
-        sendmsg(self.incoming, 'HEARTBEAT', str(timestamp()))
         self._meta['last_sent_heartbeat'] = monotonic()
 
     def on_ack(self, msgid, ackd_msgid):
@@ -204,3 +188,7 @@ class JobManager(object):
         ackd_msgid = ackd_msgid[0]
         logger.info('Received ACK for %s' % ackd_msgid)
         self.awaiting_startup_ack = False
+
+    def on_heartbeat(self, msgid, message):
+        """
+        """

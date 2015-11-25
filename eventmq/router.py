@@ -18,21 +18,21 @@
 Routes messages to workers (that are in named queues).
 """
 import uuid
-from zmq.eventloop import ioloop
 
+from . import conf, exceptions, log, poller, receiver
 from .constants import STATUS
-from . import exceptions, log, receiver
+from .utils.classes import HeartbeatMixin
 from .utils.messages import (
     send_emqp_router_message as sendmsg,
     parse_router_message
 )
-from .utils.timeutils import monotonic
+from .utils.timeutils import monotonic, timestamp
 
 
 logger = log.get_logger(__file__)
 
 
-class Router(object):
+class Router(HeartbeatMixin):
     """
     A simple router of messages
 
@@ -40,18 +40,25 @@ class Router(object):
     """
 
     def __init__(self, *args, **kwargs):
-        ioloop.install()
+        super(Router, self).__init__(*args, **kwargs)
+
         self.name = str(uuid.uuid4())
         logger.info('Initializing Router %s...' % self.name)
 
-        self.incoming = receiver.Receiver(on_recv=self.on_receive_request,
-                                          skip_zmqstream=False)
-        self.outgoing = receiver.Receiver(skip_zmqstream=False,
-                                          on_recv=self.on_receive_reply)
+        self.poller = poller.Poller()
+
+        self.incoming = receiver.Receiver()
+        self.outgoing = receiver.Receiver()
+
+        self.poller.register(self.incoming, poller.POLLIN)
+        self.poller.register(self.outgoing, poller.POLLIN)
 
         self.status = STATUS.ready
-        logger.info('Done initializing Router %s' % self.name)
+
+        # List of workers by queue name
         self.queues = {}
+        # List of queues by workers
+        self.workers = {}
 
     def start(self,
               frontend_addr='tcp://127.0.0.1:47290',
@@ -72,7 +79,30 @@ class Router(object):
         logger.info('Listening for requests on %s' % frontend_addr)
         logger.info('Listening for workers on %s' % backend_addr)
 
-        ioloop.IOLoop.instance().start()
+        self._start_event_loop()
+
+    def _start_event_loop(self):
+        """
+        Starts the actual eventloop. Usually called by :meth:`Router.start`
+        """
+        while True:
+            now = monotonic()
+            events = self.poller.poll()
+
+            if events.get(self.incoming) == poller.POLLIN:
+                msg = self.incoming.recv_multipart()
+                self.on_receive_request(msg)
+
+            if events.get(self.outgoing) == poller.POLLIN:
+                msg = self.outgoing.recv_multipart()
+                self.on_receive_reply(msg)
+
+            if not conf.DISABLE_HEARTBEATS:
+                # Send a HEARTBEAT if necessary
+                if now - self._meta['last_sent_heartbeat'] >= \
+                   conf.HEARTBEAT_INTERVAL:
+                    self.send_workers_heartbeats()
+                    self._meta['last_sent_heartbeat'] = monotonic()
 
     def send_ack(self, socket, recipient, msgid):
         """
@@ -81,13 +111,32 @@ class Router(object):
         logger.info('Sending ACK to %s' % recipient)
         sendmsg(socket, recipient, 'ACK', msgid)
 
+    def send_heartbeat(self, socket, recipient):
+        """
+        Custom send heartbeat method to take into account the recipient that is
+        needed when building messages
+        """
+        sendmsg(socket, recipient, 'HEARTBEAT', str(timestamp()))
+
+    def send_workers_heartbeats(self):
+        """
+        Send heartbeats to the registered workers.
+        """
+        for k in self.workers:
+            self.send_heartbeat(self.outgoing, k)
+
+    def on_heartbeat(self, sender, msgid, msg):
+        """
+        """
+
     def on_inform(self, sender, msgid, msg):
         """
         Handles an INFORM message. Usually when new worker coming online
         """
-        logger.info('Received INFORM request from %s')
+        logger.info('Received INFORM request from %s' % sender)
         queue_name = msg[0]
 
+        self.workers[sender] = queue_name
         if queue_name in self.queues:
             self.queues[queue_name] += (sender,)
         else:

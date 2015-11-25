@@ -136,6 +136,7 @@ FRAME  Value          Description
 1      eMQP/1.0       Protocol version
 2      HEARTBEAT      command
 3      _MSGID_        A unique id for the msg
+4      _UNIX_TS_      A unix timestamp
 ====== ============== ===========
 
 A **DISCONNECT** frame consists of
