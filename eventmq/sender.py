@@ -20,11 +20,8 @@ The sender is responsible for sending messages
 import uuid
 
 import zmq
-from zmq.eventloop import zmqstream
 
-from . import constants
-from . import exceptions
-from . import log
+from . import constants, exceptions, log
 from .utils.classes import ZMQReceiveMixin, ZMQSendMixin
 
 logger = log.get_logger(__file__)
@@ -34,15 +31,10 @@ class Sender(ZMQSendMixin, ZMQReceiveMixin):
     """
     Sends messages to a particular socket
 
-    .. note::
-       Polling with this sender is currently only available via an eventloop
-       (:mod:`zmq.eventloop`)
-
     Attributes:
         name (str): Name of this socket
         zcontext (:class:`zmq.Context`): socket context
-        zsocket (:class:`zmq.Socket`): socket wrapped up in a
-            :class:`zmqstream.ZMQStream`
+        zsocket (:class:`zmq.Socket`):
     """
 
     def __init__(self, *args, **kwargs):
@@ -124,11 +116,6 @@ class Sender(ZMQSendMixin, ZMQReceiveMixin):
         self.name = kwargs.pop('name', str(uuid.uuid4()))
         self.zsocket = kwargs.pop('socket', self.zcontext.socket(zmq.DEALER))
         self.zsocket.setsockopt(zmq.IDENTITY, self.name)
-
-        if not kwargs.get('skip_zmqstream', True):
-            logger.info('Using ZMQStream')
-            self.zsocket = zmqstream.ZMQStream(self.zsocket)
-            self.zsocket.on_recv(kwargs.pop('on_recv'))
 
         self.status = constants.STATUS.ready
 

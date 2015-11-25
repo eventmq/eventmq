@@ -20,7 +20,6 @@ The receiver is responsible for receiveing messages
 import uuid
 
 import zmq
-from zmq.eventloop import zmqstream
 
 from . import constants, log
 from .utils.classes import ZMQReceiveMixin, ZMQSendMixin
@@ -33,17 +32,11 @@ class Receiver(ZMQReceiveMixin, ZMQSendMixin):
     """
     Receives messages and pass them to a on_recv.
 
-    .. note::
-       Polling with this reciever is currently only available via an eventloop
-       (:mod:`zmq.eventloop`).
-
     Attributes:
         name (str): Name of this socket
         zcontext (:class:`zmq.Context`): socket context
-        zsocket (:class:`zmq.Socket`): socket wrapped up in a
-            :class:`zmqstream.ZMQStream`
+        zsocket (:class:`zmq.Socket`):
     """
-
     def __init__(self, *args, **kwargs):
         """
         .. note::
@@ -56,32 +49,15 @@ class Receiver(ZMQReceiveMixin, ZMQSendMixin):
                 socket
             socket (:class:`zmq.Socket`): Should be one of :attr:`zmq.REP` or
                 :attr:`zmq.ROUTER`. By default a `ROUTER` is used
-            skip_zmqstream (bool): If set to true, skip creating the zmqstream
-                socket. Callable is unused and optional when this is True
-            on_recv: REQUIRED for zmqstream mode. A function or method to call
-                when a message is received
         Raises:
             :class:`TypeError`: when `callable` is not callable
         """
         self.zcontext = kwargs.get('context', zmq.Context.instance())
         self.name = kwargs.get('name', str(uuid.uuid4()))
-        self.skip_zmqstream = kwargs.get('skip_zmqstream', True)
-        self.on_recv = kwargs.get('on_recv')
 
         self.zsocket = kwargs.get('socket', self.zcontext.socket(zmq.ROUTER))
         self.zsocket.setsockopt(zmq.IDENTITY, self.name)
         self.zsocket.setsockopt(zmq.ROUTER_MANDATORY, 1)
-
-        if not self.skip_zmqstream:
-            # To use the built in ioloop, we have to wrap the socket in this
-            # ZMQStream object
-            if not callable(self.on_recv):
-                raise TypeError('Required argument "on_recv" is not actually '
-                                'callable')
-
-            logger.debug('Using ZMQStream')
-            self.zsocket = zmqstream.ZMQStream(self.zsocket)
-            self.zsocket.on_recv(self.on_recv)
 
         self.status = constants.STATUS.ready
 

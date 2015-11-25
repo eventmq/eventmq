@@ -17,6 +17,7 @@
 =================================
 Defines some classes to use when implementing ZMQ devices
 """
+import zmq.error
 
 from .. import conf, exceptions, log
 from ..utils.messages import send_emqp_message as sendmsg
@@ -62,15 +63,17 @@ class HeartbeatMixin(object):
 
     def is_dead(self, now=None):
         """
-        Checks the counters for the heartbeats to find out if the thresholds
-        have been met.
+        Checks the heartbeat counters to find out if the thresholds have been
+        met.
 
         Args:
             now (float): The time to use to check if death has occurred. If
-            this value is None, then :func:`utils.timeutils.monotonic` is used.
+                this value is None, then :func:`utils.timeutils.monotonic`
+                is used.
 
-        Returns (bool) True if the connection to the peer has died, otherwise
-            False
+        Returns:
+            bool: True if the connection to the peer has died, otherwise
+                False
         """
         if not now:
             now = monotonic()
@@ -141,7 +144,11 @@ class ZMQSendMixin(object):
 
         msg = headers + message
         logger.debug('Sending message: %s' % str(msg))
-        self.zsocket.send_multipart(msg)
+        try:
+            self.zsocket.send_multipart(msg)
+        except zmq.error.ZMQError as e:
+            if 'No route' in e.message:
+                raise exceptions.PeerGoneAwayError(e)
 
     def send(self, message, protocol_version):
         """

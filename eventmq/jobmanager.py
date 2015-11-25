@@ -85,8 +85,9 @@ class JobManager(HeartbeatMixin):
                 events = self.poller.poll(conf.RECONNECT_TIMEOUT * 1000)
                 if self.incoming in events:
                     msg = self.incoming.recv_multipart()
-                    # We don't want to accidentally start processing jobs before
-                    # our conenction has been setup completely and acknowledged.
+                    # We don't want to accidentally start processing jobs
+                    # before our conenction has been setup completely and
+                    # acknowledged.
                     if msg[2] != "ACK":
                         # TODO This will silently drop messages that aren't ACK
                         continue
@@ -191,4 +192,7 @@ class JobManager(HeartbeatMixin):
 
     def on_heartbeat(self, msgid, message):
         """
+        a placeholder for a noop command. The actual 'logic' for HEARTBEAT is
+        in :meth:`self.process_message` as every message is counted as a
+        HEARTBEAT
         """

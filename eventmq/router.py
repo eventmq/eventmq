@@ -17,6 +17,7 @@
 =======================
 Routes messages to workers (that are in named queues).
 """
+from copy import copy
 import uuid
 
 from . import conf, exceptions, log, poller, receiver
@@ -35,12 +36,9 @@ logger = log.get_logger(__file__)
 class Router(HeartbeatMixin):
     """
     A simple router of messages
-
-    This router uses tornado's eventloop.
     """
-
     def __init__(self, *args, **kwargs):
-        super(Router, self).__init__(*args, **kwargs)
+        super(Router, self).__init__(*args, **kwargs)  # Creates _meta
 
         self.name = str(uuid.uuid4())
         logger.info('Initializing Router %s...' % self.name)
@@ -55,9 +53,19 @@ class Router(HeartbeatMixin):
 
         self.status = STATUS.ready
 
-        # List of workers by queue name
+        # Tracks the last time the worker queues were cleaned
+        self._meta['last_worker_cleanup'] = 0
+
+        # Worker queues by queue name. The lists here are Last Recently Used
+        # queues where a worker is popped off when given a job, and appeneded
+        # when one finishes
         self.queues = {}
-        # List of queues by workers
+
+        # List of queues by workers. This helps to clear out old workers from
+        # self.queues.
+        # Keys:
+        #    queues: list() of queues the worker belongs to
+        #    hb: monotonic timestamp of the last received message from worker
         self.workers = {}
 
     def start(self,
@@ -102,7 +110,11 @@ class Router(HeartbeatMixin):
                 if now - self._meta['last_sent_heartbeat'] >= \
                    conf.HEARTBEAT_INTERVAL:
                     self.send_workers_heartbeats()
-                    self._meta['last_sent_heartbeat'] = monotonic()
+
+                if now - self._meta['last_worker_cleanup'] >= 10:
+                    # Loop through the next worker queue and clean up any dead
+                    # ones so the next one is alive
+                    self.clean_up_dead_workers()
 
     def send_ack(self, socket, recipient, msgid):
         """
@@ -115,6 +127,10 @@ class Router(HeartbeatMixin):
         """
         Custom send heartbeat method to take into account the recipient that is
         needed when building messages
+
+        Args:
+            socket (socket): the socket to send the heartbeat with
+            recipient (str): Worker I
         """
         sendmsg(socket, recipient, 'HEARTBEAT', str(timestamp()))
 
@@ -122,11 +138,16 @@ class Router(HeartbeatMixin):
         """
         Send heartbeats to the registered workers.
         """
+        self._meta['last_sent_heartbeat'] = monotonic()
+
         for k in self.workers:
             self.send_heartbeat(self.outgoing, k)
 
     def on_heartbeat(self, sender, msgid, msg):
         """
+        a placeholder for a noop command. The actual 'logic' for HEARTBEAT is
+        in :meth:`self.on_receive_reply` because any message from a worker
+        counts as a HEARTBEAT
         """
 
     def on_inform(self, sender, msgid, msg):
@@ -136,13 +157,40 @@ class Router(HeartbeatMixin):
         logger.info('Received INFORM request from %s' % sender)
         queue_name = msg[0]
 
-        self.workers[sender] = queue_name
+        # Add the worker to our worker dict
+        self.workers[sender] = {}
+        self.workers[sender]['queues'] = queue_name
+
+        # Add the worker to the queues it supports
         if queue_name in self.queues:
             self.queues[queue_name] += (sender,)
         else:
             self.queues[queue_name] = (sender,)
+        logger.debug('Adding %s to the worker pool for %s' %
+                     (sender, queue_name))
 
         self.send_ack(self.outgoing, sender, msgid)
+
+    def clean_up_dead_workers(self):
+        """
+        Loops through the worker queues and removes any workers who haven't
+        responded in HEARTBEAT_TIMEOUT
+        """
+        logger.debug('Cleaning up workers...')
+
+        now = monotonic()
+        self._meta['last_worker_cleanup'] = now
+
+        # Because workers are removed from inside the loop, a copy is needed to
+        # prevent the dict we are iterating over from changing.
+        workers = copy(self.workers)
+        for worker_id in workers:
+            last_hb_seconds = now - self.workers[worker_id]['hb']
+            if last_hb_seconds >= conf.HEARTBEAT_TIMEOUT:
+                logger.info("No messages from worker %s in %s. Removing from "
+                            "the queue" % (worker_id, last_hb_seconds))
+                # Remove the worker from the actual worker queues
+                del self.workers[worker_id]
 
     def on_receive_request(self, msg):
         """
@@ -183,6 +231,14 @@ class Router(HeartbeatMixin):
         command = message[1]
         msgid = message[2]
         message = message[3]
+
+        # Treat any message like a HEARTBEAT.
+        if sender in self.workers:
+            self.workers[sender]['hb'] = monotonic()
+        elif command.lower() != 'inform':
+            logger.critical('Unknown worker %s attempting to run %s command: '
+                            '%s' % (command, str(msg)))
+            return
 
         if hasattr(self, "on_%s" % command.lower()):
             func = getattr(self, "on_%s" % command.lower())

@@ -36,3 +36,10 @@ class InvalidMessageError(MessageError):
     """
     Raise when EventMQ encounters a malformed message is encountered.
     """
+
+
+class PeerGoneAwayError(EventMQError):
+    """
+    Raised when attempting to contact a peer that no longer exists (i.e. when
+    sending a message to it)
+    """

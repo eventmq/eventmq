@@ -30,7 +30,8 @@ import uuid
 
 def random_characters():
     """
-    Returns some random characters of a specified length
+    Returns:
+        str: some random characters of a specified length
     """
     # TODO: Pull out the random_chars function from eb.io code
     return str(uuid.uuid4())
