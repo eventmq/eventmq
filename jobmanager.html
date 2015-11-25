@@ -175,7 +175,7 @@ generated.</td>
 
 <dl class="method">
 <dt id="eventmq.jobmanager.JobManager.on_ack">
-<code class="descname">on_ack</code><span class="sig-paren">(</span><em>msgid</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.on_ack" title="Permalink to this definition">¶</a></dt>
+<code class="descname">on_ack</code><span class="sig-paren">(</span><em>msgid</em>, <em>ackd_msgid</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.on_ack" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets <code class="xref py py-attr docutils literal"><span class="pre">awaiting_ack</span></code> to False</p>
 </dd></dl>
 
@@ -183,12 +183,33 @@ generated.</td>
 <dt id="eventmq.jobmanager.JobManager.process_message">
 <code class="descname">process_message</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.process_message" title="Permalink to this definition">¶</a></dt>
 <dd><p>Processes a message</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>msg</strong> &#8211; The message received from the socket to parse and process.
+Processing takes form of calling an <cite>on_COMMAND</cite> method.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.jobmanager.JobManager.restart">
+<code class="descname">restart</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.restart" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restarts the current connection by closing and reopening the socket</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.jobmanager.JobManager.send_heartbeat">
+<code class="descname">send_heartbeat</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.send_heartbeat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a HEARTBEAT command to the connected broker</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="eventmq.jobmanager.JobManager.send_inform">
 <code class="descname">send_inform</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.send_inform" title="Permalink to this definition">¶</a></dt>
-<dd><p>Send an INFORM frame</p>
+<dd><p>Send an INFORM command</p>
 </dd></dl>
 
 <dl class="method">
@@ -199,7 +220,7 @@ generated.</td>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>args</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; connection string to connect to</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>addr</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; connection string to connect to</td>
 </tr>
 </tbody>
 </table>

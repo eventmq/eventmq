@@ -196,9 +196,9 @@
 <p>An <strong>ACK</strong> command consists of a 4-frame multipart message, formatted as follows.</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="14%" />
-<col width="33%" />
-<col width="53%" />
+<col width="8%" />
+<col width="19%" />
+<col width="73%" />
 </colgroup>
 <thead valign="bottom">
 <tr class="row-odd"><th class="head">FRAME</th>
@@ -222,6 +222,10 @@
 <tr class="row-odd"><td>3</td>
 <td>_MSGID_</td>
 <td>A unique id for the msg</td>
+</tr>
+<tr class="row-even"><td>4</td>
+<td>_MSGID_</td>
+<td>The message id of the message this ACK is acknowledging</td>
 </tr>
 </tbody>
 </table>
@@ -452,6 +456,10 @@
 <tr class="row-odd"><td>3</td>
 <td>_MSGID_</td>
 <td>A unique id for the msg</td>
+</tr>
+<tr class="row-even"><td>4</td>
+<td>_UNIX_TS_</td>
+<td>A unix timestamp</td>
 </tr>
 </tbody>
 </table>

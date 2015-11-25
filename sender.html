@@ -247,6 +247,29 @@ False</td>
 </table>
 </dd></dl>
 
+<dl class="method">
+<dt id="eventmq.sender.Sender.rebuild">
+<code class="descname">rebuild</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.sender.Sender.rebuild" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rebuilds the socket. This is useful when you need to reconnect to
+something without restarting the process. Many of these things happen
+happen during <code class="xref py py-meth docutils literal"><span class="pre">self.__init__()</span></code>, so it takes roughly the same
+parameters as <code class="xref py py-meth docutils literal"><span class="pre">self.__init__()</span></code></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>socket</strong> (<a class="reference external" href="http://pyzmq.readthedocs.org/en/v15.0.0/api/zmq.html#zmq.Socket" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Socket</span></code></a>) &#8211; Should be one of <code class="xref py py-attr docutils literal"><span class="pre">zmq.REQ</span></code> or
+<code class="xref py py-attr docutils literal"><span class="pre">zmq.DEALER</span></code>. By default a <cite>DEALER</cite> is used</li>
+<li><strong>skip_zmqstream</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; If set to true, skip creating the zmqstream
+socket</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </dd></dl>
 
 </div>
