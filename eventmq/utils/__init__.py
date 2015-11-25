@@ -26,6 +26,7 @@ like creating message more simple.
 """
 import uuid
 
+
 def random_characters():
     """
     Returns some random characters of a specified length

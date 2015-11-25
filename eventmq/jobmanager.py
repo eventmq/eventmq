@@ -17,17 +17,14 @@
 ================================
 Ensures things about jobs and spawns the actual tasks
 """
-from time import sleep
 import uuid
 
-from . import constants
-from . import exceptions
-from . import log
-from . import utils
+from . import conf, constants, exceptions, log, utils
 from .poller import Poller, POLLIN
 from .sender import Sender
 from .utils.messages import send_emqp_message as sendmsg
 import utils.messages
+from .utils.timeutils import monotonic, timestamp
 
 logger = log.get_logger(__file__)
 
@@ -58,43 +55,100 @@ class JobManager(object):
 
         self.status = constants.STATUS.ready
 
-        # Are we waiting for an acknowledgment for something?
-        self.awaiting_ack = False
+        # Are we waiting for acknowledgement from someone that we've connected?
+        self.awaiting_startup_ack = False
+
+        # Meta data such as times, and counters are stored here
+        self._meta = {
+            'last_sent_heartbeat': 0,
+            'last_received_heartbeat': 0,
+            'heartbeat_miss_count': 0,
+        }
 
     def start(self, addr='tcp://127.0.0.1:47291'):
         """
         Connect to `addr` and begin listening for job requests
 
         Args:
-            args (str): connection string to connect to
+            addr (str): connection string to connect to
         """
         self.status = constants.STATUS.connecting
         self.incoming.connect(addr)
 
-        self.awaiting_ack = True
+        self.awaiting_startup_ack = True
 
-        #while self.awaiting_ack:
-        self.send_inform()
-        #    sleep(5)
+        while self.awaiting_startup_ack:
+            self.send_inform()
+            # Poller timeout is in ms so we multiply it to get seconds
+            events = self.poller.poll(conf.RECONNECT_TIMEOUT * 1000)
+            if self.incoming in events:
+                msg = self.incoming.recv_multipart()
+                # We don't want to accidentally start processing jobs before
+                # our conenction has been setup completely and acknowledged.
+                if msg[2] != "ACK":
+                    continue
+                self.process_message(msg)
 
+        if not self.awaiting_startup_ack:
+            logger.info('Starting to listen for jobs')
+            self._start_event_loop()
+
+    def _start_event_loop(self):
+        """
+        Starts the actual eventloop. Usually called by :meth:`JobManager.start`
+        """
         self.status = constants.STATUS.connected
 
         while True:
-            events = self.poller.poll(1000)
+            now = monotonic()
+            events = self.poller.poll()
 
             if events.get(self.incoming) == POLLIN:
                 msg = self.incoming.recv_multipart()
                 self.process_message(msg)
 
+            # Send a HEARTBEAT if necessary
+            if now - self._meta['last_sent_heartbeat'] >= \
+               conf.HEARTBEAT_INTERVAL:
+                if conf.SUPER_DEBUG:
+                    logger.debug(now - self._meta['last_sent_heartbeat'])
+                self.send_heartbeat()
+
+            # Do something about any missed HEARTBEAT
+            if now - self._meta['last_received_heartbeat'] >= \
+               conf.HEARTBEAT_TIMEOUT:
+                # Update as if we got the last heartbeat so we can check in
+                # interval again
+                self._meta['heartbeat_miss_count'] += 1
+                self._meta['last_received_heartbeat'] = monotonic()
+                if self._meta['heartbeat_miss_count'] >= \
+                   conf.HEARTBEAT_LIVENESS:
+                    logger.critical('The broker appears to have gone away. '
+                                    'Reconnecting...')
+                    break
+                print self._meta['heartbeat_miss_count']
+
     def process_message(self, msg):
         """
         Processes a message
+
+        Args:
+            msg: The message received from the socket to parse and process.
+                Processing takes form of calling an `on_COMMAND` method.
         """
+        # Any received message should count as a heartbeat
+        self._meta['last_received_heartbeat'] = monotonic()
+        if self._meta['heartbeat_miss_count']:
+            self._meta['heartbeat_miss_count'] = 0  # Reset the miss count too
+
         try:
             message = utils.messages.parse_message(msg)
         except exceptions.InvalidMessageError:
             logger.error('Invalid message: %s' % str(msg))
             return
+
+        if conf.SUPER_DEBUG:
+            logger.debug("Received Message: %s" % msg)
 
         command = message[0]
         msgid = message[1]
@@ -108,21 +162,24 @@ class JobManager(object):
             logger.warning('No handler for %s found (tried: %s)' %
                            (command, ('on_%s' % command.lower)))
 
-    def process_job(self, msg):
-        pass
-
-    def sync(self):
-        pass
-
     def send_inform(self):
         """
-        Send an INFORM frame
+        Send an INFORM command
         """
         sendmsg(self.incoming, 'INFORM', 'default_queuename')
 
-    def on_ack(self, msgid, message):
+    def send_heartbeat(self):
+        """
+        Send a HEARTBEAT command to the connected broker
+        """
+        sendmsg(self.incoming, 'HEARTBEAT', str(timestamp()))
+        self._meta['last_sent_heartbeat'] = monotonic()
+
+    def on_ack(self, msgid, ackd_msgid):
         """
         Sets :attr:`awaiting_ack` to False
         """
-        logger.info('Recieved ACK')
-        self.awaiting_ack = False
+        # The msgid is the only frame in the message
+        ackd_msgid = ackd_msgid[0]
+        logger.info('Received ACK for %s' % ackd_msgid)
+        self.awaiting_startup_ack = False

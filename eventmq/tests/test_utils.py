@@ -14,14 +14,13 @@
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
 import unittest
 
-from .. import exceptions
-from .. import utils
-import utils.messages
+from .. import exceptions, utils
+from ..utils import messages, classes
 
 
 class TestCase(unittest.TestCase):
     def test_generate_msgid(self):
-        msgid = utils.messages.generate_msgid()
+        msgid = messages.generate_msgid()
 
         self.assertEqual(type(msgid), str)
 
@@ -31,9 +30,9 @@ class TestCase(unittest.TestCase):
         emq_frame_manymsg = emq_headers + ('many', 'parts')
         emq_frame_nomsg = emq_headers
 
-        singlemsg = utils.messages.parse_router_message(emq_frame_singlemsg)
-        manymsg = utils.messages.parse_router_message(emq_frame_manymsg)
-        nomsg = utils.messages.parse_router_message(emq_frame_nomsg)
+        singlemsg = messages.parse_router_message(emq_frame_singlemsg)
+        manymsg = messages.parse_router_message(emq_frame_manymsg)
+        nomsg = messages.parse_router_message(emq_frame_nomsg)
 
         self.assertEqual(singlemsg[0], emq_frame_singlemsg[0])
         self.assertEqual(singlemsg[1], emq_frame_singlemsg[3])
@@ -52,4 +51,4 @@ class TestCase(unittest.TestCase):
 
         broken_message = ('dlkajfs', 'lkasdjf')
         with self.assertRaises(exceptions.InvalidMessageError):
-            utils.messages.parse_router_message(broken_message)
+            messages.parse_router_message(broken_message)

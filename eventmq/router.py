@@ -18,15 +18,16 @@
 Routes messages to workers (that are in named queues).
 """
 import uuid
-
 from zmq.eventloop import ioloop
 
 from .constants import STATUS
-from . import exceptions, log, receiver, utils
+from . import exceptions, log, receiver
 from .utils.messages import (
     send_emqp_router_message as sendmsg,
     parse_router_message
 )
+from .utils.time import monotonic
+
 
 logger = log.get_logger(__file__)
 
@@ -73,12 +74,12 @@ class Router(object):
 
         ioloop.IOLoop.instance().start()
 
-    def send_ack(self, socket, recipient):
+    def send_ack(self, socket, recipient, msgid):
         """
         Sends an ACK response
         """
         logger.info('Sending ACK to %s' % recipient)
-        sendmsg(socket, recipient, 'ACK')
+        sendmsg(socket, recipient, 'ACK', msgid)
 
     def on_inform(self, sender, msgid, msg):
         """
@@ -92,7 +93,7 @@ class Router(object):
         else:
             self.queues[queue_name] = (sender,)
 
-        self.send_ack(self.outgoing, sender)
+        self.send_ack(self.outgoing, sender, msgid)
 
     def on_receive_request(self, msg):
         """

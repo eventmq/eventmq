@@ -57,6 +57,7 @@ FRAME  Value          Description
 1      eMQP/1.0       Protocol version
 2      ACK            command
 3      _MSGID_        A unique id for the msg
+4      _MSGID_        The message id of the message this ACK is acknowledging
 ====== ============== ===========
 
 eMQP / Client
@@ -165,7 +166,7 @@ Below is a table which defines and describes the headers.
 =============== ======= ======= ======= ===========
 Header          REQUEST PUBLISH Default Description
 =============== ======= ======= ======= ===========
-reply-requested X               False     Once the job is finished, send a reply back with information from the job. If there is no information reply with a True value.
+reply-requested X               False   Once the job is finished, send a reply back with information from the job. If there is no information reply with a True value.
 retry-count:#   X               0       Retry a failed job this many times before accepting defeat.
-guarantee       X               False     Ensure the job completes by letting someone else worry about a success reply.
+guarantee       X               False   Ensure the job completes by letting someone else worry about a success reply.
 =============== ======= ======= ======= ===========
