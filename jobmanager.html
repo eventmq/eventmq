@@ -167,17 +167,16 @@ generated.</td>
 </table>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="eventmq.jobmanager.JobManager.__weakref__">
-<code class="descname">__weakref__</code><a class="headerlink" href="#eventmq.jobmanager.JobManager.__weakref__" title="Permalink to this definition">¶</a></dt>
-<dd><p>list of weak references to the object (if defined)</p>
-</dd></dl>
-
 <dl class="method">
 <dt id="eventmq.jobmanager.JobManager.on_ack">
 <code class="descname">on_ack</code><span class="sig-paren">(</span><em>msgid</em>, <em>ackd_msgid</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.on_ack" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets <code class="xref py py-attr docutils literal"><span class="pre">awaiting_ack</span></code> to False</p>
 </dd></dl>
+
+<dl class="method">
+<dt id="eventmq.jobmanager.JobManager.on_heartbeat">
+<code class="descname">on_heartbeat</code><span class="sig-paren">(</span><em>msgid</em>, <em>message</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.on_heartbeat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="eventmq.jobmanager.JobManager.process_message">
@@ -195,15 +194,9 @@ Processing takes form of calling an <cite>on_COMMAND</cite> method.</td>
 </dd></dl>
 
 <dl class="method">
-<dt id="eventmq.jobmanager.JobManager.restart">
-<code class="descname">restart</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.restart" title="Permalink to this definition">¶</a></dt>
-<dd><p>Restarts the current connection by closing and reopening the socket</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="eventmq.jobmanager.JobManager.send_heartbeat">
-<code class="descname">send_heartbeat</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.send_heartbeat" title="Permalink to this definition">¶</a></dt>
-<dd><p>Send a HEARTBEAT command to the connected broker</p>
+<dt id="eventmq.jobmanager.JobManager.reset">
+<code class="descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resets the current connection by closing and reopening the socket</p>
 </dd></dl>
 
 <dl class="method">

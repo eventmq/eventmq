@@ -32,7 +32,7 @@
   
     <link rel="top" title="EventMQ 0 documentation" href="../index.html"/>
         <link rel="up" title="utils – Utilities" href="../utils.html"/>
-        <link rel="next" title="utils.messages – Message Utilities" href="messages.html"/>
+        <link rel="next" title="messages – Message Utilities" href="messages.html"/>
         <link rel="prev" title="utils – Utilities" href="../utils.html"/> 
 
   
@@ -92,7 +92,8 @@
 <li class="toctree-l2"><a class="reference internal" href="../sender.html"><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="../utils.html"><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</a><ul class="current">
 <li class="toctree-l3 current"><a class="current reference internal" href=""><code class="docutils literal"><span class="pre">classes</span></code> &#8211; Utility Classes</a></li>
-<li class="toctree-l3"><a class="reference internal" href="messages.html"><code class="docutils literal"><span class="pre">utils.messages</span></code> &#8211; Message Utilities</a></li>
+<li class="toctree-l3"><a class="reference internal" href="messages.html"><code class="docutils literal"><span class="pre">messages</span></code> &#8211; Message Utilities</a></li>
+<li class="toctree-l3"><a class="reference internal" href="timeutils.html"><code class="docutils literal"><span class="pre">time</span></code> &#8211; Time Utilites</a></li>
 </ul>
 </li>
 </ul>
@@ -149,6 +150,64 @@
   <span class="target" id="module-eventmq.utils.classes"></span><div class="section" id="classes-utility-classes">
 <h1><code class="xref py py-mod docutils literal"><span class="pre">classes</span></code> &#8211; Utility Classes<a class="headerlink" href="#classes-utility-classes" title="Permalink to this headline">¶</a></h1>
 <p>Defines some classes to use when implementing ZMQ devices</p>
+<dl class="class">
+<dt id="eventmq.utils.classes.HeartbeatMixin">
+<em class="property">class </em><code class="descclassname">eventmq.utils.classes.</code><code class="descname">HeartbeatMixin</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.classes.HeartbeatMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides methods for implementing heartbeats</p>
+<dl class="method">
+<dt id="eventmq.utils.classes.HeartbeatMixin.__init__">
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.classes.HeartbeatMixin.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets up some variables to track the state of heartbeaty things</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="eventmq.utils.classes.HeartbeatMixin.__weakref__">
+<code class="descname">__weakref__</code><a class="headerlink" href="#eventmq.utils.classes.HeartbeatMixin.__weakref__" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of weak references to the object (if defined)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.utils.classes.HeartbeatMixin.is_dead">
+<code class="descname">is_dead</code><span class="sig-paren">(</span><em>now=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.classes.HeartbeatMixin.is_dead" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks the counters for the heartbeats to find out if the thresholds
+have been met.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>now</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; The time to use to check if death has occurred. If</td>
+</tr>
+</tbody>
+</table>
+<p>:param this value is None, then <code class="xref py py-func docutils literal"><span class="pre">utils.timeutils.monotonic()</span></code> is used.:</p>
+<dl class="docutils">
+<dt>Returns (bool) True if the connection to the peer has died, otherwise</dt>
+<dd>False</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.utils.classes.HeartbeatMixin.reset_heartbeat_counters">
+<code class="descname">reset_heartbeat_counters</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.classes.HeartbeatMixin.reset_heartbeat_counters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resets all the counters for heartbeats back to 0</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.utils.classes.HeartbeatMixin.send_heartbeat">
+<code class="descname">send_heartbeat</code><span class="sig-paren">(</span><em>socket</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.classes.HeartbeatMixin.send_heartbeat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a HEARTBEAT command to the specified socket</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; The eMQP socket to send the message to</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="class">
 <dt id="eventmq.utils.classes.ZMQReceiveMixin">
 <em class="property">class </em><code class="descclassname">eventmq.utils.classes.</code><code class="descname">ZMQReceiveMixin</code><a class="headerlink" href="#eventmq.utils.classes.ZMQReceiveMixin" title="Permalink to this definition">¶</a></dt>
@@ -240,7 +299,7 @@ specify the the recipient id of the</li>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="messages.html" class="btn btn-neutral float-right" title="utils.messages – Message Utilities" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="messages.html" class="btn btn-neutral float-right" title="messages – Message Utilities" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
         <a href="../utils.html" class="btn btn-neutral" title="utils – Utilities" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>

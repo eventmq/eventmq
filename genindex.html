@@ -133,6 +133,7 @@
  | <a href="#C"><strong>C</strong></a>
  | <a href="#E"><strong>E</strong></a>
  | <a href="#G"><strong>G</strong></a>
+ | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
  | <a href="#J"><strong>J</strong></a>
  | <a href="#L"><strong>L</strong></a>
@@ -142,6 +143,7 @@
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
+ | <a href="#T"><strong>T</strong></a>
  | <a href="#U"><strong>U</strong></a>
  | <a href="#Z"><strong>Z</strong></a>
  
@@ -166,18 +168,18 @@
   <dt><a href="sender.html#eventmq.sender.Sender.__init__">(eventmq.sender.Sender method)</a>
   </dt>
 
+        
+  <dt><a href="utils/classes.html#eventmq.utils.classes.HeartbeatMixin.__init__">(eventmq.utils.classes.HeartbeatMixin method)</a>
+  </dt>
+
       </dl></dd>
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
-  <dt><a href="jobmanager.html#eventmq.jobmanager.JobManager.__weakref__">__weakref__ (eventmq.jobmanager.JobManager attribute)</a>
+  <dt><a href="utils/classes.html#eventmq.utils.classes.HeartbeatMixin.__weakref__">__weakref__ (eventmq.utils.classes.HeartbeatMixin attribute)</a>
   </dt>
 
       <dd><dl>
-        
-  <dt><a href="router.html#eventmq.router.Router.__weakref__">(eventmq.router.Router attribute)</a>
-  </dt>
-
         
   <dt><a href="utils/classes.html#eventmq.utils.classes.ZMQReceiveMixin.__weakref__">(eventmq.utils.classes.ZMQReceiveMixin attribute)</a>
   </dt>
@@ -229,12 +231,12 @@
   <dt><a href="router.html#module-eventmq.router">eventmq.router (module)</a>
   </dt>
 
-  </dl></td>
-  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="sender.html#module-eventmq.sender">eventmq.sender (module)</a>
   </dt>
 
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="utils.html#module-eventmq.utils">eventmq.utils (module)</a>
   </dt>
@@ -245,6 +247,10 @@
 
       
   <dt><a href="utils/messages.html#module-eventmq.utils.messages">eventmq.utils.messages (module)</a>
+  </dt>
+
+      
+  <dt><a href="utils/timeutils.html#module-eventmq.utils.timeutils">eventmq.utils.timeutils (module)</a>
   </dt>
 
       
@@ -264,11 +270,27 @@
   </dl></td>
 </tr></table>
 
+<h2 id="H">H</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="utils/classes.html#eventmq.utils.classes.HeartbeatMixin">HeartbeatMixin (class in eventmq.utils.classes)</a>
+  </dt>
+
+  </dl></td>
+</tr></table>
+
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%" valign="top"><dl>
       
   <dt><a href="exceptions.html#eventmq.exceptions.InvalidMessageError">InvalidMessageError</a>
+  </dt>
+
+  </dl></td>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="utils/classes.html#eventmq.utils.classes.HeartbeatMixin.is_dead">is_dead() (eventmq.utils.classes.HeartbeatMixin method)</a>
   </dt>
 
   </dl></td>
@@ -308,6 +330,12 @@
   </dt>
 
   </dl></td>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="utils/timeutils.html#eventmq.utils.timeutils.monotonic">monotonic() (in module eventmq.utils.timeutils)</a>
+  </dt>
+
+  </dl></td>
 </tr></table>
 
 <h2 id="N">N</h2>
@@ -333,6 +361,16 @@
   <dt><a href="jobmanager.html#eventmq.jobmanager.JobManager.on_ack">on_ack() (eventmq.jobmanager.JobManager method)</a>
   </dt>
 
+      
+  <dt><a href="jobmanager.html#eventmq.jobmanager.JobManager.on_heartbeat">on_heartbeat() (eventmq.jobmanager.JobManager method)</a>
+  </dt>
+
+      <dd><dl>
+        
+  <dt><a href="router.html#eventmq.router.Router.on_heartbeat">(eventmq.router.Router method)</a>
+  </dt>
+
+      </dl></dd>
       
   <dt><a href="router.html#eventmq.router.Router.on_inform">on_inform() (eventmq.router.Router method)</a>
   </dt>
@@ -418,7 +456,11 @@
   </dt>
 
       
-  <dt><a href="jobmanager.html#eventmq.jobmanager.JobManager.restart">restart() (eventmq.jobmanager.JobManager method)</a>
+  <dt><a href="jobmanager.html#eventmq.jobmanager.JobManager.reset">reset() (eventmq.jobmanager.JobManager method)</a>
+  </dt>
+
+      
+  <dt><a href="utils/classes.html#eventmq.utils.classes.HeartbeatMixin.reset_heartbeat_counters">reset_heartbeat_counters() (eventmq.utils.classes.HeartbeatMixin method)</a>
   </dt>
 
       
@@ -448,9 +490,15 @@
   </dt>
 
       
-  <dt><a href="jobmanager.html#eventmq.jobmanager.JobManager.send_heartbeat">send_heartbeat() (eventmq.jobmanager.JobManager method)</a>
+  <dt><a href="router.html#eventmq.router.Router.send_heartbeat">send_heartbeat() (eventmq.router.Router method)</a>
   </dt>
 
+      <dd><dl>
+        
+  <dt><a href="utils/classes.html#eventmq.utils.classes.HeartbeatMixin.send_heartbeat">(eventmq.utils.classes.HeartbeatMixin method)</a>
+  </dt>
+
+      </dl></dd>
   </dl></td>
   <td style="width: 33%" valign="top"><dl>
       
@@ -459,6 +507,10 @@
 
       
   <dt><a href="utils/classes.html#eventmq.utils.classes.ZMQSendMixin.send_multipart">send_multipart() (eventmq.utils.classes.ZMQSendMixin method)</a>
+  </dt>
+
+      
+  <dt><a href="router.html#eventmq.router.Router.send_workers_heartbeats">send_workers_heartbeats() (eventmq.router.Router method)</a>
   </dt>
 
       
@@ -475,6 +527,16 @@
   </dt>
 
       </dl></dd>
+  </dl></td>
+</tr></table>
+
+<h2 id="T">T</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%" valign="top"><dl>
+      
+  <dt><a href="utils/timeutils.html#eventmq.utils.timeutils.timestamp">timestamp() (in module eventmq.utils.timeutils)</a>
+  </dt>
+
   </dl></td>
 </tr></table>
 

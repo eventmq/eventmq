@@ -148,11 +148,10 @@
 <em class="property">class </em><code class="descclassname">eventmq.router.</code><code class="descname">Router</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router" title="Permalink to this definition">¶</a></dt>
 <dd><p>A simple router of messages</p>
 <p>This router uses tornado&#8217;s eventloop.</p>
-<dl class="attribute">
-<dt id="eventmq.router.Router.__weakref__">
-<code class="descname">__weakref__</code><a class="headerlink" href="#eventmq.router.Router.__weakref__" title="Permalink to this definition">¶</a></dt>
-<dd><p>list of weak references to the object (if defined)</p>
-</dd></dl>
+<dl class="method">
+<dt id="eventmq.router.Router.on_heartbeat">
+<code class="descname">on_heartbeat</code><span class="sig-paren">(</span><em>sender</em>, <em>msgid</em>, <em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.on_heartbeat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="eventmq.router.Router.on_inform">
@@ -184,6 +183,19 @@ warning is created.</p>
 <dt id="eventmq.router.Router.send_ack">
 <code class="descname">send_ack</code><span class="sig-paren">(</span><em>socket</em>, <em>recipient</em>, <em>msgid</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.send_ack" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sends an ACK response</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.router.Router.send_heartbeat">
+<code class="descname">send_heartbeat</code><span class="sig-paren">(</span><em>socket</em>, <em>recipient</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.send_heartbeat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Custom send heartbeat method to take into account the recipient that is
+needed when building messages</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.router.Router.send_workers_heartbeats">
+<code class="descname">send_workers_heartbeats</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.send_workers_heartbeats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send heartbeats to the registered workers.</p>
 </dd></dl>
 
 <dl class="method">
