@@ -26,7 +26,7 @@ from .utils.messages import (
     send_emqp_router_message as sendmsg,
     parse_router_message
 )
-from .utils.time import monotonic
+from .utils.timeutils import monotonic
 
 
 logger = log.get_logger(__file__)

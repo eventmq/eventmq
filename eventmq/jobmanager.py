@@ -50,12 +50,14 @@ class JobManager(object):
         self.incoming = Sender()
         self.poller = Poller()
 
-        # Alert us of both incoming and outgoing events
+        self._setup()
+
+    def _setup(self):
+        """
+        Gets JobManager ready to connect to a broker
+        """
+        # Look for incoming events
         self.poller.register(self.incoming, POLLIN)
-
-        self.status = constants.STATUS.ready
-
-        # Are we waiting for acknowledgement from someone that we've connected?
         self.awaiting_startup_ack = False
 
         # Meta data such as times, and counters are stored here
@@ -64,6 +66,8 @@ class JobManager(object):
             'last_received_heartbeat': 0,
             'heartbeat_miss_count': 0,
         }
+
+        self.status = constants.STATUS.ready
 
     def start(self, addr='tcp://127.0.0.1:47291'):
         """
@@ -93,6 +97,21 @@ class JobManager(object):
             logger.info('Starting to listen for jobs')
             self._start_event_loop()
 
+    def restart(self):
+        """
+        Restarts the current connection by closing and reopening the socket
+        """
+        # Unregister the old socket from the poller
+        self.poller.unregister(self.incoming)
+
+        # Polish up a new socket to use
+        self.incoming.rebuild()
+
+        # Prepare the device to connect again
+        self._setup()
+
+        self.start()
+
     def _start_event_loop(self):
         """
         Starts the actual eventloop. Usually called by :meth:`JobManager.start`
@@ -107,26 +126,28 @@ class JobManager(object):
                 msg = self.incoming.recv_multipart()
                 self.process_message(msg)
 
-            # Send a HEARTBEAT if necessary
-            if now - self._meta['last_sent_heartbeat'] >= \
-               conf.HEARTBEAT_INTERVAL:
-                if conf.SUPER_DEBUG:
-                    logger.debug(now - self._meta['last_sent_heartbeat'])
-                self.send_heartbeat()
+            if not conf.DISABLE_HEARTBEATS:
+                # Send a HEARTBEAT if necessary
+                if now - self._meta['last_sent_heartbeat'] >= \
+                conf.HEARTBEAT_INTERVAL:
+                    if conf.SUPER_DEBUG:
+                        logger.debug(now - self._meta['last_sent_heartbeat'])
+                    self.send_heartbeat()
 
-            # Do something about any missed HEARTBEAT
-            if now - self._meta['last_received_heartbeat'] >= \
-               conf.HEARTBEAT_TIMEOUT:
-                # Update as if we got the last heartbeat so we can check in
-                # interval again
-                self._meta['heartbeat_miss_count'] += 1
-                self._meta['last_received_heartbeat'] = monotonic()
-                if self._meta['heartbeat_miss_count'] >= \
-                   conf.HEARTBEAT_LIVENESS:
-                    logger.critical('The broker appears to have gone away. '
-                                    'Reconnecting...')
-                    break
-                print self._meta['heartbeat_miss_count']
+                # Do something about any missed HEARTBEAT
+                if now - self._meta['last_received_heartbeat'] >= \
+                conf.HEARTBEAT_TIMEOUT:
+                    # Update as if we got the last heartbeat so we can check in
+                    # interval again
+                    self._meta['heartbeat_miss_count'] += 1
+                    self._meta['last_received_heartbeat'] = monotonic()
+                    if self._meta['heartbeat_miss_count'] >= \
+                    conf.HEARTBEAT_LIVENESS:
+                        logger.critical(
+                            'The broker appears to have gone away. '
+                            'Reconnecting...')
+                        break
+        self.restart()
 
     def process_message(self, msg):
         """

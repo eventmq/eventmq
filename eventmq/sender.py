@@ -61,18 +61,13 @@ class Sender(ZMQSendMixin, ZMQReceiveMixin):
                 socket
 
         """
-        self.name = kwargs.get('name', str(uuid.uuid4()))
-        self.zcontext = kwargs.get('context', zmq.Context.instance())
+        self.zcontext = kwargs.pop('context', zmq.Context.instance())
 
-        self.zsocket = kwargs.get('socket', self.zcontext.socket(zmq.DEALER))
-        self.zsocket.setsockopt(zmq.IDENTITY, self.name)
+        # Set zsocket to none so we can check if it exists and close it before
+        # rebuilding it later.
+        self.zsocket = None
 
-        if not kwargs.get('skip_zmqstream', True):
-            logger.info('Using ZMQStream')
-            self.zsocket = zmqstream.ZMQStream(self.zsocket)
-            self.zsocket.on_recv(kwargs.get('on_recv'))
-
-        self.status = constants.STATUS.ready
+        self.rebuild(*args, **kwargs)
 
     def listen(self, addr=None):
         """
@@ -109,6 +104,33 @@ class Sender(ZMQSendMixin, ZMQReceiveMixin):
         else:
             raise exceptions.EventMQError('Not ready. status=%s' %
                                           (self.status))
+
+    def rebuild(self, *args, **kwargs):
+        """
+        Rebuilds the socket. This is useful when you need to reconnect to
+        something without restarting the process. Many of these things happen
+        happen during :meth:`self.__init__`, so it takes roughly the same
+        parameters as :meth:`self.__init__`
+
+        Args:
+            socket (:class:`zmq.Socket`): Should be one of :attr:`zmq.REQ` or
+                :attr:`zmq.DEALER`. By default a `DEALER` is used
+            skip_zmqstream (bool): If set to true, skip creating the zmqstream
+                socket
+        """
+        if self.zsocket:
+            self.zsocket.close()
+
+        self.name = kwargs.pop('name', str(uuid.uuid4()))
+        self.zsocket = kwargs.pop('socket', self.zcontext.socket(zmq.DEALER))
+        self.zsocket.setsockopt(zmq.IDENTITY, self.name)
+
+        if not kwargs.get('skip_zmqstream', True):
+            logger.info('Using ZMQStream')
+            self.zsocket = zmqstream.ZMQStream(self.zsocket)
+            self.zsocket.on_recv(kwargs.pop('on_recv'))
+
+        self.status = constants.STATUS.ready
 
     @property
     def ready(self):

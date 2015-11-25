@@ -76,7 +76,7 @@ class Poller(ZPoller):
             logger.warning("Attempt to unregister unregistered socket from "
                            "poller: socket: %s" % socket.name)
 
-        self._sockets.remove(socket.zsocket)
+        self._sockets.remove(socket)
         super(Poller, self).unregister(socket.zsocket)
 
     def poll(self, timeout=1):
