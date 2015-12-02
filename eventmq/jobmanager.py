@@ -27,6 +27,7 @@ from .utils.messages import send_emqp_message as sendmsg
 import utils.messages
 from .utils.timeutils import monotonic, timestamp
 
+
 logger = log.get_logger(__file__)
 
 
@@ -78,9 +79,9 @@ class JobManager(HeartbeatMixin):
             self.incoming.connect(addr)
 
             self.awaiting_startup_ack = True
+            self.send_inform()
 
             while self.awaiting_startup_ack:
-                self.send_inform()
                 # Poller timeout is in ms so we multiply it to get seconds
                 events = self.poller.poll(conf.RECONNECT_TIMEOUT * 1000)
                 if self.incoming in events:

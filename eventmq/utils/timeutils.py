@@ -31,5 +31,16 @@ def timestamp():
 
 def monotonic():
     """
+    Returns (float) seconds since boot, or something close to it. This value
+    will never count down so it's useful for cases where DST would mess up
+    time.time() arithmetic (e.g. heartbeats).
     """
     return _monotonic()
+
+
+def seconds_until(ts):
+    """
+    Calculates the number of seconds until `ts` by subtracting it from
+    time.time()
+    """
+    return ts - timestamp()

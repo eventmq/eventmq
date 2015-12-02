@@ -13,26 +13,21 @@
 # You should have received a copy of the GNU General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
 """
-:mod:`utils` -- Utilities
-=========================
-This module contains a handful of utility classes to make dealing with things
-like creating message more simple.
-
-.. toctree ::
-   :maxdepth: 2
-
-   utils/classes
-   utils/messages
-   utils/timeutils
+:mod:`devices` -- Device Utilities
+==================================
 """
 
 
-def random_characters():
+def generate_device_name(prefix=None):
     """
-    Returns:
-        str: some random characters of a specified length
+    This takes care of the python3 'everything is unicode' feature which
+    causes errors when setting the IDENTITY of the ZMQ socket.
+
+    Args:
+        prefix (str): Prefix the id with this string.
+
+    Returns (str) An ascii encoded string that can be used as an IDENTITY for a
+        ZMQ socket.
     """
     import uuid
-
-    # TODO: Pull out the random_chars function from eb.io code
-    return str(uuid.uuid4())
+    return str(uuid.uuid4()).encode('ascii')

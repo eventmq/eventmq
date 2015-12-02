@@ -65,7 +65,6 @@ def parse_message(message):
         raise exceptions.InvalidMessageError('Invalid Message Encountered: %s'
                                              % str(message))
 
-    print len(message)
     if len(message) > 4:
         msg = message[4:]
     else:

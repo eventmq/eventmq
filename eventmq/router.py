@@ -66,7 +66,8 @@ class Router(HeartbeatMixin):
         # Keys:
         #    queues: list() of queues the worker belongs to
         #    hb: monotonic timestamp of the last received message from worker
-        self.workers = {}
+        self.workers = {
+        }
 
     def start(self,
               frontend_addr='tcp://127.0.0.1:47290',
@@ -103,7 +104,7 @@ class Router(HeartbeatMixin):
 
             if events.get(self.outgoing) == poller.POLLIN:
                 msg = self.outgoing.recv_multipart()
-                self.on_receive_reply(msg)
+                self.process_worker_message(msg)
 
             if not conf.DISABLE_HEARTBEATS:
                 # Send a HEARTBEAT if necessary
@@ -146,7 +147,7 @@ class Router(HeartbeatMixin):
     def on_heartbeat(self, sender, msgid, msg):
         """
         a placeholder for a noop command. The actual 'logic' for HEARTBEAT is
-        in :meth:`self.on_receive_reply` because any message from a worker
+        in :meth:`self.process_worker_message` because any message from a worker
         counts as a HEARTBEAT
         """
 
@@ -185,12 +186,30 @@ class Router(HeartbeatMixin):
         # prevent the dict we are iterating over from changing.
         workers = copy(self.workers)
         for worker_id in workers:
+
+            # If a worker started, then immediatly died then no hb dictionary
+            # was created so we should just remove that worker.
+            if 'hb' not in self.workers[worker_id]:
+                logger.info('Removing worker %s from the queue due to no '
+                            'heartbeat' % (worker_id))
+                del self.workers[worker_id]
+                continue
+
             last_hb_seconds = now - self.workers[worker_id]['hb']
             if last_hb_seconds >= conf.HEARTBEAT_TIMEOUT:
                 logger.info("No messages from worker %s in %s. Removing from "
                             "the queue" % (worker_id, last_hb_seconds))
                 # Remove the worker from the actual worker queues
                 del self.workers[worker_id]
+
+    def add_worker(self, id, queues=None):
+        """
+        Adds a worker to worker queues
+
+        Args:
+            worker_id: unique id of the worker to add
+            queues: queue or queues this worker should be a member of
+        """
 
     def on_receive_request(self, msg):
         """
@@ -205,14 +224,14 @@ class Router(HeartbeatMixin):
 
         queue_name = message[3][0]
 
-        # do some things and forward it to the workers
-        self.outgoing.send_multipart(msg)
+        # cheat here and forward the message to the workers
+        self.outgoing.zsocket.send_multipart(msg)
 
         # If we have no workers for the queue TODO something about it
         if queue_name not in self.queues:
             logger.warning("Received REQUEST with a queue I don't recognize")
 
-    def on_receive_reply(self, msg):
+    def process_worker_message(self, msg):
         """
         This method is called when a message comes in from the worker socket.
         It then calls `on_command`. If `on_command` isn't found, then a warning
@@ -237,7 +256,7 @@ class Router(HeartbeatMixin):
             self.workers[sender]['hb'] = monotonic()
         elif command.lower() != 'inform':
             logger.critical('Unknown worker %s attempting to run %s command: '
-                            '%s' % (command, str(msg)))
+                            '%s' % (sender, command, str(msg)))
             return
 
         if hasattr(self, "on_%s" % command.lower()):

@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+# -*- mode: python -*-
+
+from eventmq.scheduler import Scheduler
+
+if __name__ == "__main__":
+    s = Scheduler()
+    s.start()
