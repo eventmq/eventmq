@@ -152,7 +152,17 @@
 <dl class="function">
 <dt id="eventmq.utils.timeutils.monotonic">
 <code class="descclassname">eventmq.utils.timeutils.</code><code class="descname">monotonic</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.timeutils.monotonic" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Returns (float) seconds since boot, or something close to it. This value
+will never count down so it&#8217;s useful for cases where DST would mess up
+time.time() arithmetic (e.g. heartbeats).</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="eventmq.utils.timeutils.seconds_until">
+<code class="descclassname">eventmq.utils.timeutils.</code><code class="descname">seconds_until</code><span class="sig-paren">(</span><em>ts</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.timeutils.seconds_until" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the number of seconds until <cite>ts</cite> by subtracting it from
+time.time()</p>
+</dd></dl>
 
 <dl class="function">
 <dt id="eventmq.utils.timeutils.timestamp">

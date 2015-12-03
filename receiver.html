@@ -147,11 +147,6 @@
 <dt id="eventmq.receiver.Receiver">
 <em class="property">class </em><code class="descclassname">eventmq.receiver.</code><code class="descname">Receiver</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.receiver.Receiver" title="Permalink to this definition">¶</a></dt>
 <dd><p>Receives messages and pass them to a on_recv.</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">Polling with this reciever is currently only available via an eventloop
-(<code class="xref py py-mod docutils literal"><span class="pre">zmq.eventloop</span></code>).</p>
-</div>
 <dl class="attribute">
 <dt id="eventmq.receiver.Receiver.name">
 <code class="descname">name</code><a class="headerlink" href="#eventmq.receiver.Receiver.name" title="Permalink to this definition">¶</a></dt>
@@ -167,8 +162,7 @@
 <dl class="attribute">
 <dt id="eventmq.receiver.Receiver.zsocket">
 <code class="descname">zsocket</code><a class="headerlink" href="#eventmq.receiver.Receiver.zsocket" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="http://pyzmq.readthedocs.org/en/v15.0.0/api/zmq.html#zmq.Socket" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Socket</span></code></a> &#8211; socket wrapped up in a
-<code class="xref py py-class docutils literal"><span class="pre">zmqstream.ZMQStream</span></code></p>
+<dd><p><a class="reference external" href="http://pyzmq.readthedocs.org/en/v15.0.0/api/zmq.html#zmq.Socket" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Socket</span></code></a></p>
 </dd></dl>
 
 <dl class="method">
@@ -189,10 +183,6 @@ generated</li>
 socket</li>
 <li><strong>socket</strong> (<a class="reference external" href="http://pyzmq.readthedocs.org/en/v15.0.0/api/zmq.html#zmq.Socket" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Socket</span></code></a>) &#8211; Should be one of <code class="xref py py-attr docutils literal"><span class="pre">zmq.REP</span></code> or
 <code class="xref py py-attr docutils literal"><span class="pre">zmq.ROUTER</span></code>. By default a <cite>ROUTER</cite> is used</li>
-<li><strong>skip_zmqstream</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; If set to true, skip creating the zmqstream
-socket. Callable is unused and optional when this is True</li>
-<li><strong>on_recv</strong> &#8211; REQUIRED for zmqstream mode. A function or method to call
-when a message is received</li>
 </ul>
 </td>
 </tr>

@@ -5,7 +5,7 @@ EventMQ Protocol Specification
 
 Goals
 =====
-The EventMQ Protocol (eMQP) defines a reliable service-oriented request-reply and pub-sub dialog between a set of clients, a broker, and a set of workers. This goal is to 
+The EventMQ Protocol (eMQP) defines a reliable service-oriented request-reply and pub-sub dialog between a set of clients, a broker, and a set of workers. This goal is to
 
 The goals are to:
 
@@ -13,7 +13,7 @@ The goals are to:
  * Allow requests to be routed to workers by an abstracted service name.
  * Detect disconnected peers through heartbeating.
  * Allow for message tracing and debugging.
- 
+
 
 License
 =======
@@ -69,7 +69,7 @@ FRAME  Value          Description
 ====== ============== ===========
 0      _EMPTY_        leave empty
 1      eMQP/1.0       Protocol version
-2      READY          command
+2      REQUEST        command
 3      _MSGID_        A unique id for the msg
 4      _QUEUE_NAME_   the name of the queue the worker belongs to
 5      _HEADERS_      dictionary of headers. can be an empty set

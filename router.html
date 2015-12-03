@@ -147,11 +147,38 @@
 <dt id="eventmq.router.Router">
 <em class="property">class </em><code class="descclassname">eventmq.router.</code><code class="descname">Router</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router" title="Permalink to this definition">¶</a></dt>
 <dd><p>A simple router of messages</p>
-<p>This router uses tornado&#8217;s eventloop.</p>
+<dl class="method">
+<dt id="eventmq.router.Router.add_worker">
+<code class="descname">add_worker</code><span class="sig-paren">(</span><em>id</em>, <em>queues=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.add_worker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a worker to worker queues</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>worker_id</strong> &#8211; unique id of the worker to add</li>
+<li><strong>queues</strong> &#8211; queue or queues this worker should be a member of</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.router.Router.clean_up_dead_workers">
+<code class="descname">clean_up_dead_workers</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.clean_up_dead_workers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loops through the worker queues and removes any workers who haven&#8217;t
+responded in HEARTBEAT_TIMEOUT</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="eventmq.router.Router.on_heartbeat">
 <code class="descname">on_heartbeat</code><span class="sig-paren">(</span><em>sender</em>, <em>msgid</em>, <em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.on_heartbeat" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>a placeholder for a noop command. The actual &#8216;logic&#8217; for HEARTBEAT is
+in <code class="xref py py-meth docutils literal"><span class="pre">self.process_worker_message()</span></code> because any message from a worker
+counts as a HEARTBEAT</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="eventmq.router.Router.on_inform">
@@ -160,8 +187,16 @@
 </dd></dl>
 
 <dl class="method">
-<dt id="eventmq.router.Router.on_receive_reply">
-<code class="descname">on_receive_reply</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.on_receive_reply" title="Permalink to this definition">¶</a></dt>
+<dt id="eventmq.router.Router.on_receive_request">
+<code class="descname">on_receive_request</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.on_receive_request" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function is called when a message comes in from the client socket.
+It then calls <cite>on_command</cite>. If <cite>on_command</cite> isn&#8217;t found, then a
+warning is created.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.router.Router.process_worker_message">
+<code class="descname">process_worker_message</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.process_worker_message" title="Permalink to this definition">¶</a></dt>
 <dd><p>This method is called when a message comes in from the worker socket.
 It then calls <cite>on_command</cite>. If <cite>on_command</cite> isn&#8217;t found, then a warning
 is created.</p>
@@ -169,14 +204,6 @@ is created.</p>
 <dt>def on_inform(msg):</dt>
 <dd>pass</dd>
 </dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="eventmq.router.Router.on_receive_request">
-<code class="descname">on_receive_request</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.on_receive_request" title="Permalink to this definition">¶</a></dt>
-<dd><p>This function is called when a message comes in from the client socket.
-It then calls <cite>on_command</cite>. If <cite>on_command</cite> isn&#8217;t found, then a
-warning is created.</p>
 </dd></dl>
 
 <dl class="method">
@@ -190,6 +217,18 @@ warning is created.</p>
 <code class="descname">send_heartbeat</code><span class="sig-paren">(</span><em>socket</em>, <em>recipient</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.send_heartbeat" title="Permalink to this definition">¶</a></dt>
 <dd><p>Custom send heartbeat method to take into account the recipient that is
 needed when building messages</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; the socket to send the heartbeat with</li>
+<li><strong>recipient</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Worker I</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">

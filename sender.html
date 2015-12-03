@@ -147,11 +147,6 @@
 <dt id="eventmq.sender.Sender">
 <em class="property">class </em><code class="descclassname">eventmq.sender.</code><code class="descname">Sender</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.sender.Sender" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sends messages to a particular socket</p>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">Polling with this sender is currently only available via an eventloop
-(<code class="xref py py-mod docutils literal"><span class="pre">zmq.eventloop</span></code>)</p>
-</div>
 <dl class="attribute">
 <dt id="eventmq.sender.Sender.name">
 <code class="descname">name</code><a class="headerlink" href="#eventmq.sender.Sender.name" title="Permalink to this definition">¶</a></dt>
@@ -167,8 +162,7 @@
 <dl class="attribute">
 <dt id="eventmq.sender.Sender.zsocket">
 <code class="descname">zsocket</code><a class="headerlink" href="#eventmq.sender.Sender.zsocket" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="http://pyzmq.readthedocs.org/en/v15.0.0/api/zmq.html#zmq.Socket" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Socket</span></code></a> &#8211; socket wrapped up in a
-<code class="xref py py-class docutils literal"><span class="pre">zmqstream.ZMQStream</span></code></p>
+<dd><p><a class="reference external" href="http://pyzmq.readthedocs.org/en/v15.0.0/api/zmq.html#zmq.Socket" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Socket</span></code></a></p>
 </dd></dl>
 
 <dl class="method">
