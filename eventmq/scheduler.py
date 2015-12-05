@@ -17,18 +17,17 @@
 =============================
 Handles cron and other scheduled tasks
 """
+import logging
 import time
 
 from croniter import croniter
 from six import next
 
-from . import log
 from .sender import Sender
 from .utils.classes import HeartbeatMixin
-from .utils.devices import generate_device_name
 from .utils.timeutils import monotonic, seconds_until, timestamp
 
-logger = log.get_logger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class Scheduler(HeartbeatMixin):
@@ -48,10 +47,11 @@ class Scheduler(HeartbeatMixin):
 
         self.load_jobs()
 
-    def connect(self, addr=''):
+    def connect(self, addr='tcp://127.0.0.1:47290'):
         """
         Connect the scheduler to worker/router at `addr`
         """
+
 
     def load_jobs(self):
         """
@@ -117,4 +117,4 @@ class Scheduler(HeartbeatMixin):
                     logger.debug("Next execution will be in %ss" %
                                  seconds_until(self.jobs[i][0]))
 
-            time.sleep(1)
+            time.sleep(0.1)

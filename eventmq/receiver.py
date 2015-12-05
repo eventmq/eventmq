@@ -17,15 +17,16 @@
 ===========================
 The receiver is responsible for receiveing messages
 """
+import logging
 import uuid
 
 import zmq
 
-from . import constants, log
+from . import constants
 from .utils.classes import ZMQReceiveMixin, ZMQSendMixin
 
 
-logger = log.get_logger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class Receiver(ZMQReceiveMixin, ZMQSendMixin):

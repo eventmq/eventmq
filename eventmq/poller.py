@@ -17,14 +17,14 @@
 =======================
 Device for polling sockets
 """
+import logging
 import uuid
 
 import zmq
 from zmq import Poller as ZPoller
 
-from . import log
 
-logger = log.get_logger(__package__)
+logger = logging.getLogger(__name__)
 
 POLLIN = zmq.POLLIN
 POLLOUT = zmq.POLLOUT

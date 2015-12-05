@@ -18,19 +18,21 @@
 Routes messages to workers (that are in named queues).
 """
 from copy import copy
-import uuid
+import logging
 
-from . import conf, exceptions, log, poller, receiver
+from . import conf, exceptions, poller, receiver
 from .constants import STATUS
 from .utils.classes import HeartbeatMixin
 from .utils.messages import (
     send_emqp_router_message as sendmsg,
+    fwd_emqp_router_message as fwdmsg,
     parse_router_message
 )
+from .utils.devices import generate_device_name
 from .utils.timeutils import monotonic, timestamp
 
 
-logger = log.get_logger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class Router(HeartbeatMixin):
@@ -40,7 +42,7 @@ class Router(HeartbeatMixin):
     def __init__(self, *args, **kwargs):
         super(Router, self).__init__(*args, **kwargs)  # Creates _meta
 
-        self.name = str(uuid.uuid4())
+        self.name = generate_device_name()
         logger.info('Initializing Router %s...' % self.name)
 
         self.poller = poller.Poller()
@@ -141,14 +143,14 @@ class Router(HeartbeatMixin):
         """
         self._meta['last_sent_heartbeat'] = monotonic()
 
-        for k in self.workers:
-            self.send_heartbeat(self.outgoing, k)
+        for worker_id in self.workers:
+            self.send_heartbeat(self.outgoing, worker_id)
 
     def on_heartbeat(self, sender, msgid, msg):
         """
         a placeholder for a noop command. The actual 'logic' for HEARTBEAT is
-        in :meth:`self.process_worker_message` because any message from a worker
-        counts as a HEARTBEAT
+        in :meth:`self.process_worker_message` because any message from a
+        worker counts as a HEARTBEAT
         """
 
     def on_inform(self, sender, msgid, msg):
@@ -158,19 +160,15 @@ class Router(HeartbeatMixin):
         logger.info('Received INFORM request from %s' % sender)
         queue_name = msg[0]
 
-        # Add the worker to our worker dict
-        self.workers[sender] = {}
-        self.workers[sender]['queues'] = queue_name
-
-        # Add the worker to the queues it supports
-        if queue_name in self.queues:
-            self.queues[queue_name] += (sender,)
-        else:
-            self.queues[queue_name] = (sender,)
-        logger.debug('Adding %s to the worker pool for %s' %
-                     (sender, queue_name))
+        self.add_worker(sender, queue_name)
 
         self.send_ack(self.outgoing, sender, msgid)
+
+    def on_ready(self, sender, msgid, msg):
+        """
+        A worker that we should already know about is ready for another job
+        """
+        self.requeue_worker(sender)
 
     def clean_up_dead_workers(self):
         """
@@ -189,6 +187,7 @@ class Router(HeartbeatMixin):
 
             # If a worker started, then immediatly died then no hb dictionary
             # was created so we should just remove that worker.
+            # hb stands for heartbeat
             if 'hb' not in self.workers[worker_id]:
                 logger.info('Removing worker %s from the queue due to no '
                             'heartbeat' % (worker_id))
@@ -202,7 +201,7 @@ class Router(HeartbeatMixin):
                 # Remove the worker from the actual worker queues
                 del self.workers[worker_id]
 
-    def add_worker(self, id, queues=None):
+    def add_worker(self, worker_id, queues=None):
         """
         Adds a worker to worker queues
 
@@ -210,6 +209,32 @@ class Router(HeartbeatMixin):
             worker_id: unique id of the worker to add
             queues: queue or queues this worker should be a member of
         """
+        # Add the worker to our worker dict
+        self.workers[worker_id] = {}
+        self.workers[worker_id]['queues'] = queues
+
+        # Add the worker to the queues it supports
+        if queues in self.queues:
+            self.queues[queues] += [worker_id, ]
+        else:
+            self.queues[queues] = [worker_id, ]
+        logger.debug('Adding %s to the worker pool for %s' %
+                     (worker_id, str(queues)))
+
+    def requeue_worker(self, worker_id):
+        """
+        Add a worker back to the queue pool
+        """
+        if worker_id in self.workers:
+            queues = self.workers[worker_id].get('queues', None)
+        else:
+            queues = None
+
+        if queues:
+            logger.debug('Readding worker {} to queues {}'.
+                         format(worker_id, queues))
+
+            self.queues[queues].append(worker_id)
 
     def on_receive_request(self, msg):
         """
@@ -224,18 +249,24 @@ class Router(HeartbeatMixin):
 
         queue_name = message[3][0]
 
-        # cheat here and forward the message to the workers
-        self.outgoing.zsocket.send_multipart(msg)
-
         # If we have no workers for the queue TODO something about it
         if queue_name not in self.queues:
             logger.warning("Received REQUEST with a queue I don't recognize")
 
+        try:
+            worker_addr = self.queues[queue_name].pop()
+        except IndexError:
+            # There were no workers in the queue
+            raise NotImplementedError("TODO: buffer when there are no workers "
+                                      "waiting in the queue")
+
+        fwdmsg(self.outgoing, worker_addr, msg[1:])
+
     def process_worker_message(self, msg):
         """
         This method is called when a message comes in from the worker socket.
-        It then calls `on_command`. If `on_command` isn't found, then a warning
-        is created.
+        It then calls `on_COMMAND.lower()`. If `on_command` isn't found, then
+        a warning is created.
 
         def on_inform(msg):
             pass

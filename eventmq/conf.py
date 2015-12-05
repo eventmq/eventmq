@@ -2,6 +2,11 @@
 # at different levels in the application
 SUPER_DEBUG = True
 
+# When a queue name isn't specified use this queue name for the default. It
+# would be a good idea to have a handful of workers listening on this queue
+# unless you're positive that everything specifies a queue with workers.
+DEFAULT_QUEUE_NAME = 'default'
+
 # {{{Job Manager
 # How long should we wait before retrying to connect to a broker?
 RECONNECT_TIMEOUT = 5  # in seconds

@@ -17,18 +17,19 @@
 ================================
 Ensures things about jobs and spawns the actual tasks
 """
+import logging
 import uuid
 
-from . import conf, constants, exceptions, log, utils
+from . import conf, constants, exceptions, utils
 from .poller import Poller, POLLIN
 from .sender import Sender
 from .utils.classes import HeartbeatMixin
 from .utils.messages import send_emqp_message as sendmsg
 import utils.messages
-from .utils.timeutils import monotonic, timestamp
+from .utils.timeutils import monotonic
 
 
-logger = log.get_logger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class JobManager(HeartbeatMixin):
@@ -49,7 +50,6 @@ class JobManager(HeartbeatMixin):
                  generated.
         """
         super(JobManager, self).__init__(*args, **kwargs)
-        print self._meta
         self.name = kwargs.get('name', str(uuid.uuid4()))
         logger.info('Initializing JobManager %s...' % self.name)
         self.incoming = Sender()
@@ -141,6 +141,13 @@ class JobManager(HeartbeatMixin):
                         'Reconnecting...')
                     break
 
+    def on_request(self, msgid, msg):
+        """
+        Handles a REQUEST command
+        """
+        logger.debug("WHAT")
+        self.send_ready()
+
     def process_message(self, msg):
         """
         Processes a message
@@ -160,26 +167,31 @@ class JobManager(HeartbeatMixin):
             logger.error('Invalid message: %s' % str(msg))
             return
 
-        if conf.SUPER_DEBUG:
-            logger.debug("Received Message: %s" % msg)
-
         command = message[0]
         msgid = message[1]
         message = message[2]
 
         if hasattr(self, "on_%s" % command.lower()):
-            logger.debug('Calling on_%s' % command.lower())
+            if conf.SUPER_DEBUG:
+                logger.debug('Calling on_%s' % command.lower())
             func = getattr(self, "on_%s" % command.lower())
             func(msgid, message)
         else:
             logger.warning('No handler for %s found (tried: %s)' %
                            (command, ('on_%s' % command.lower())))
 
-    def send_inform(self):
+    def send_ready(self):
+        """
+        send the READY command upstream to indicate that JobManager is ready
+        for another REQUEST message.
+        """
+        sendmsg(self.incoming, 'READY')
+
+    def send_inform(self, queue=None):
         """
         Send an INFORM command
         """
-        sendmsg(self.incoming, 'INFORM', 'default_queuename')
+        sendmsg(self.incoming, 'INFORM', queue or conf.DEFAULT_QUEUE_NAME)
         self._meta['last_sent_heartbeat'] = monotonic()
 
     def on_ack(self, msgid, ackd_msgid):
@@ -188,7 +200,7 @@ class JobManager(HeartbeatMixin):
         """
         # The msgid is the only frame in the message
         ackd_msgid = ackd_msgid[0]
-        logger.info('Received ACK for %s' % ackd_msgid)
+        logger.info('Received ACK for router (or client) %s' % ackd_msgid)
         self.awaiting_startup_ack = False
 
     def on_heartbeat(self, msgid, message):

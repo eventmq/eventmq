@@ -17,14 +17,15 @@
 =======================
 The sender is responsible for sending messages
 """
+import logging
 import uuid
 
 import zmq
 
-from . import constants, exceptions, log
+from . import constants, exceptions
 from .utils.classes import ZMQReceiveMixin, ZMQSendMixin
 
-logger = log.get_logger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class Sender(ZMQSendMixin, ZMQReceiveMixin):

@@ -16,8 +16,12 @@
 :mod:`messages` -- Message Utilities
 ==========================================
 """
-from .. import constants, log, exceptions
+import logging
+
+from .. import constants, exceptions
 from . import random_characters
+
+logger = logging.getLogger(__name__)
 
 
 def parse_router_message(message):
@@ -84,22 +88,20 @@ def generate_msgid(prefix=None):
     id = random_characters()
     return id if not prefix else str(prefix) + id
 
-logger = log.get_logger(__file__)
-
 
 def send_emqp_message(socket, command, message=None):
     """
     Formats and sends an eMQP message
 
     Args:
-
+        socket
+        command
+        message
     Raises:
-
-    Returns
     """
     msg = (str(command).upper(), generate_msgid())
     if message and isinstance(message, (tuple, list)):
-        msg += message
+        msg += tuple(message)
     elif message:
         msg += (message,)
 
@@ -129,3 +131,16 @@ def send_emqp_router_message(socket, recipient_id, command, message=None):
 
     socket.send_multipart(msg, constants.PROTOCOL_VERSION,
                           _recipient_id=recipient_id)
+
+
+def fwd_emqp_router_message(socket, recipient_id, payload):
+    """
+    Forwards `payload` to socket untouched.
+
+    .. note:
+       Because it's untouched, and because this function targets
+       :prop:`zmq.ROUTER`, it may be a good idea to first strip off the
+       leading sender id before forwarding it. If you dont you will need to
+       account for that on the recipient side.
+    """
+    socket.zsocket.send_multipart([recipient_id, ] + payload)

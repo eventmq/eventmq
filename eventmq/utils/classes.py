@@ -17,13 +17,15 @@
 =================================
 Defines some classes to use when implementing ZMQ devices
 """
+import logging
+
 import zmq.error
 
-from .. import conf, exceptions, log
+from .. import conf, exceptions
 from ..utils.messages import send_emqp_message as sendmsg
 from ..utils.timeutils import monotonic, timestamp
 
-logger = log.get_logger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class HeartbeatMixin(object):
@@ -99,13 +101,19 @@ class ZMQReceiveMixin(object):
         """
         Receive a message
         """
-        return self.zsocket.recv()
+        msg = self.zsocket.recv()
+        if conf.SUPER_DEBUG:
+            logger.debug('Received message: {}'.format(msg))
+        return msg
 
     def recv_multipart(self):
         """
         Receive a multipart message
         """
-        return self.zsocket.recv_multipart()
+        msg = self.zsocket.recv_multipart()
+        if conf.SUPER_DEBUG:
+            logger.debug('Received message: {}'.format(msg))
+        return msg
 
 
 class ZMQSendMixin(object):
@@ -117,16 +125,16 @@ class ZMQSendMixin(object):
         """
         Send a message directly to the 0mq socket. Automatically inserts some
         frames for your convience. The sent frame ends up looking something
-        like identity
+        like this
 
-            (this, '', protocol_version) + (your, tuple)
+            (_recipient_id, '', protocol_version) + (your, tuple)
 
         Args:
             message (tuple): Raw message to send.
             protocol_version (str): protocol version. it's good practice but
                 you may explicitly specify None to skip adding the version
             _recipient_id (object): When using a :attr:`zmq.ROUTER` you must
-                specify the the recipient id of the
+                specify the the recipient id of the remote socket
         """
         supported_msg_types = (tuple, list)
         if not isinstance(message, supported_msg_types):
@@ -143,7 +151,10 @@ class ZMQSendMixin(object):
             headers = ('', protocol_version, )
 
         msg = headers + message
-        logger.debug('Sending message: %s' % str(msg))
+
+        if conf.SUPER_DEBUG:
+            logger.debug('Sending message: %s' % str(msg))
+
         try:
             self.zsocket.send_multipart(msg)
         except zmq.error.ZMQError as e:
@@ -159,5 +170,4 @@ class ZMQSendMixin(object):
             protocol_version (str): protocol version. it's good practice, but
                 you may explicitly specify None to skip adding the version
         """
-        logger.debug('Sending message: %s' % str(message))
         self.send_multipart((message, ), protocol_version)

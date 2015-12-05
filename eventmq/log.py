@@ -1,10 +1,14 @@
 """
 log module for eventmq
+
+this needs so much work.
 """
 import logging
 
 import zmq
 import zmq.log.handlers
+
+import watchtower
 
 
 FORMAT_STANDARD = logging.Formatter(
@@ -28,12 +32,16 @@ class handlers(object):
     """
     PUBLISH_HANDLER = PUBHandler
     STREAM_HANDLER = logging.StreamHandler
+    CLOUDWATCH_HANDLER = watchtower.CloudWatchLogHandler
 
 
-def get_logger(name, formatter=FORMAT_NAMELESS,
-               handler=handlers.STREAM_HANDLER):
-    logger = logging.getLogger(name)
+def setup_logger(base_name, formatter=FORMAT_STANDARD,
+                 handler=handlers.STREAM_HANDLER):
+
+    logger = logging.getLogger(base_name)
     logger.setLevel(logging.DEBUG)
+
+    # remove handlers we don't want
     for h in logger.handlers:
         logger.removeHandler(h)
 
@@ -45,7 +53,9 @@ def get_logger(name, formatter=FORMAT_NAMELESS,
         time.sleep(1)
 
         handler = handler(_handler_sock)
-        handler.root_topic = name
+        handler.root_topic = base_name
+    elif handler == handlers.CLOUDWATCH_HANDLER:
+        handler = handler(log_group='eventmq-dev')
     else:
         handler = handler()
 
