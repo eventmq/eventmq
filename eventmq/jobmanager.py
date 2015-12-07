@@ -17,6 +17,8 @@
 ================================
 Ensures things about jobs and spawns the actual tasks
 """
+from importlib import import_module
+import json
 import logging
 import uuid
 
@@ -144,8 +146,80 @@ class JobManager(HeartbeatMixin):
     def on_request(self, msgid, msg):
         """
         Handles a REQUEST command
+
+        Messages are formatted like this:
+        [subcmd(str), {
+            ...options...
+        }]
+
+        Subcommands:
+            run - run some callable. Options:
+                {
+                  'callable': func or method name (eg. walk),
+                  'path': module path (eg. os.path),
+                  'args': (optional) list of args,
+                  'kwargs': (optional) dict of kwargs,
+                  'class_args': (optional) list of args for class
+                      instantiation,
+                  'class_kwargs': (optional) dict of kwargs for class,
+                }
+
+        .. note:
+           If you want to run a method from a class you must specify the class
+           name in the path preceeded with a colon. 'name.of.mypacakge:MyClass'
+
         """
-        logger.debug(msg)
+        # s_ indicates the string path vs the actual module and class
+        print msg
+        queue_name = msg[0]
+
+        ## run callable
+        payload = json.loads(msg[2])
+        subcmd = payload[0]
+        params = payload[1]
+        print subcmd
+        print params
+        if ":" in params["path"]:
+            _pkgsplit = params["path"].split(':')
+            s_package = _pkgsplit[0]
+            s_cls = _pkgsplit[1]
+        else:
+            s_package = params["path"]
+            s_cls = None
+
+        s_callable = params["callable"]
+
+        package = import_module(s_package)
+        if s_cls:
+            cls = getattr(package, s_cls)
+
+            if "class_args" in params:
+                class_args = params["class_args"]
+            else:
+                class_args = ()
+
+            if "class_kwargs" in params:
+                class_kwargs = params["class_kwargs"]
+            else:
+                class_kwargs = {}
+
+            obj = cls(*class_args, **class_kwargs)
+            callable_ = getattr(obj, s_callable)
+        else:
+            callable_ = getattr(package, s_callable)
+
+        if "args" in params:
+            args = params["args"]
+        else:
+            args = ()
+
+        if "kwargs" in params:
+            kwargs = params["kwargs"]
+        else:
+            kwargs = {}
+
+        callable_(*args, **kwargs)
+
         self.send_ready()
 
     def process_message(self, msg):
@@ -172,9 +246,6 @@ class JobManager(HeartbeatMixin):
         message = message[2]
 
         if hasattr(self, "on_%s" % command.lower()):
-            if conf.SUPER_DEBUG:
-                if "HEARTBEAT" != command or not conf.HIDE_HEARTBEAT_LOGS:
-                    logger.debug('Calling on_%s' % command.lower())
             func = getattr(self, "on_%s" % command.lower())
             func(msgid, message)
         else:

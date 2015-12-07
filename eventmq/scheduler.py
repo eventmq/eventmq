@@ -61,24 +61,7 @@ class Scheduler(HeartbeatMixin):
         Loads the jobs that need to be scheduled
         """
         raw_jobs = (
-            ('*/2 * * * *', 'health.cron.check_device_health'),  # renew winrt push tokens
-            ('30 12,21 * * *', 'apns.cron.winrt_refresh_credential'),  # renew calendar watches
-            ('0 11 * * *', 'calendars.cron.renew_watches'),
-            ('0 * * * *', 'calendars.cron.send_checkin_notifications'),
-            ('* * * * *', 'calendars.cron.mark_events_as_ended'),
-            ('* * * * *', 'calendars.cron.exchange2007_polling'),  # renew calendar watches (exchange)
-            ('0 */2 * * *', 'calendars.cron.renew_ews_push_tokens'),  # renew calendar watches (exchange)
-            ('1 5 * * *', 'calendars.cron.delete_old_events'),
-            ('0 8 * * *', 'support.cron.expire_stale_support_pins'),
-            ('5 8 * * 6', 'analytics.cron.weekly_mozilla_report'),
-            ('0 10 * * *', 'crm.cron.unmark_out_of_office'),
-            ('1 6 * * *', 'devices.cron.status_cleanup'),
-            ('42 13 * * *', 'drip.cron.send_drips'),
-            ('0 9 * * *', 'billing.cron.suspend_expired_trials'),
-            ('1 6 * * *', 'billing.cron.create_subscription_invoices'),  # run at 8AM EST
-            # ('0 12 * * *',           'analytics.cron.hunt_zombies'),
-            ('0 * * * *',
-             'integrations.plugins.o365.tasks.sync_all_active_plugins')
+            ('* * * * *', 'eventmq.scheduler.test_job'),
         )
         ts = int(timestamp())
         for job in raw_jobs:
@@ -130,3 +113,11 @@ class Scheduler(HeartbeatMixin):
                                  seconds_until(self.jobs[i][0]))
 
             time.sleep(0.1)
+
+
+def test_job():
+    print "hello!"
+    print "hello!"
+    print "hello!"
+    print "hello!"
+    time.sleep(4)
