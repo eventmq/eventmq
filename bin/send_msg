@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+"""
+Usage: ./send_msg <ipaddresss> <command> <frame w/ values space separated>
+"""
+import sys
+
+from eventmq.sender import Sender
+from eventmq.client.messages import send_request
+
+
+if __name__ == "__main__":
+    s = Sender()
+    s.connect(sys.argv[1])
+
+    msg = ['run', {
+           'path': 'path.to.some.module:Class',
+           'callable': 'do_thing',
+           'class_args': ('blurp',),
+           'class_kwargs': {'kwarg1': True},
+           'args': ('arg1', 'arg2'),
+           'kwargs': {'kwarg1': 'something'}
+           }]
+
+    send_request(s, msg, guarantee=True, reply_requested=True)

@@ -22,6 +22,12 @@ from .. import conf
 from ..utils.messages import send_emqp_message
 
 
+def defer_job():
+    """
+    sends a job to a worker
+    """
+
+
 def send_request(socket, message, reply_requested=False, guarantee=False,
                  retry_count=0, queue=None):
     """
@@ -29,6 +35,26 @@ def send_request(socket, message, reply_requested=False, guarantee=False,
 
     Default headers are always all disabled by default. If they are included in
     the headers then they have been enabled.
+
+    To execute a task, the message should be formatted as follows:
+    {subcommand(str), {
+        # dot path location where callable can be imported. If callable is a
+        # method on a class, the class should always come last, and be
+        # seperated with a colon. (So we know to instantiate on the receiving
+        # end)
+        'path': path(str),
+        # function or method name to run
+        'callable': callable(str),
+        # Optional args for callable
+        'args': (arg, arg),
+        # Optional kwargs for callable
+        'kwargs': {'kwarg': kwarg},
+        # Optional class args, kwargs
+        'class_args': (arg2, arg3),
+        'class_kwargs': {'kwarg2': kwarg}
+
+        }
+    }
     """
     headers = []
 

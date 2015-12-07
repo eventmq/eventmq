@@ -1,6 +1,8 @@
 # SUPER_DEBUG basically enables more debugging logs. specifically of messages
 # at different levels in the application
 SUPER_DEBUG = True
+# Don't show HEARTBEAT message when debug logging is enabled
+HIDE_HEARTBEAT_LOGS = True
 
 # When a queue name isn't specified use this queue name for the default. It
 # would be a good idea to have a handful of workers listening on this queue

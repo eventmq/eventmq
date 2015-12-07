@@ -145,7 +145,7 @@ class JobManager(HeartbeatMixin):
         """
         Handles a REQUEST command
         """
-        logger.debug("WHAT")
+        logger.debug(msg)
         self.send_ready()
 
     def process_message(self, msg):
@@ -173,7 +173,8 @@ class JobManager(HeartbeatMixin):
 
         if hasattr(self, "on_%s" % command.lower()):
             if conf.SUPER_DEBUG:
-                logger.debug('Calling on_%s' % command.lower())
+                if "HEARTBEAT" != command or not conf.HIDE_HEARTBEAT_LOGS:
+                    logger.debug('Calling on_%s' % command.lower())
             func = getattr(self, "on_%s" % command.lower())
             func(msgid, message)
         else:

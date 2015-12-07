@@ -68,8 +68,11 @@ class Router(HeartbeatMixin):
         # Keys:
         #    queues: list() of queues the worker belongs to
         #    hb: monotonic timestamp of the last received message from worker
-        self.workers = {
-        }
+        self.workers = {}
+
+        # Message buffer. When messages can't be sent because there are no
+        # workers available to take the job
+        self.waiting_messages = {}
 
     def start(self,
               frontend_addr='tcp://127.0.0.1:47290',
@@ -168,15 +171,33 @@ class Router(HeartbeatMixin):
         """
         A worker that we should already know about is ready for another job
         """
-        self.requeue_worker(sender)
+        queue_name = None  # stores the queue name
+        # if there are waiting messages for the queues this worker is a member
+        # of, then reply back with the oldest waiting message, otherwise just
+        # add the worker to the list of available workers.
+        if self.workers[sender]['queues'] in self.waiting_messages:
+            queue_name = self.workers[sender]['queues']
+
+            logger.debug('Found waiting message in the %s waiting messages '
+                         'queue' % queue_name)
+            msg = self.waiting_messages[queue_name].pop()
+            fwdmsg(self.outgoing, sender, msg[1:])  # strip off client id.
+
+            # It is easier to check if a key exists rather than the len of a
+            # key if it exists, so if that was the last message remove the
+            # queue
+            if len(self.waiting_messages[queue_name]) is 0:
+                logger.debug('No more messages in waiting_messages queue %s. '
+                             'Removing...' % queue_name)
+                del self.waiting_messages[queue_name]
+        else:
+                self.requeue_worker(sender)
 
     def clean_up_dead_workers(self):
         """
         Loops through the worker queues and removes any workers who haven't
         responded in HEARTBEAT_TIMEOUT
         """
-        logger.debug('Cleaning up workers...')
-
         now = monotonic()
         self._meta['last_worker_cleanup'] = now
 
@@ -218,6 +239,7 @@ class Router(HeartbeatMixin):
             self.queues[queues] += [worker_id, ]
         else:
             self.queues[queues] = [worker_id, ]
+
         logger.debug('Adding %s to the worker pool for %s' %
                      (worker_id, str(queues)))
 
@@ -252,15 +274,23 @@ class Router(HeartbeatMixin):
         # If we have no workers for the queue TODO something about it
         if queue_name not in self.queues:
             logger.warning("Received REQUEST with a queue I don't recognize")
-
+        print self.queues
         try:
             worker_addr = self.queues[queue_name].pop()
+        except KeyError:
+            logger.critical("REQUEST for an unknown queue")
+            return
         except IndexError:
-            # There were no workers in the queue
-            raise NotImplementedError("TODO: buffer when there are no workers "
-                                      "waiting in the queue")
+            logger.warning('No available workers for queue "%s". Buffering '
+                           'message to send later.' % queue_name)
+            if queue_name not in self.waiting_messages:
+                self.waiting_messages[queue_name] = []
+            self.waiting_messages[queue_name].append(msg)
+            logger.debug('%d waiting messages in queue "%s"' %
+                         (len(self.waiting_messages[queue_name]), queue_name))
+            return
 
-        fwdmsg(self.outgoing, worker_addr, msg[1:])
+        fwdmsg(self.outgoing, worker_addr, msg[1:])  # strip off the client id
 
     def process_worker_message(self, msg):
         """

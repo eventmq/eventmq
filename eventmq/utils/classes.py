@@ -103,7 +103,9 @@ class ZMQReceiveMixin(object):
         """
         msg = self.zsocket.recv()
         if conf.SUPER_DEBUG:
-            logger.debug('Received message: {}'.format(msg))
+            if not ("HEARTBEAT" == msg[2] or "HEARTBEAT" == msg[3]) or \
+               not conf.HIDE_HEARTBEAT_LOGS:
+                logger.debug('Received message: {}'.format(msg))
         return msg
 
     def recv_multipart(self):
@@ -112,7 +114,9 @@ class ZMQReceiveMixin(object):
         """
         msg = self.zsocket.recv_multipart()
         if conf.SUPER_DEBUG:
-            logger.debug('Received message: {}'.format(msg))
+            if not ("HEARTBEAT" == msg[2] or "HEARTBEAT" == msg[3]) or \
+               not conf.HIDE_HEARTBEAT_LOGS:
+                logger.debug('Received message: {}'.format(msg))
         return msg
 
 
@@ -153,7 +157,9 @@ class ZMQSendMixin(object):
         msg = headers + message
 
         if conf.SUPER_DEBUG:
-            logger.debug('Sending message: %s' % str(msg))
+            if not ("HEARTBEAT" == msg[2] or "HEARTBEAT" == msg[3]) or \
+               not conf.HIDE_HEARTBEAT_LOGS:
+                logger.debug('Sending message: %s' % str(msg))
 
         try:
             self.zsocket.send_multipart(msg)

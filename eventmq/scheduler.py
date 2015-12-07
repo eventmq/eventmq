@@ -26,6 +26,8 @@ from six import next
 from .sender import Sender
 from .utils.classes import HeartbeatMixin
 from .utils.timeutils import monotonic, seconds_until, timestamp
+from .client.messages import send_request
+
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +53,7 @@ class Scheduler(HeartbeatMixin):
         """
         Connect the scheduler to worker/router at `addr`
         """
+        self.outgoing.connect(addr)
 
 
     def load_jobs(self):
@@ -58,8 +61,7 @@ class Scheduler(HeartbeatMixin):
         Loads the jobs that need to be scheduled
         """
         raw_jobs = (
-            # heartbeat emails
-            ('* * * * *', 'health.cron.check_device_health'),  # renew winrt push tokens
+            ('*/2 * * * *', 'health.cron.check_device_health'),  # renew winrt push tokens
             ('30 12,21 * * *', 'apns.cron.winrt_refresh_credential'),  # renew calendar watches
             ('0 11 * * *', 'calendars.cron.renew_watches'),
             ('0 * * * *', 'calendars.cron.send_checkin_notifications'),
@@ -105,13 +107,23 @@ class Scheduler(HeartbeatMixin):
         """
         while True:
             ts_now = int(timestamp())
-            m_now = monotonic()
 
             for i in range(0, len(self.jobs)):
                 if self.jobs[i][0] <= ts_now:  # If the time is now, or passed
+                    job = self.jobs[i][1]
+                    path = '.'.join(job.split('.')[:-1])
+                    callable_ = job.split('.')[-1]
+
                     # Run the job
                     logger.debug("Time is: %s; Schedule is: %s - Running %s"
-                                 % (ts_now, self.jobs[i][0], self.jobs[i][1]))
+                                 % (ts_now, self.jobs[i][0], job))
+
+                    msg = ['run', {
+                        'path': path,
+                        'callable': callable_
+                    }]
+                    send_request(self.outgoing, msg)
+
                     # Update the next time to run
                     self.jobs[i][0] = next(self.jobs[i][2])
                     logger.debug("Next execution will be in %ss" %
