@@ -16,8 +16,6 @@ import os.path  # used for deferjob test
 from testfixtures import LogCapture
 import unittest
 
-import zmq
-
 from ..receiver import Receiver
 from ..sender import Sender
 from ..client import messages
@@ -34,6 +32,7 @@ class TestClass(object):
         """
         return True
 
+
 class CallableTestClass(object):
     def __call__(self):
         return True
@@ -41,6 +40,8 @@ class CallableTestClass(object):
 
 class TestCase(unittest.TestCase):
     def test_defer_job(self):
+        import json
+
         out = Sender()
         in_ = Receiver()
 
@@ -51,6 +52,13 @@ class TestCase(unittest.TestCase):
 
         # An index error here means the frames weren't properly formatted
         msg = in_.recv_multipart()[7]
+
+        self.assertEqual(json.loads(msg), ["run", {"args": [],
+                                                   "class_args": [],
+                                                   "callable": "walk",
+                                                   "kwargs": {},
+                                                   "path": "posixpath",
+                                                   "class_kwargs": {}}])
 
         with LogCapture() as log_checker:
             # don't blow up on a non-callable
@@ -70,7 +78,6 @@ class TestCase(unittest.TestCase):
             # log an error if a callable instance object is passed
             callable_obj = CallableTestClass()
             messages.defer_job(out, callable_obj)
-
 
             log_checker.check(
                 ('eventmq.client.messages',

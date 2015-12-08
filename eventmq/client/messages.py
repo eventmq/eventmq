@@ -28,11 +28,33 @@ logger = logging.getLogger(__name__)
 
 def defer_job(socket, func, args=(), kwargs=None, class_args=(),
               class_kwargs=None, reply_requested=False, guarantee=False,
-              retry_count=0, queue=None):
+              retry_count=0, queue=conf.DEFAULT_QUEUE_NAME):
     """
-    sends a job to a worker to execute.
+    Used to send a job to a worker to execute via `socket`.
 
-    This should not raise any exceptions, so always check your response.
+    This tries not to raise any exceptions so use some of the message flags to
+    guarentee things.
+
+    Args:
+        socket (socket): eventmq socket to use for sending the message
+        func (callable): the callable to be deferred to a worker
+        args (list): list of *args for the callable
+        kwargs (dict): dict of **kwargs for the callable
+        class_args (list): list of *args to pass to the the class when
+            initializing (if applicable).
+        class_kwargs (dict): dict of **kwargs to pass to the class when
+            initializing (if applicable).
+        reply_requested (bool): request the return value of func as a reply
+        guarantee (bool): (Give your best effort) to guarantee that func is
+            executed. Exceptions and things will be logged.
+        retry_count (int): How many times should be retried when encountering
+            an Exception or some other failure before giving up. (default: 0
+            or immediatly fail)
+        queue (str): Name of queue to use when executing the job. Default: is
+            configured default queue name
+    Returns:
+        bool: True if the message was successfully queued, False if something
+        went wrong. If something did go wrong check the logs for details.
     """
     callable_name = None
     path = None
@@ -47,18 +69,18 @@ def defer_job(socket, func, args=(), kwargs=None, class_args=(),
 
     else:
         logger.error('Encountered non-callable func: {}'.format(func))
-        return
+        return False
 
     # Check for and log errors
     if not callable_name:
         logger.error('Encountered callable with no name in {}'.
                      format(func.__module__))
-        return
+        return False
 
     if not path:
         logger.error('Encountered callable with no __module__ path {}'.
                      format(func.func_name))
-        return
+        return False
 
     msg = ['run', {
         'callable': callable_name,
@@ -72,6 +94,8 @@ def defer_job(socket, func, args=(), kwargs=None, class_args=(),
     send_request(socket, msg, reply_requested=reply_requested,
                  guarantee=guarantee, retry_count=retry_count, queue=queue)
 
+    return True
+
 
 def build_module_path(func):
     """
@@ -84,8 +108,9 @@ def build_module_path(func):
 
     Args:
         func (callable): The function or method to build the path for
-
-    Returns (list): (import path (w/ class seperated by a ':'), callable name)
+    Returns:
+        list: (import path (w/ class seperated by a ':'), callable name) or
+        (None, None) on error
     """
     callable_name = None
 
@@ -141,6 +166,17 @@ def send_request(socket, message, reply_requested=False, guarantee=False,
 
         }
     }
+    Args:
+        socket (socket): Socket to use when sending `message`
+        message: message to send to `socket`
+        reply_requested (bool): request the return value of func as a reply
+        guarantee (bool): (Give your best effort) to guarantee that func is
+            executed. Exceptions and things will be logged.
+        retry_count (int): How many times should be retried when encountering
+            an Exception or some other failure before giving up. (default: 0
+            or immediatly fail)
+        queue (str): Name of queue to use when executing the job. Default: is
+            configured default queue name
     """
     headers = []
 
@@ -170,3 +206,4 @@ def job(block=False):  # Move to decorators.py
             that would otherwise overwhelm a box that has to do it all alone.
             (decryption?)
     """
+    raise NotImplementedError('eventmq.client.messages.job')
