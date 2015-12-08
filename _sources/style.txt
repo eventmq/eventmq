@@ -1,0 +1,4 @@
+Style Guide
+===========
+
+ - Thou shalt not cross 80 columns in thy file

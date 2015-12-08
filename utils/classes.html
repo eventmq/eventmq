@@ -270,9 +270,9 @@ you may explicitly specify None to skip adding the version</li>
 <code class="descname">send_multipart</code><span class="sig-paren">(</span><em>message</em>, <em>protocol_version</em>, <em>_recipient_id=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.classes.ZMQSendMixin.send_multipart" title="Permalink to this definition">¶</a></dt>
 <dd><p>Send a message directly to the 0mq socket. Automatically inserts some
 frames for your convience. The sent frame ends up looking something
-like identity</p>
+like this</p>
 <blockquote>
-<div>(this, &#8216;&#8217;, protocol_version) + (your, tuple)</div></blockquote>
+<div>(_recipient_id, &#8216;&#8217;, protocol_version) + (your, tuple)</div></blockquote>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -282,7 +282,7 @@ like identity</p>
 <li><strong>protocol_version</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; protocol version. it&#8217;s good practice but
 you may explicitly specify None to skip adding the version</li>
 <li><strong>_recipient_id</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#object" title="(in Python v2.7)"><em>object</em></a>) &#8211; When using a <code class="xref py py-attr docutils literal"><span class="pre">zmq.ROUTER</span></code> you must
-specify the the recipient id of the</li>
+specify the the recipient id of the remote socket</li>
 </ul>
 </td>
 </tr>

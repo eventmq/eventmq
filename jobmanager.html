@@ -182,6 +182,38 @@ HEARTBEAT</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="eventmq.jobmanager.JobManager.on_request">
+<code class="descname">on_request</code><span class="sig-paren">(</span><em>msgid</em>, <em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.on_request" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles a REQUEST command</p>
+<p>Messages are formatted like this:
+[subcmd(str), {</p>
+<blockquote>
+<div>...options...</div></blockquote>
+<p>}]</p>
+<dl class="docutils">
+<dt>Subcommands:</dt>
+<dd><dl class="first last docutils">
+<dt>run - run some callable. Options:</dt>
+<dd><dl class="first docutils">
+<dt>{</dt>
+<dd><p class="first">&#8216;callable&#8217;: func or method name (eg. walk),
+&#8216;path&#8217;: module path (eg. os.path),
+&#8216;args&#8217;: (optional) list of args,
+&#8216;kwargs&#8217;: (optional) dict of kwargs,
+&#8216;class_args&#8217;: (optional) list of args for class</p>
+<blockquote>
+<div>instantiation,</div></blockquote>
+<p class="last">&#8216;class_kwargs&#8217;: (optional) dict of kwargs for class,</p>
+</dd>
+</dl>
+<p class="last">}</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
 <dt id="eventmq.jobmanager.JobManager.process_message">
 <code class="descname">process_message</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.process_message" title="Permalink to this definition">¶</a></dt>
 <dd><p>Processes a message</p>
@@ -204,8 +236,15 @@ Processing takes form of calling an <cite>on_COMMAND</cite> method.</td>
 
 <dl class="method">
 <dt id="eventmq.jobmanager.JobManager.send_inform">
-<code class="descname">send_inform</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.send_inform" title="Permalink to this definition">¶</a></dt>
+<code class="descname">send_inform</code><span class="sig-paren">(</span><em>queue=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.send_inform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Send an INFORM command</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.jobmanager.JobManager.send_ready">
+<code class="descname">send_ready</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.send_ready" title="Permalink to this definition">¶</a></dt>
+<dd><p>send the READY command upstream to indicate that JobManager is ready
+for another REQUEST message.</p>
 </dd></dl>
 
 <dl class="method">

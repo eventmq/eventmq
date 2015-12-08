@@ -150,6 +150,12 @@
   <span class="target" id="module-eventmq.utils.messages"></span><div class="section" id="messages-message-utilities">
 <h1><code class="xref py py-mod docutils literal"><span class="pre">messages</span></code> &#8211; Message Utilities<a class="headerlink" href="#messages-message-utilities" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
+<dt id="eventmq.utils.messages.fwd_emqp_router_message">
+<code class="descclassname">eventmq.utils.messages.</code><code class="descname">fwd_emqp_router_message</code><span class="sig-paren">(</span><em>socket</em>, <em>recipient_id</em>, <em>payload</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.messages.fwd_emqp_router_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Forwards <cite>payload</cite> to socket untouched.</p>
+</dd></dl>
+
+<dl class="function">
 <dt id="eventmq.utils.messages.generate_msgid">
 <code class="descclassname">eventmq.utils.messages.</code><code class="descname">generate_msgid</code><span class="sig-paren">(</span><em>prefix=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.messages.generate_msgid" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a random string to be used for message ids. Optionally the ID can
