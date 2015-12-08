@@ -48,7 +48,8 @@ class TestCase(unittest.TestCase):
         in_.listen('ipc://test_defer_job')
         out.connect('ipc://test_defer_job')
 
-        messages.defer_job(out, os.path.walk)
+        messages.defer_job(out, os.path.walk, reply_requested=True,
+                           guarantee=True, retry_count=3, queue='test_queue')
 
         # An index error here means the frames weren't properly formatted
         msg = in_.recv_multipart()[7]

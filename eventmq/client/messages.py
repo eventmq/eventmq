@@ -79,7 +79,7 @@ def defer_job(socket, func, args=(), kwargs=None, class_args=(),
 
     if not path:
         logger.error('Encountered callable with no __module__ path {}'.
-                     format(func.func_name))
+                     format(func.__name__))
         return False
 
     msg = ['run', {

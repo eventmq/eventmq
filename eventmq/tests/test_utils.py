@@ -14,8 +14,8 @@
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
 import unittest
 
-from .. import exceptions, utils
-from ..utils import messages, classes
+from .. import exceptions
+from ..utils import messages
 
 
 class TestCase(unittest.TestCase):
