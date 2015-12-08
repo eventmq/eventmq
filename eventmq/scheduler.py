@@ -25,7 +25,7 @@ from six import next
 
 from .sender import Sender
 from .utils.classes import HeartbeatMixin
-from .utils.timeutils import monotonic, seconds_until, timestamp
+from .utils.timeutils import seconds_until, timestamp
 from .client.messages import send_request
 
 
@@ -54,7 +54,6 @@ class Scheduler(HeartbeatMixin):
         Connect the scheduler to worker/router at `addr`
         """
         self.outgoing.connect(addr)
-
 
     def load_jobs(self):
         """

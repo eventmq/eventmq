@@ -52,7 +52,7 @@ class JobManager(HeartbeatMixin):
                  generated.
         """
         super(JobManager, self).__init__(*args, **kwargs)
-        self.name = kwargs.get('name', str(uuid.uuid4()))
+        self.name = kwargs.pop('name', str(uuid.uuid4()))
         logger.info('Initializing JobManager %s...' % self.name)
         self.incoming = Sender()
         self.poller = Poller()
@@ -129,6 +129,8 @@ class JobManager(HeartbeatMixin):
                 msg = self.incoming.recv_multipart()
                 self.process_message(msg)
 
+            # TODO: Optimization: Move the method calls into another thread so
+            # they don't block the event loop
             if not conf.DISABLE_HEARTBEATS:
                 # Send a HEARTBEAT if necessary
                 if now - self._meta['last_sent_heartbeat'] >= \
@@ -170,15 +172,13 @@ class JobManager(HeartbeatMixin):
 
         """
         # s_ indicates the string path vs the actual module and class
-        print msg
-        queue_name = msg[0]
+        # queue_name = msg[0]
 
-        ## run callable
+        # run callable
         payload = json.loads(msg[2])
-        subcmd = payload[0]
+        # subcmd = payload[0]
         params = payload[1]
-        print subcmd
-        print params
+
         if ":" in params["path"]:
             _pkgsplit = params["path"].split(':')
             s_package = _pkgsplit[0]

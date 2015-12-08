@@ -55,7 +55,7 @@ class Router(HeartbeatMixin):
 
         self.status = STATUS.ready
 
-        # Tracks the last time the worker queues were cleaned
+        # Tracks the last time the worker queues were cleaned of dead workers
         self._meta['last_worker_cleanup'] = 0
 
         # Worker queues by queue name. The lists here are Last Recently Used
@@ -111,6 +111,8 @@ class Router(HeartbeatMixin):
                 msg = self.outgoing.recv_multipart()
                 self.process_worker_message(msg)
 
+            # TODO: Optimization: the calls to functions could be done in
+            #     another thread so they don't block the loop
             if not conf.DISABLE_HEARTBEATS:
                 # Send a HEARTBEAT if necessary
                 if now - self._meta['last_sent_heartbeat'] >= \
@@ -125,6 +127,11 @@ class Router(HeartbeatMixin):
     def send_ack(self, socket, recipient, msgid):
         """
         Sends an ACK response
+
+        Args:
+            socket (socket): The socket to use for this ack
+            recipient (str): The recipient id for the ack
+            msgid: The unique id that we are acknowledging
         """
         logger.info('Sending ACK to %s' % recipient)
         sendmsg(socket, recipient, 'ACK', msgid)
@@ -142,7 +149,7 @@ class Router(HeartbeatMixin):
 
     def send_workers_heartbeats(self):
         """
-        Send heartbeats to the registered workers.
+        Send heartbeats to all registered workers.
         """
         self._meta['last_sent_heartbeat'] = monotonic()
 
@@ -151,14 +158,15 @@ class Router(HeartbeatMixin):
 
     def on_heartbeat(self, sender, msgid, msg):
         """
-        a placeholder for a noop command. The actual 'logic' for HEARTBEAT is
+        a placeholder for a no-op command. The actual 'logic' for HEARTBEAT is
         in :meth:`self.process_worker_message` because any message from a
         worker counts as a HEARTBEAT
         """
 
     def on_inform(self, sender, msgid, msg):
         """
-        Handles an INFORM message. Usually when new worker coming online
+        Handles an INFORM message. This happens when new worker coming online
+        and announces itself.
         """
         logger.info('Received INFORM request from %s' % sender)
         queue_name = msg[0]
@@ -170,6 +178,11 @@ class Router(HeartbeatMixin):
     def on_ready(self, sender, msgid, msg):
         """
         A worker that we should already know about is ready for another job
+
+        Args:
+            sender (str): The id of the sender
+            msgid (str): Unique identifier for this message
+            msg: The actual message that was sent
         """
         queue_name = None  # stores the queue name
         # if there are waiting messages for the queues this worker is a member
@@ -263,6 +276,9 @@ class Router(HeartbeatMixin):
         This function is called when a message comes in from the client socket.
         It then calls `on_command`. If `on_command` isn't found, then a
         warning is created.
+
+        Args:
+            msg: The untouched message from zmq
         """
         try:
             message = parse_router_message(msg)
@@ -273,12 +289,17 @@ class Router(HeartbeatMixin):
 
         # If we have no workers for the queue TODO something about it
         if queue_name not in self.queues:
-            logger.warning("Received REQUEST with a queue I don't recognize")
-        print self.queues
+            logger.warning("Received REQUEST with a queue I don't recognize: "
+                           "%s" % queue_name)
+            logger.critical("Discarding message")
+            # TODO: Don't discard teh message
+            return
+
         try:
             worker_addr = self.queues[queue_name].pop()
         except KeyError:
-            logger.critical("REQUEST for an unknown queue")
+            logger.critical("REQUEST for an unknown queue caught in exception")
+            logger.critical("Discarding message")
             return
         except IndexError:
             logger.warning('No available workers for queue "%s". Buffering '
@@ -298,8 +319,8 @@ class Router(HeartbeatMixin):
         It then calls `on_COMMAND.lower()`. If `on_command` isn't found, then
         a warning is created.
 
-        def on_inform(msg):
-            pass
+        Args:
+            msg: The untouched message from zmq
         """
         try:
             message = parse_router_message(msg)
