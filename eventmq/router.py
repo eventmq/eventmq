@@ -271,6 +271,11 @@ class Router(HeartbeatMixin):
 
             self.queues[queues].append(worker_id)
 
+    def queue_message(self, msg):
+        """
+        Add a message to the queue for processing later
+        """
+
     def on_receive_request(self, msg):
         """
         This function is called when a message comes in from the client socket.
@@ -292,7 +297,7 @@ class Router(HeartbeatMixin):
             logger.warning("Received REQUEST with a queue I don't recognize: "
                            "%s" % queue_name)
             logger.critical("Discarding message")
-            # TODO: Don't discard teh message
+            # TODO: Don't discard the message
             return
 
         try:
@@ -311,7 +316,13 @@ class Router(HeartbeatMixin):
                          (len(self.waiting_messages[queue_name]), queue_name))
             return
 
-        fwdmsg(self.outgoing, worker_addr, msg[1:])  # strip off the client id
+        try:
+            # strip off the client id before forwarding
+            fwdmsg(self.outgoing, worker_addr, msg[1:])
+        except exceptions.PeerGoneAwayError as e:
+            logger.exception(e)
+            # TODO: Do something better than calling yourself as this could
+            self.on_receive_request(msg)  # TODO: cause an infinite loop
 
     def process_worker_message(self, msg):
         """

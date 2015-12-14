@@ -20,12 +20,12 @@ Ensures things about jobs and spawns the actual tasks
 from importlib import import_module
 import json
 import logging
-import uuid
 
 from . import conf, constants, exceptions, utils
 from .poller import Poller, POLLIN
 from .sender import Sender
 from .utils.classes import HeartbeatMixin
+from .utils.devices import generate_device_name
 from .utils.messages import send_emqp_message as sendmsg
 import utils.messages
 from .utils.timeutils import monotonic
@@ -52,8 +52,8 @@ class JobManager(HeartbeatMixin):
                  generated.
         """
         super(JobManager, self).__init__(*args, **kwargs)
-        self.name = kwargs.pop('name', str(uuid.uuid4()))
-        logger.info('Initializing JobManager %s...' % self.name)
+        self.name = kwargs.pop('name', generate_device_name())
+        logger.info('Initializing JobManager %s...'.format(self.name))
         self.incoming = Sender()
         self.poller = Poller()
 
@@ -218,7 +218,10 @@ class JobManager(HeartbeatMixin):
         else:
             kwargs = {}
 
-        callable_(*args, **kwargs)
+        try:
+            callable_(*args, **kwargs)
+        except Exception as e:
+            logger.exception(e.message)
 
         self.send_ready()
 

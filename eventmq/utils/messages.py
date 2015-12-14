@@ -143,4 +143,16 @@ def fwd_emqp_router_message(socket, recipient_id, payload):
        leading sender id before forwarding it. If you dont you will need to
        account for that on the recipient side.
     """
-    socket.zsocket.send_multipart([recipient_id, ] + payload)
+    import zmq
+
+    try:
+        socket.zsocket.send_multipart([recipient_id, ] + payload)
+    except zmq.error.ZMQError as e:
+        logger.critical(dir(e))
+        logger.critical(e.errno)
+        if e.errno == 113:
+            e.message = e.message + " {}".format(recipient_id)
+            raise exceptions.PeerGoneAwayError(e)
+        else:
+            raise exceptions.EventMQError("errno{}: {}".format(e.errno,
+                                                               str(e)))

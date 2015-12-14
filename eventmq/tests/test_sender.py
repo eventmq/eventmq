@@ -43,3 +43,30 @@ class TestCase(unittest.TestCase):
     def test_send_multipart_unicode(self):
         # Test that send_multipart handles unicode safely
         pass
+
+    def test_listen(self):
+        # test that the listen method functions correctly
+        with self.assertRaises(sender.exceptions.EventMQError):
+            self.sender.status = 'something else'
+            self.sender.listen('ipc://emq-test_sender.ipc')
+
+        # put the status back
+        self.sender.status = sender.constants.STATUS.ready
+        self.sender.listen('ipc://emq-test_sender.ipc')
+        self.assertEqual(self.sender.status, sender.constants.STATUS.listening)
+
+    def test_connect(self):
+        # test that the connect method functions correctly
+        with self.assertRaises(sender.exceptions.EventMQError):
+            self.sender.status = 'something else'
+            self.sender.connect()
+
+        self.sender.status = sender.constants.STATUS.ready
+        self.sender.connect('ipc://emq-test_sender.ipc')
+
+    def test_rebuild(self):
+        self.sender.listen('ipc://emq-test_sender.ipc')
+        self.assertEqual(self.sender.status, sender.constants.STATUS.listening)
+
+        self.sender.rebuild()
+        self.assertEqual(self.sender.status, sender.constants.STATUS.ready)
