@@ -18,7 +18,7 @@
 """
 import logging
 
-from .. import constants, exceptions
+from .. import conf, constants, exceptions
 from . import random_characters
 
 logger = logging.getLogger(__name__)
@@ -145,8 +145,11 @@ def fwd_emqp_router_message(socket, recipient_id, payload):
     """
     import zmq
 
+    payload = [recipient_id, ] + payload
+    if conf.SUPER_DEBUG:
+        logger.debug('Forwarding message: {}'.format(str(payload)))
     try:
-        socket.zsocket.send_multipart([recipient_id, ] + payload)
+        socket.zsocket.send_multipart(payload)
     except zmq.error.ZMQError as e:
         logger.critical(dir(e))
         logger.critical(e.errno)
