@@ -217,21 +217,12 @@ class Router(HeartbeatMixin):
         # Because workers are removed from inside the loop, a copy is needed to
         # prevent the dict we are iterating over from changing.
         workers = copy(self.workers)
+
         for worker_id in workers:
-
-            # If a worker started, then immediatly died then no hb dictionary
-            # was created so we should just remove that worker.
-            # hb stands for heartbeat
-            if 'hb' not in self.workers[worker_id]:
-                logger.info('Removing worker %s from the queue due to no '
-                            'heartbeat' % (worker_id))
-                del self.workers[worker_id]
-                continue
-
             last_hb_seconds = now - self.workers[worker_id]['hb']
             if last_hb_seconds >= conf.HEARTBEAT_TIMEOUT:
-                logger.info("No messages from worker %s in %s. Removing from "
-                            "the queue" % (worker_id, last_hb_seconds))
+                logger.info("No messages from worker {} in {}. Removing from "
+                            "the queue".format(worker_id, last_hb_seconds))
                 # Remove the worker from the actual worker queues
                 del self.workers[worker_id]
 
@@ -246,6 +237,7 @@ class Router(HeartbeatMixin):
         # Add the worker to our worker dict
         self.workers[worker_id] = {}
         self.workers[worker_id]['queues'] = queues
+        self.workers[worker_id]['hb'] = monotonic()
 
         # Add the worker to the queues it supports
         if queues in self.queues:
@@ -317,12 +309,16 @@ class Router(HeartbeatMixin):
             return
 
         try:
-            # strip off the client id before forwarding
+            # strip off the client id before forwarding because the worker
+            # isn't expecting it, and the zmq socket is going to put our
+            # id on it.
             fwdmsg(self.outgoing, worker_addr, msg[1:])
-        except exceptions.PeerGoneAwayError as e:
-            logger.exception(e)
+        except exceptions.PeerGoneAwayError:
+            logger.debug("Worker {} has unexpectedly gone away. Trying "
+                         "another worker".format(worker_addr))
+
             # TODO: Do something better than calling yourself as this could
-            self.on_receive_request(msg)  # TODO: cause an infinite loop
+            self.on_receive_request(msg)  # ...cause an infinite loop
 
     def process_worker_message(self, msg):
         """
