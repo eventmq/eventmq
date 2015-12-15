@@ -17,7 +17,6 @@
 ================================
 Ensures things about jobs and spawns the actual tasks
 """
-from importlib import import_module
 import json
 import logging
 
@@ -29,7 +28,7 @@ from .utils.devices import generate_device_name
 from .utils.messages import send_emqp_message as sendmsg
 import utils.messages
 from .utils.timeutils import monotonic
-
+from .worker import MultiprocessWorker as Worker
 
 logger = logging.getLogger(__name__)
 
@@ -179,50 +178,10 @@ class JobManager(HeartbeatMixin):
         # subcmd = payload[0]
         params = payload[1]
 
-        if ":" in params["path"]:
-            _pkgsplit = params["path"].split(':')
-            s_package = _pkgsplit[0]
-            s_cls = _pkgsplit[1]
-        else:
-            s_package = params["path"]
-            s_cls = None
+        w = Worker()
+        w.run(params)  # Spawns job w/ multiprocess
 
-        s_callable = params["callable"]
-
-        package = import_module(s_package)
-        if s_cls:
-            cls = getattr(package, s_cls)
-
-            if "class_args" in params:
-                class_args = params["class_args"]
-            else:
-                class_args = ()
-
-            if "class_kwargs" in params:
-                class_kwargs = params["class_kwargs"]
-            else:
-                class_kwargs = {}
-
-            obj = cls(*class_args, **class_kwargs)
-            callable_ = getattr(obj, s_callable)
-        else:
-            callable_ = getattr(package, s_callable)
-
-        if "args" in params:
-            args = params["args"]
-        else:
-            args = ()
-
-        if "kwargs" in params:
-            kwargs = params["kwargs"]
-        else:
-            kwargs = {}
-
-        try:
-            callable_(*args, **kwargs)
-        except Exception as e:
-            logger.exception(e.message)
-
+        # self.available_workers -= 1
         self.send_ready()
 
     def process_message(self, msg):
