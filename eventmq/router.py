@@ -19,6 +19,8 @@ Routes messages to workers (that are in named queues).
 """
 from copy import copy
 import logging
+import threading
+import warnings
 
 from . import conf, exceptions, poller, receiver
 from .constants import STATUS
@@ -55,23 +57,29 @@ class Router(HeartbeatMixin):
 
         self.status = STATUS.ready
 
-        # Tracks the last time the worker queues were cleaned of dead workers
+        #: Tracks the last time the worker queues were cleaned of dead workers
         self._meta['last_worker_cleanup'] = 0
 
-        # Worker queues by queue name. The lists here are Last Recently Used
-        # queues where a worker is popped off when given a job, and appeneded
-        # when one finishes
+        #: JobManager address by queue name. The lists here are Last Recently
+        #: Used queues where a worker is popped off when given a job, and
+        #: appeneded when one finishes. There is one entry per available
+        #: worker slot, so you may see duplicate addresses.
+        #:
+        #: Example:
+        #:     {'default': ['w1', 'w2', 'w1', 'w4']}
         self.queues = {}
 
-        # List of queues by workers. This helps to clear out old workers from
-        # self.queues.
-        # Keys:
-        #    queues: list() of queues the worker belongs to
-        #    hb: monotonic timestamp of the last received message from worker
+        #: List of queues by workers. Meta data about the worker such as the
+        #: queue memebership and timestamp of last message received are stored
+        #: here.
+        #:
+        #: **Keys**
+        #:  * queues: list() of queues the worker belongs to
+        #:  * hb: monotonic timestamp of the last received message from worker
         self.workers = {}
 
-        # Message buffer. When messages can't be sent because there are no
-        # workers available to take the job
+        #: Message buffer. When messages can't be sent because there are no
+        #: workers available to take the job
         self.waiting_messages = {}
 
     def start(self,
@@ -112,7 +120,7 @@ class Router(HeartbeatMixin):
                 self.process_worker_message(msg)
 
             # TODO: Optimization: the calls to functions could be done in
-            #     another thread so they don't block the loop
+            #     another thread so they don't block the loop. syncronize
             if not conf.DISABLE_HEARTBEATS:
                 # Send a HEARTBEAT if necessary
                 if now - self._meta['last_sent_heartbeat'] >= \
@@ -184,10 +192,12 @@ class Router(HeartbeatMixin):
             msgid (str): Unique identifier for this message
             msg: The actual message that was sent
         """
-        queue_name = None  # stores the queue name
         # if there are waiting messages for the queues this worker is a member
         # of, then reply back with the oldest waiting message, otherwise just
         # add the worker to the list of available workers.
+        # Note: This is only taking into account the queue the worker is
+        # returning from, and not other queue_names that might have had
+        # messages waiting even longer.
         if self.workers[sender]['queues'] in self.waiting_messages:
             queue_name = self.workers[sender]['queues']
 
@@ -197,11 +207,11 @@ class Router(HeartbeatMixin):
             fwdmsg(self.outgoing, sender, msg[1:])  # strip off client id.
 
             # It is easier to check if a key exists rather than the len of a
-            # key if it exists, so if that was the last message remove the
-            # queue
+            # key if it exists elsewhere, so if that was the last message
+            # remove the queue
             if len(self.waiting_messages[queue_name]) is 0:
                 logger.debug('No more messages in waiting_messages queue %s. '
-                             'Removing...' % queue_name)
+                             'Removing from list...' % queue_name)
                 del self.waiting_messages[queue_name]
         else:
                 self.requeue_worker(sender)
@@ -223,7 +233,12 @@ class Router(HeartbeatMixin):
             if last_hb_seconds >= conf.HEARTBEAT_TIMEOUT:
                 logger.info("No messages from worker {} in {}. Removing from "
                             "the queue".format(worker_id, last_hb_seconds))
-                # Remove the worker from the actual worker queues
+
+                # Remove the worker from the actual queues
+                for queue in self.workers[worker_id]['queues']:
+                    while worker_id in self.queues[queue]:
+                        self.queues[queue].remove(worker_id)
+
                 del self.workers[worker_id]
 
     def add_worker(self, worker_id, queues=None):
@@ -236,37 +251,41 @@ class Router(HeartbeatMixin):
         """
         # Add the worker to our worker dict
         self.workers[worker_id] = {}
-        self.workers[worker_id]['queues'] = queues
+        self.workers[worker_id]['queues'] = (queues,)
         self.workers[worker_id]['hb'] = monotonic()
 
-        # Add the worker to the queues it supports
-        if queues in self.queues:
-            self.queues[queues] += [worker_id, ]
-        else:
-            self.queues[queues] = [worker_id, ]
-
-        logger.debug('Adding %s to the worker pool for %s' %
-                     (worker_id, str(queues)))
+        logger.debug('Adding {} to the self.workers for queues:{}'.format(
+                     worker_id, str(queues)))
 
     def requeue_worker(self, worker_id):
         """
-        Add a worker back to the queue pool
+        Add a worker back to the pools for which it is a member of.
+
+        .. note::
+           This will (correctly) add duplicate items into the queues.
         """
         if worker_id in self.workers:
             queues = self.workers[worker_id].get('queues', None)
         else:
             queues = None
 
-        if queues:
-            logger.debug('Readding worker {} to queues {}'.
-                         format(worker_id, queues))
+        logger.debug('Readding worker {} to queues {}'.
+                     format(worker_id, queues))
 
-            self.queues[queues].append(worker_id)
+        for queue in queues:
+            if queue not in self.queues:
+                self.queues[queue] = []
+            self.queues[queue].append(worker_id)
+
+            if conf.SUPER_DEBUG:
+                logger.debug('Worker queue update:')
+                logger.debug('{}'.format(self.queues))
 
     def queue_message(self, msg):
         """
         Add a message to the queue for processing later
         """
+        raise NotImplementedError()
 
     def on_receive_request(self, msg):
         """
@@ -317,8 +336,8 @@ class Router(HeartbeatMixin):
             logger.debug("Worker {} has unexpectedly gone away. Trying "
                          "another worker".format(worker_addr))
 
-            # TODO: Do something better than calling yourself as this could
-            self.on_receive_request(msg)  # ...cause an infinite loop
+            # TODO: Rewrite this logic as a loop
+            self.on_receive_request(msg)
 
     def process_worker_message(self, msg):
         """

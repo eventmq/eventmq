@@ -51,16 +51,34 @@ class JobManager(HeartbeatMixin):
                  generated.
         """
         super(JobManager, self).__init__(*args, **kwargs)
+
+        #: Define the name of this JobManager instance. Useful to know when
+        #: referring to the logs.
         self.name = kwargs.pop('name', generate_device_name())
         logger.info('Initializing JobManager %s...'.format(self.name))
+
+        #: Number of workers that are available to have a job executed. This
+        #: number changes as workers become busy with jobs
+        self.available_workers = 4
+
+        #: JobManager starts out by INFORMing the router of it's existance,
+        #: then telling the router that it is READY. The reply will be the unit
+        #: of work.
         self.incoming = Sender()
+
+        #: Jobs that are running should be stored in `active_jobs`. There
+        #: should always be at most `available_workers` count of active jobs.
+        #: this point the manager should wait for a slot to free up.
+        self.active_jobs = []
+
         self.poller = Poller()
 
         self._setup()
 
     def _setup(self):
         """
-        Gets JobManager ready to connect to a broker
+        Prepares JobManager ready to connect to a broker. Actions that must
+        also run on a reset are here.
         """
         # Look for incoming events
         self.poller.register(self.incoming, POLLIN)
@@ -82,26 +100,32 @@ class JobManager(HeartbeatMixin):
             self.awaiting_startup_ack = True
             self.send_inform()
 
+            # We don't want to accidentally start processing jobs before our
+            # connection has been setup completely and acknowledged.
             while self.awaiting_startup_ack:
-                # Poller timeout is in ms so we multiply it to get seconds
+                # Poller timeout is in ms so the reconnect timeout is
+                # multiplied by 1000 to get seconds
                 events = self.poller.poll(conf.RECONNECT_TIMEOUT * 1000)
-                if self.incoming in events:
-                    msg = self.incoming.recv_multipart()
-                    # We don't want to accidentally start processing jobs
-                    # before our conenction has been setup completely and
-                    # acknowledged.
-                    if msg[2] != "ACK":
-                        # TODO This will silently drop messages that aren't ACK
-                        continue
-                    self.process_message(msg)
 
-            if not self.awaiting_startup_ack:
-                logger.info('Starting to listen for jobs')
-                self.status = constants.STATUS.connected
-                self._start_event_loop()
-                # When we return, soemthing has gone wrong and we should try to
-                # reconnect
-                self.reset()
+                if self.incoming in events:  # A message from the Router!
+                    msg = self.incoming.recv_multipart()
+                    # TODO This will silently drop messages that aren't ACK
+                    if msg[2] == "ACK":
+                        # :meth:`on_ack` will set self.awaiting_startup_ack to
+                        # False
+                        self.process_message(msg)
+
+            # Acknowledgment has come
+            # Send a READY for each available worker
+            for i in range(0, self.available_workers):
+                self.send_ready()
+
+            self.status = constants.STATUS.connected
+            logger.info('Starting to listen for jobs')
+            self._start_event_loop()
+            # When we return, soemthing has gone wrong and we should try to
+            # reconnect
+            self.reset()
 
     def reset(self):
         """
@@ -127,6 +151,13 @@ class JobManager(HeartbeatMixin):
             if events.get(self.incoming) == POLLIN:
                 msg = self.incoming.recv_multipart()
                 self.process_message(msg)
+
+            # Maintain the list of active jobs
+            for job in self.active_jobs:
+                if not job.is_alive():
+                    self.active_jobs.remove(job)
+                    self.available_workers += 1
+                    self.send_ready()
 
             # TODO: Optimization: Move the method calls into another thread so
             # they don't block the event loop
@@ -180,9 +211,9 @@ class JobManager(HeartbeatMixin):
 
         w = Worker()
         w.run(params)  # Spawns job w/ multiprocess
+        self.active_jobs.append(w)
 
-        # self.available_workers -= 1
-        self.send_ready()
+        self.available_workers -= 1
 
     def process_message(self, msg):
         """

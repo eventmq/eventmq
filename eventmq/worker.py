@@ -28,11 +28,25 @@ class MultiprocessWorker(object):
     """
     Defines a worker that spans the job in a multiprocessing task
     """
+    def __init__(self):
+        self.process = None
+
     def run(self, payload):
         """
-        process a message
+        Begins processing a job in another process
         """
-        ### Spawn in a new multiprocess
+        self.process = multiprocessing.Process(
+            target=self._run, args=(payload,)
+        )
+        self.process.start()
+
+    def _run(self, payload):
+        """
+        process a run message and execute a job
+
+        This is designed to run in a seperate process.
+        """
+        # Spawn in a new multiprocess
         if ":" in payload["path"]:
             _pkgsplit = payload["path"].split(':')
             s_package = _pkgsplit[0]
@@ -72,10 +86,12 @@ class MultiprocessWorker(object):
         else:
             kwargs = {}
 
+        try:
+            callable_(*args, **kwargs)
+        except Exception as e:
+            logger.exception(e.message)
 
-        # try:
-        #     callable_(*args, **kwargs)
-        # except Exception as e:
-        #     logger.exception(e.message)
-
-        multiprocessing.Process(target=callable_, args=args, kwargs=kwargs).start()
+    def is_alive(self):
+        if self.process:
+            return self.process.is_alive()
+        return False
