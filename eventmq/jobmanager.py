@@ -20,26 +20,26 @@ Ensures things about jobs and spawns the actual tasks
 import json
 import logging
 
-from . import conf, constants, exceptions, utils
+from . import conf
 from .poller import Poller, POLLIN
 from .sender import Sender
-from .utils.classes import HeartbeatMixin
+from .utils.classes import EMQPService, HeartbeatMixin
 from .utils.devices import generate_device_name
 from .utils.messages import send_emqp_message as sendmsg
-import utils.messages
 from .utils.timeutils import monotonic
 from .worker import MultiprocessWorker as Worker
 
 logger = logging.getLogger(__name__)
 
 
-class JobManager(HeartbeatMixin):
+class JobManager(HeartbeatMixin, EMQPService):
     """
     The exposed portion of the worker. The job manager's main responsibility is
     to manage the resources on the server it's running.
 
     This job manager uses tornado's eventloop.
     """
+    SERVICE_TYPE = 'worker'
 
     def __init__(self, *args, **kwargs):
         """
@@ -64,7 +64,8 @@ class JobManager(HeartbeatMixin):
         #: JobManager starts out by INFORMing the router of it's existance,
         #: then telling the router that it is READY. The reply will be the unit
         #: of work.
-        self.incoming = Sender()
+        # Despite the name, jobs are received on this socket
+        self.outgoing = Sender()
 
         #: Jobs that are running should be stored in `active_jobs`. There
         #: should always be at most `available_workers` count of active jobs.
@@ -75,81 +76,21 @@ class JobManager(HeartbeatMixin):
 
         self._setup()
 
-    def _setup(self):
-        """
-        Prepares JobManager ready to connect to a broker. Actions that must
-        also run on a reset are here.
-        """
-        # Look for incoming events
-        self.poller.register(self.incoming, POLLIN)
-        self.awaiting_startup_ack = False
-
-        self.status = constants.STATUS.ready
-
-    def start(self, addr='tcp://127.0.0.1:47291'):
-        """
-        Connect to `addr` and begin listening for job requests
-
-        Args:
-            addr (str): connection string to connect to
-        """
-        while True:
-            self.status = constants.STATUS.connecting
-            self.incoming.connect(addr)
-
-            self.awaiting_startup_ack = True
-            self.send_inform()
-
-            # We don't want to accidentally start processing jobs before our
-            # connection has been setup completely and acknowledged.
-            while self.awaiting_startup_ack:
-                # Poller timeout is in ms so the reconnect timeout is
-                # multiplied by 1000 to get seconds
-                events = self.poller.poll(conf.RECONNECT_TIMEOUT * 1000)
-
-                if self.incoming in events:  # A message from the Router!
-                    msg = self.incoming.recv_multipart()
-                    # TODO This will silently drop messages that aren't ACK
-                    if msg[2] == "ACK":
-                        # :meth:`on_ack` will set self.awaiting_startup_ack to
-                        # False
-                        self.process_message(msg)
-
-            # Acknowledgment has come
-            # Send a READY for each available worker
-            for i in range(0, self.available_workers):
-                self.send_ready()
-
-            self.status = constants.STATUS.connected
-            logger.info('Starting to listen for jobs')
-            self._start_event_loop()
-            # When we return, soemthing has gone wrong and we should try to
-            # reconnect
-            self.reset()
-
-    def reset(self):
-        """
-        Resets the current connection by closing and reopening the socket
-        """
-        # Unregister the old socket from the poller
-        self.poller.unregister(self.incoming)
-
-        # Polish up a new socket to use
-        self.incoming.rebuild()
-
-        # Prepare the device to connect again
-        self._setup()
-
     def _start_event_loop(self):
         """
-        Starts the actual eventloop. Usually called by :meth:`JobManager.start`
+        Starts the actual eventloop. Usually called by :meth:`start`
         """
+        # Acknowledgment has come
+        # Send a READY for each available worker
+        for i in range(0, self.available_workers):
+            self.send_ready()
+
         while True:
             now = monotonic()
             events = self.poller.poll()
 
-            if events.get(self.incoming) == POLLIN:
-                msg = self.incoming.recv_multipart()
+            if events.get(self.outgoing) == POLLIN:
+                msg = self.outgoing.recv_multipart()
                 self.process_message(msg)
 
             # Maintain the list of active jobs
@@ -165,7 +106,7 @@ class JobManager(HeartbeatMixin):
                 # Send a HEARTBEAT if necessary
                 if now - self._meta['last_sent_heartbeat'] >= \
                    conf.HEARTBEAT_INTERVAL:
-                    self.send_heartbeat(self.incoming)
+                    self.send_heartbeat(self.outgoing)
 
                 # Do something about any missed HEARTBEAT, if we have nothing
                 # waiting on the socket
@@ -215,49 +156,12 @@ class JobManager(HeartbeatMixin):
 
         self.available_workers -= 1
 
-    def process_message(self, msg):
-        """
-        Processes a message
-
-        Args:
-            msg: The message received from the socket to parse and process.
-                Processing takes form of calling an `on_COMMAND` method.
-        """
-        # Any received message should count as a heartbeat
-        self._meta['last_received_heartbeat'] = monotonic()
-        if self._meta['heartbeat_miss_count']:
-            self._meta['heartbeat_miss_count'] = 0  # Reset the miss count too
-
-        try:
-            message = utils.messages.parse_message(msg)
-        except exceptions.InvalidMessageError:
-            logger.error('Invalid message: %s' % str(msg))
-            return
-
-        command = message[0]
-        msgid = message[1]
-        message = message[2]
-
-        if hasattr(self, "on_%s" % command.lower()):
-            func = getattr(self, "on_%s" % command.lower())
-            func(msgid, message)
-        else:
-            logger.warning('No handler for %s found (tried: %s)' %
-                           (command, ('on_%s' % command.lower())))
-
     def send_ready(self):
         """
         send the READY command upstream to indicate that JobManager is ready
         for another REQUEST message.
         """
-        sendmsg(self.incoming, 'READY')
-
-    def send_inform(self, queue=None):
-        """
-        Send an INFORM command
-        """
-        sendmsg(self.incoming, 'INFORM', queue or conf.DEFAULT_QUEUE_NAME)
-        self._meta['last_sent_heartbeat'] = monotonic()
+        sendmsg(self.outgoing, 'READY')
 
     def on_ack(self, msgid, ackd_msgid):
         """

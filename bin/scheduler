@@ -6,4 +6,4 @@ from eventmq.scheduler import Scheduler
 if __name__ == "__main__":
     setup_logger("eventmq")
     s = Scheduler()
-    s.start()
+    s.start(addr='tcp://127.0.0.1:47290')

@@ -26,6 +26,62 @@ from ..utils.messages import send_emqp_message
 logger = logging.getLogger(__name__)
 
 
+def schedule(socket, func, interval_mins, args=(), kwargs=None, class_args=(),
+             class_kwargs=None, queue=conf.DEFAULT_QUEUE_NAME):
+    """
+    Execute a task on a defined interval.
+
+    Args:
+        socket (socket): eventmq socket to use for sending the message
+        func (callable): the callable to be scheduled on a worker
+        minutes (int): minutes to wait in between executions
+        args (list): list of *args to pass to the callable
+        kwargs (dict): dict of **kwargs to pass to the callable
+        class_args (list): list of *args to pass to the class (if applicable)
+        class_kwargs (dict): dict of **kwargs to pass to the class (if
+            applicable)
+        queue (str): name of the queue to use when executing the job. The
+            default value is the default queue.
+    """
+    if not class_kwargs:
+        class_kwargs = {}
+    if not kwargs:
+        kwargs = {}
+
+    if callable(func):
+        path, callable_name = build_module_path(func)
+    else:
+        logger.error('Encountered non-callable func: {}'.format(func))
+        return False
+
+    if not callable_name:
+        logger.error('Encountered callable with no name in {}'.format(
+            func.__module__
+        ))
+        return False
+
+    if not path:
+        logger.error('Encountered callable with no __module__ path {}'.format(
+            func.__name__
+        ))
+        return False
+
+    # TODO: convert all the times to seconds for the clock
+
+    # TODO: send the schedule request
+
+    msg = ['run', {
+        'callable': callable_name,
+        'path': path,
+        'args': args,
+        'kwargs': kwargs,
+        'class_args': class_args,
+        'class_kwargs': class_kwargs,
+    }]
+
+    send_schedule_request(socket, 300, msg, queue)
+
+
 def defer_job(socket, func, args=(), kwargs=None, class_args=(),
               class_kwargs=None, reply_requested=False, guarantee=False,
               retry_count=0, queue=conf.DEFAULT_QUEUE_NAME):
@@ -94,7 +150,7 @@ def defer_job(socket, func, args=(), kwargs=None, class_args=(),
     send_request(socket, msg, reply_requested=reply_requested,
                  guarantee=guarantee, retry_count=retry_count, queue=queue)
 
-    return True
+    return True  # The message has successfully been queued for delivery
 
 
 def build_module_path(func):
@@ -194,6 +250,24 @@ def send_request(socket, message, reply_requested=False, guarantee=False,
                        ",".join(headers),
                        serialize(message))
                       )
+
+
+def send_schedule_request(socket, interval_secs, message, queue=None):
+    """
+    Send a SCHEDULE command.
+
+    Queues a message requesting that something happens on an
+    interval for the scheduler.
+
+    Args:
+        socket (socket):
+        interval_secs (int):
+        message: Message to send socket.
+    """
+    send_emqp_message(socket, 'SCHEDULE',
+                      (queue or conf.DEFAULT_QUEUE_NAME,
+                       str(interval_secs),
+                       serialize(message)))
 
 
 def job(block=False):  # Move to decorators.py
