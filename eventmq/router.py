@@ -82,6 +82,11 @@ class Router(HeartbeatMixin):
         #: workers available to take the job
         self.waiting_messages = {}
 
+        #: Scheduler clients. Clients are able to send SCHEDULE commands that
+        #: need to be routed to a scheduler, which will keep track of time and
+        #: run the job.
+        self.schedulers = []
+
     def start(self,
               frontend_addr='tcp://127.0.0.1:47290',
               backend_addr='tcp://127.0.0.1:47291'):
@@ -176,9 +181,9 @@ class Router(HeartbeatMixin):
         Handles an INFORM message. This happens when new worker coming online
         and announces itself.
         """
-        logger.info('Received INFORM request from %s' % sender)
         queue_name = msg[0]
-
+        client_type = msg[1]
+        logger.info('Received INFORM request from {} (type: {})'.format(sender, client_type))
         self.add_worker(sender, queue_name)
 
         self.send_ack(self.outgoing, sender, msgid)
@@ -305,8 +310,8 @@ class Router(HeartbeatMixin):
 
         # If we have no workers for the queue TODO something about it
         if queue_name not in self.queues:
-            logger.warning("Received REQUEST with a queue I don't recognize: "
-                           "%s" % queue_name)
+            logger.warning("Received %s with a queue I don't recognize: "
+                           "%s" % (msg[3], queue_name))
             logger.critical("Discarding message")
             # TODO: Don't discard the message
             return

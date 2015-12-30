@@ -24,7 +24,8 @@ from croniter import croniter
 from six import next
 
 from .sender import Sender
-from .utils.classes import HeartbeatMixin
+from .poller import Poller
+from .utils.classes import EMQPService, HeartbeatMixin
 from .utils.timeutils import seconds_until, timestamp
 from .client.messages import send_request
 
@@ -32,28 +33,27 @@ from .client.messages import send_request
 logger = logging.getLogger(__name__)
 
 
-class Scheduler(HeartbeatMixin):
+class Scheduler(HeartbeatMixin, EMQPService):
     """
     Keeper of time, master of schedules
     """
-
+    SERVICE_TYPE = 'scheduler'
     def __init__(self, *args, **kwargs):
         logger.info('Initializing Scheduler...')
         super(Scheduler, self).__init__(*args, **kwargs)
         self.outgoing = Sender()
 
+        # IDX     Description
         # 0 = the next ts this job should be executed
         # 1 = the function to be executed
         # 2 = the croniter iterator for this job
         self.jobs = []
 
+        self.poller = Poller()
+
         self.load_jobs()
 
-    def connect(self, addr='tcp://127.0.0.1:47290'):
-        """
-        Connect the scheduler to worker/router at `addr`
-        """
-        self.outgoing.connect(addr)
+        self._setup()
 
     def load_jobs(self):
         """
@@ -74,14 +74,6 @@ class Scheduler(HeartbeatMixin):
                 # the following time
                 c_next = next(c)
             self.jobs.append([c_next, job[1], c])
-
-    def start(self, addr='tcp://127.0.0.1:47290'):
-        """
-        Begin sending messages to execute scheduled jobs
-        """
-        self.connect(addr)
-
-        self._start_event_loop()
 
     def _start_event_loop(self):
         """
@@ -115,8 +107,6 @@ class Scheduler(HeartbeatMixin):
 
 
 def test_job():
-    print "hello!"
-    print "hello!"
     print "hello!"
     print "hello!"
     time.sleep(4)

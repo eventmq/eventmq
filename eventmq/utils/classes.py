@@ -21,11 +21,174 @@ import logging
 
 import zmq.error
 
-from .. import conf, exceptions
+from .. import conf, constants, exceptions, poller, utils
 from ..utils.messages import send_emqp_message as sendmsg
 from ..utils.timeutils import monotonic, timestamp
 
 logger = logging.getLogger(__name__)
+
+
+class EMQPService(object):
+    """
+    Helper for devices that connect to brokers.
+
+    Implements utility methods for sending EMQP messages for the following
+    EMQP commands.
+     - INFORM
+
+    Also implements utlitiy methods for managing long-running processes.
+
+    To use you must define:
+     - `self.outgoing` - socket where messages can be sent to the Router
+     - `self.SERVICE_TYPE` - defines the service type for INFORM. See
+       :meth:`send_inform` for more information.
+     - `self.poller` - the poller that `self.outgoing` will be using.
+       Usually: `self.poller = eventmq.poller.Poller()`
+
+    When messages are received from the router, they are processed in
+    :meth:`process_message` which then calls `on_COMMAND`, so if you want to
+    respond to the SCHEDULE command, you would define the method `on_schedule`
+    in your service class.
+
+    See the code for :class:`Scheduler` and :class:`JobManager` for examples.
+    """
+    def send_inform(self, queue=None):
+        """
+        Queues an INFORM command to `self.outgoing`.
+
+        Args:
+            type_ (str): Either 'worker' or 'scheduler'
+            queue (list):
+                - For 'worker' type, the queues the worker is listening on
+                - Ignored for 'scheduler' type
+
+        Raises:
+            ValueError: When `type_` does not match a specified type
+        """
+        valid_types = ('worker', 'scheduler')
+
+        if self.SERVICE_TYPE not in valid_types:
+            raise ValueError('{} not one of {}'.format(self.SERVICE_TYPE,
+                                                       valid_types))
+
+        sendmsg(self.outgoing, 'INFORM', [
+            queue or conf.DEFAULT_QUEUE_NAME,
+            self.SERVICE_TYPE
+        ])
+
+        # If heartbeating is active, update the last heartbeat time
+        if hasattr(self, '_meta') and 'last_sent_heartbeat' in self._meta:
+            self._meta['last_sent_heartbeat'] = monotonic()
+
+    def _setup(self):
+        """
+        Prepares the service to connect to a broker. Actions that must
+        also run on a reset are here.
+        """
+        # Look for incoming events
+        self.poller.register(self.outgoing, poller.POLLIN)
+        self.awaiting_startup_ack = False
+
+        self.status = constants.STATUS.ready
+
+    def start(self, addr, queues=conf.DEFAULT_QUEUE_NAME):
+        """
+        Connect to `addr` and begin listening for job requests
+
+        Args:
+            addr (str): connection string to connect to
+        """
+        while True:
+            self.status = constants.STATUS.connecting
+            self.outgoing.connect(addr)
+
+            # Setting this to false is how the loop is broken and the
+            # _event_loop is started.
+            self.awaiting_startup_ack = True
+
+            # If this is inside the loop, then many inform messages will stack
+            # up on the buffer until something is actually connected to.
+            self.send_inform(queues)
+
+            # We don't want to accidentally start processing jobs before our
+            # connection has been setup completely and acknowledged.
+            while self.awaiting_startup_ack:
+                # Poller timeout is in ms so the reconnect timeout is
+                # multiplied by 1000 to get seconds
+                events = self.poller.poll(conf.RECONNECT_TIMEOUT * 1000)
+
+                if self.outgoing in events:  # A message from the Router!
+                    msg = self.outgoing.recv_multipart()
+                    # TODO This will silently drop messages that aren't ACK
+                    if msg[2] == "ACK":
+                        # :meth:`on_ack` will set self.awaiting_startup_ack to
+                        # False
+                        self.process_message(msg)
+
+            self.status = constants.STATUS.connected
+            logger.info('Starting event loop...')
+            self._start_event_loop()
+            # When we return, soemthing has gone wrong and we should try to
+            # reconnect
+            self.reset()
+
+    def reset(self):
+        """
+        Resets the current connection by closing and reopening the socket
+        """
+        # Unregister the old socket from the poller
+        self.poller.unregister(self.incoming)
+
+        # Polish up a new socket to use
+        self.outgoing.rebuild()
+
+        # Prepare the device to connect again
+        self._setup()
+
+    def process_message(self, msg):
+        """
+        Processes a message. Processing takes form of calling an
+        `on_EMQP_COMMAND` method. The method must accept `msgid` and `message`
+        as the first arguments.
+
+        Args:
+            msg: The message received from the socket to parse and process.
+        """
+        if self.is_heartbeat_enabled:
+            # Any received message should count as a heartbeat
+            self._meta['last_received_heartbeat'] = monotonic()
+            if self._meta['heartbeat_miss_count']:
+                # Reset the miss count too
+                self._meta['heartbeat_miss_count'] = 0
+
+        try:
+            message = utils.messages.parse_message(msg)
+        except exceptions.InvalidMessageError:
+            logger.exception('Invalid message: %s' % str(msg))
+            return
+
+        command = message[0].lower()
+        msgid = message[1]
+        message = message[2]
+
+        if hasattr(self, "on_%s" % command):
+            func = getattr(self, "on_%s" % command)
+            func(msgid, message)
+        else:
+            logger.warning('No handler for %s found (tried: %s)' %
+                           (command.upper(), ('on_%s' % command)))
+
+    @property
+    def is_heartbeat_enabled(self):
+        """
+        Property to check if heartbeating is enabled. Useful when certain
+        properties must be updated for heartbeating
+        Returns:
+            bool - True if heartbeating is enabled, False if it isn't
+        """
+        if hasattr(self, '_meta') and 'last_sent_heartbeat' in self._meta:
+            return True
+        return False
 
 
 class HeartbeatMixin(object):
@@ -36,6 +199,7 @@ class HeartbeatMixin(object):
         """
         Sets up some variables to track the state of heartbeaty things
         """
+        super(HeartbeatMixin, self).__init__()
         if not hasattr(self, '_meta'):
             self._meta = {}
 
@@ -162,7 +326,7 @@ class ZMQSendMixin(object):
         if conf.SUPER_DEBUG:
             # If it's not at least 4 frames long then most likely it isn't an
             # eventmq message
-            if len(msg) == 4 and \
+            if len(msg) > 4 and \
                not ("HEARTBEAT" == msg[2] or "HEARTBEAT" == msg[3]) or \
                not conf.HIDE_HEARTBEAT_LOGS:
                 logger.debug('Sending message: %s' % str(msg))
