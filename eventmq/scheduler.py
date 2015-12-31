@@ -133,8 +133,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
                     logger.debug("Time is: %s; Schedule is: %s - Running %s"
                                  % (ts_now, self.interval_jobs[i][0], msg))
 
-                    #self.send_request(msg, queue=queue)
-                    logger.debug("{}   {}".format(queue, msg))
+                    self.send_request(msg, queue=queue)
                     self.interval_jobs[i][0] = next(self.interval_jobs[i][2])
 
     def send_request(self, jobmsg, queue=None):
