@@ -66,6 +66,7 @@ class TestCase(unittest.TestCase):
         sock = FakeDevice()
 
         self.jm_thread.start()
+        time.sleep(.1)  # wait for the manager to warm up
 
         self.assertTrue(self.jm.awaiting_startup_ack)
         self.assertEqual(self.jm.status, constants.STATUS.connecting)
