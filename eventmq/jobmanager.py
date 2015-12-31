@@ -163,15 +163,6 @@ class JobManager(HeartbeatMixin, EMQPService):
         """
         sendmsg(self.outgoing, 'READY')
 
-    def on_ack(self, msgid, ackd_msgid):
-        """
-        Sets :attr:`awaiting_ack` to False
-        """
-        # The msgid is the only frame in the message
-        ackd_msgid = ackd_msgid[0]
-        logger.info('Received ACK for router (or client) %s' % ackd_msgid)
-        self.awaiting_startup_ack = False
-
     def on_heartbeat(self, msgid, message):
         """
         a placeholder for a noop command. The actual 'logic' for HEARTBEAT is

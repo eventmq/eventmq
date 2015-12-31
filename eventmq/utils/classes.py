@@ -46,9 +46,9 @@ class EMQPService(object):
        Usually: `self.poller = eventmq.poller.Poller()`
 
     When messages are received from the router, they are processed in
-    :meth:`process_message` which then calls `on_COMMAND`, so if you want to
-    respond to the SCHEDULE command, you would define the method `on_schedule`
-    in your service class.
+    :meth:`process_message` which then calls `on_COMMAND`. This should be used
+    in the event loop so if you want to respond to the SCHEDULE command, you
+    would define the method `on_schedule` in your service class.
 
     See the code for :class:`Scheduler` and :class:`JobManager` for examples.
     """
@@ -65,7 +65,8 @@ class EMQPService(object):
         Raises:
             ValueError: When `type_` does not match a specified type
         """
-        valid_types = ('worker', 'scheduler')
+        valid_types = (constants.CLIENT_TYPE.worker,
+                       constants.CLIENT_TYPE.scheduler)
 
         if self.SERVICE_TYPE not in valid_types:
             raise ValueError('{} not one of {}'.format(self.SERVICE_TYPE,
@@ -137,7 +138,7 @@ class EMQPService(object):
         Resets the current connection by closing and reopening the socket
         """
         # Unregister the old socket from the poller
-        self.poller.unregister(self.incoming)
+        self.poller.unregister(self.outgoing)
 
         # Polish up a new socket to use
         self.outgoing.rebuild()
@@ -177,6 +178,15 @@ class EMQPService(object):
         else:
             logger.warning('No handler for %s found (tried: %s)' %
                            (command.upper(), ('on_%s' % command)))
+
+    def on_ack(self, msgid, ackd_msgid):
+        """
+        Sets :attr:`awaiting_ack` to False
+        """
+        # The msgid is the only frame in the message
+        ackd_msgid = ackd_msgid[0]
+        logger.info('Received ACK for router (or client) %s' % ackd_msgid)
+        self.awaiting_startup_ack = False
 
     @property
     def is_heartbeat_enabled(self):

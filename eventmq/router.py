@@ -23,7 +23,7 @@ import threading
 import warnings
 
 from . import conf, exceptions, poller, receiver
-from .constants import STATUS
+from .constants import STATUS, CLIENT_TYPE
 from .utils.classes import HeartbeatMixin
 from .utils.messages import (
     send_emqp_router_message as sendmsg,
@@ -183,10 +183,16 @@ class Router(HeartbeatMixin):
         """
         queue_name = msg[0]
         client_type = msg[1]
-        logger.info('Received INFORM request from {} (type: {})'.format(sender, client_type))
-        self.add_worker(sender, queue_name)
 
-        self.send_ack(self.outgoing, sender, msgid)
+        logger.info('Received INFORM request from {} (type: {})'.format(
+            sender, client_type))
+
+        if client_type == CLIENT_TYPE.worker:
+            self.add_worker(sender, queue_name)
+            self.send_ack(self.outgoing, sender, msgid)
+        elif client_type == CLIENT_TYPE.scheduler:
+            self.add_scheduler(sender)
+            self.send_ack(self.incoming, sender, msgid)
 
     def on_ready(self, sender, msgid, msg):
         """
@@ -251,7 +257,7 @@ class Router(HeartbeatMixin):
         Adds a worker to worker queues
 
         Args:
-            worker_id: unique id of the worker to add
+            worker_id (str): unique id of the worker to add
             queues: queue or queues this worker should be a member of
         """
         # Add the worker to our worker dict
@@ -261,6 +267,16 @@ class Router(HeartbeatMixin):
 
         logger.debug('Adding {} to the self.workers for queues:{}'.format(
                      worker_id, str(queues)))
+
+    def add_scheduler(self, scheduler_id):
+        """
+        Adds a scheduler to the queue to receive SCHEDULE commands
+
+        Args:
+            scheduler_id (str): unique id of the scheduler to add
+        """
+        self.schedulers.append(scheduler_id)
+        logger.debug('Adding {} to self.schedulers'.format(scheduler_id))
 
     def requeue_worker(self, worker_id):
         """
@@ -294,10 +310,6 @@ class Router(HeartbeatMixin):
 
     def on_receive_request(self, msg):
         """
-        This function is called when a message comes in from the client socket.
-        It then calls `on_command`. If `on_command` isn't found, then a
-        warning is created.
-
         Args:
             msg: The untouched message from zmq
         """
@@ -306,8 +318,30 @@ class Router(HeartbeatMixin):
         except exceptions.InvalidMessageError:
             logger.exception('Invalid message from clients: %s' % str(msg))
 
-        queue_name = message[3][0]
+        command = message[1]
+        logger.debug(command)
 
+        if command == "INFORM":
+            # This is a scheduler trying join
+            self.on_inform(message[0], message[2], message[3])
+            return
+
+        if command == "SCHEDULE":
+            scheduler_addr = self.schedulers.pop()
+            self.schedulers.append(scheduler_addr)
+
+            try:
+                # Strips off the client id before forwarding because the
+                # scheduler isn't expecting it.
+                fwdmsg(self.incoming, scheduler_addr, msg[1:])
+            except exceptions.PeerGoneAwayError:
+                logger.debug("Scheduler {} has unexpectedly gone away. Trying "
+                             "another scheduler.".format(scheduler_addr))
+                # TODO: rewrite this in a loop
+                self.on_receive_request(msg)
+            return
+
+        queue_name = message[3][0]
         # If we have no workers for the queue TODO something about it
         if queue_name not in self.queues:
             logger.warning("Received %s with a queue I don't recognize: "
