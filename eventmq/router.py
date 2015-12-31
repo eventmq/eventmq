@@ -19,7 +19,6 @@ Routes messages to workers (that are in named queues).
 """
 from copy import copy
 import logging
-import threading
 import warnings
 
 from . import conf, exceptions, poller, receiver

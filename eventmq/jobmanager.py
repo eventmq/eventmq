@@ -55,7 +55,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         #: Define the name of this JobManager instance. Useful to know when
         #: referring to the logs.
         self.name = kwargs.pop('name', generate_device_name())
-        logger.info('Initializing JobManager %s...'.format(self.name))
+        logger.info('Initializing JobManager {}...'.format(self.name))
 
         #: Number of workers that are available to have a job executed. This
         #: number changes as workers become busy with jobs
@@ -65,7 +65,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         #: then telling the router that it is READY. The reply will be the unit
         #: of work.
         # Despite the name, jobs are received on this socket
-        self.outgoing = Sender()
+        self.outgoing = Sender(name=self.name)
 
         #: Jobs that are running should be stored in `active_jobs`. There
         #: should always be at most `available_workers` count of active jobs.
@@ -86,6 +86,14 @@ class JobManager(HeartbeatMixin, EMQPService):
             self.send_ready()
 
         while True:
+            if self.received_disconnect:
+                # self.reset()
+                # Shut down if there are no active jobs waiting
+                if len(self.active_jobs) > 0:
+                    self.prune_active_jobs()
+                    continue
+                break
+
             now = monotonic()
             events = self.poller.poll()
 
@@ -93,12 +101,7 @@ class JobManager(HeartbeatMixin, EMQPService):
                 msg = self.outgoing.recv_multipart()
                 self.process_message(msg)
 
-            # Maintain the list of active jobs
-            for job in self.active_jobs:
-                if not job.is_alive():
-                    self.active_jobs.remove(job)
-                    self.available_workers += 1
-                    self.send_ready()
+            self.prune_active_jobs()
 
             # TODO: Optimization: Move the method calls into another thread so
             # they don't block the event loop
@@ -169,3 +172,13 @@ class JobManager(HeartbeatMixin, EMQPService):
         in :meth:`self.process_message` as every message is counted as a
         HEARTBEAT
         """
+
+    def prune_active_jobs(self):
+        # Maintain the list of active jobs
+        for job in self.active_jobs:
+            if not job.is_alive():
+                self.active_jobs.remove(job)
+                self.available_workers += 1
+
+                if not self.received_disconnect:
+                    self.send_ready()

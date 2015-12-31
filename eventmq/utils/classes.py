@@ -89,6 +89,7 @@ class EMQPService(object):
         # Look for incoming events
         self.poller.register(self.outgoing, poller.POLLIN)
         self.awaiting_startup_ack = False
+        self.received_disconnect = False
 
         self.status = constants.STATUS.ready
 
@@ -99,7 +100,7 @@ class EMQPService(object):
         Args:
             addr (str): connection string to connect to
         """
-        while True:
+        while not self.received_disconnect:
             self.status = constants.STATUS.connecting
             self.outgoing.connect(addr)
 
@@ -120,8 +121,9 @@ class EMQPService(object):
 
                 if self.outgoing in events:  # A message from the Router!
                     msg = self.outgoing.recv_multipart()
-                    # TODO This will silently drop messages that aren't ACK
-                    if msg[2] == "ACK":
+                    # TODO This will silently drop messages that aren't
+                    # ACK/DISCONNECT
+                    if msg[2] == "ACK" or msg[2] == "DISCONNECT":
                         # :meth:`on_ack` will set self.awaiting_startup_ack to
                         # False
                         self.process_message(msg)
@@ -129,9 +131,12 @@ class EMQPService(object):
             self.status = constants.STATUS.connected
             logger.info('Starting event loop...')
             self._start_event_loop()
-            # When we return, soemthing has gone wrong and we should try to
-            # reconnect
-            self.reset()
+            # When we return, soemthing has gone wrong and try to reconnect
+            # unless self.received_disconnect is True
+            if not self.received_disconnect:
+                self.reset()
+
+        logger.info('Death.')
 
     def reset(self):
         """
@@ -187,6 +192,13 @@ class EMQPService(object):
         ackd_msgid = ackd_msgid[0]
         logger.info('Received ACK for router (or client) %s' % ackd_msgid)
         self.awaiting_startup_ack = False
+
+    def on_disconnect(self, msgid, msg):
+        # To break out of the connecting loop if necessary
+        self.awaiting_startup_ack = False
+
+        # Loops event loops should check for this and break out
+        self.received_disconnect = True
 
     @property
     def is_heartbeat_enabled(self):
