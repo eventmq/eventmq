@@ -52,3 +52,6 @@ class TestCase(unittest.TestCase):
         broken_message = ('dlkajfs', 'lkasdjf')
         with self.assertRaises(exceptions.InvalidMessageError):
             messages.parse_router_message(broken_message)
+
+    def test_parse_router_message(self):
+        ['aef451a0-5cef-4f03-818a-221061c8ab68', '', 'eMQP/1.0', 'INFORM', '5caeb5fd-15d4-4b08-89e8-4e536672eef3', 'default', 'worker']
