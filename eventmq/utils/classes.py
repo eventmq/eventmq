@@ -277,6 +277,25 @@ class HeartbeatMixin(object):
 
         return False
 
+    def maybe_send_heartbeat(self, events):
+        # TODO: Optimization: Move the method calls into another thread so
+        # they don't block the event loop
+        if not conf.DISABLE_HEARTBEATS:
+            now = monotonic()
+            # Send a HEARTBEAT if necessary
+            if now - self._meta['last_sent_heartbeat'] >= \
+               conf.HEARTBEAT_INTERVAL:
+                self.send_heartbeat(self.outgoing)
+
+            # Do something about any missed HEARTBEAT, if we have nothing
+            # waiting on the socket
+            if self.is_dead() and not events:
+                logger.critical(
+                    'The broker appears to have gone away. '
+                    'Reconnecting...')
+                return False
+            return True
+
 
 class ZMQReceiveMixin(object):
     """

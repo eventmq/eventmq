@@ -136,6 +136,9 @@ class Scheduler(HeartbeatMixin, EMQPService):
                     self.send_request(msg, queue=queue)
                     self.interval_jobs[i][0] = next(self.interval_jobs[i][2])
 
+            if not self.maybe_send_heartbeat(events):
+                break
+
     def send_request(self, jobmsg, queue=None):
         jobmsg = json.loads(jobmsg)
         send_request(self.outgoing, jobmsg, queue=queue)
@@ -159,6 +162,11 @@ class Scheduler(HeartbeatMixin, EMQPService):
         ])
 
         self.send_request(message[2], queue=queue)
+
+    def on_heartbeat(self, msgid, message):
+        """
+        Noop command. The logic for heartbeating is in the event loop.
+        """
 
 
 def test_job():
