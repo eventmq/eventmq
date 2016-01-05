@@ -9,7 +9,7 @@
 :PROPERTIES:
 :ID:       700FE422-D105-4E59-A806-35868818FAA5
 :END:
-default: ensure the message is delivered
+default: ensure the message is delivered with an ack
 *** TODO [#A] router MUST receive an ACK when adding a schedule to a scheduler.
 :PROPERTIES:
 :ID:       DF4440E7-58AC-4AE9-8991-F24934C0C370
@@ -808,37 +808,3 @@ message's job can be traced out.
 :ID:       C397FCC8-2AE5-4129-8663-F1B42B7A3CD1
 :END:
 [2015-12-06 Sun 22:10]
-* Integrations Platform MVP Definition
-:PROPERTIES:
-:ID:       A79FCFFF-0262-4AEF-B1C4-2136F2E80D90
-:END:
-** Notes
-:PROPERTIES:
-:ID:       0DEE95B4-6B61-4048-8F80-5A77BC3B905A
-:END:
-*** <2015-12-15 Tue> First mention of Redwood Christmas deadline
-:PROPERTIES:
-:ID:       1D01C74D-28FE-4276-9667-25A55FCC33A5
-:END:
-09:59 dal will we be able to implement & test the RWS integration at mozilla
-before christmas?
-*** <2015-12-17 Thu 10:25> Let brian, zach and dal all know that David will delay the project
-:PROPERTIES:
-:ID:       28050414-0978-4D31-94F0-EF3895C6D523
-:END:
-** Tasks [1/5] [20%]
-:PROPERTIES:
-:ID:       CDD83453-CB0E-43DA-AECF-C102617D2553
-:END:
-It seems there are 3 different ends that I am shooting for.
- A) Dal - mozilla integration by christmas
- B) Zach - clean API for developers to use when integrating
- C) Brian - something to announce in Q1
-
-Dal's is the most clear, and most defined. Let's use his.
- - [X] port redwood_redwood.py script to plugin
- - [ ] define 'run x every i minutes' api ([[*Define%20and%20create%20the%20api%20for%20setting%20a%20job%20to%20run%20on%20an%20interval][Task Link]])
- - [ ] write schedule somewhere for the scheduler to read
- - [ ] update redwood plugin to use the scheduler
- - [ ] create ui widget to associate arbitrary data and pass it back to the app
- - [ ] stabilize eventmq
