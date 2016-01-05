@@ -27,7 +27,8 @@ logger = logging.getLogger(__name__)
 
 
 def schedule(socket, func, interval_mins, args=(), kwargs=None, class_args=(),
-             class_kwargs=None, queue=conf.DEFAULT_QUEUE_NAME):
+             class_kwargs=None, headers=('guarantee',),
+             queue=conf.DEFAULT_QUEUE_NAME):
     """
     Execute a task on a defined interval.
 
@@ -40,6 +41,8 @@ def schedule(socket, func, interval_mins, args=(), kwargs=None, class_args=(),
         class_args (list): list of *args to pass to the class (if applicable)
         class_kwargs (dict): dict of **kwargs to pass to the class (if
             applicable)
+        headers (list): list of strings denoting enabled headers. Default:
+            guarantee is enabled to ensure the scheduler schedules the job.
         queue (str): name of the queue to use when executing the job. The
             default value is the default queue.
     """
@@ -252,7 +255,8 @@ def send_request(socket, message, reply_requested=False, guarantee=False,
                       )
 
 
-def send_schedule_request(socket, interval_secs, message, queue=None):
+def send_schedule_request(socket, interval_secs, message, headers=(),
+                          queue=None):
     """
     Send a SCHEDULE command.
 
@@ -263,9 +267,12 @@ def send_schedule_request(socket, interval_secs, message, queue=None):
         socket (socket):
         interval_secs (int):
         message: Message to send socket.
+        headers (list): List of headers for the message
+        queue (str): name of queue the job should be executed in
     """
     send_emqp_message(socket, 'SCHEDULE',
                       (queue or conf.DEFAULT_QUEUE_NAME,
+                       ','.join(headers),
                        str(interval_secs),
                        serialize(message)))
 

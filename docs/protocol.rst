@@ -86,7 +86,7 @@ FRAME  Value          Description
 2      PUBLISH        command
 3      _MSGID_        A unique id for the msg
 4      _TOPIC_NAME_   the name of the queue the worker belongs to
-5      _HEADERS_      dictionary of headers. can be an empty set
+5      _HEADERS_      csv list of headers
 6      _MSG_          The message to send
 ====== ============== ===========
 
@@ -99,8 +99,9 @@ FRAME   Value         Description
 1      eMQP/1.0       Protocol version
 2      SCHEDULE       command
 3      _MSGID_        A unique id for the msg
-4      _QUEUE_NAME_   csv seperated names of queue the worker belongs to
-5      _MSG_          The message to send
+4      _TOPIC_NAME_   name of queue that the job should run in
+5      _HEADERS_      csv list of headers for this message
+6      _MSG_          The message to send
 ====== ============== ===========
 
 eMQP / Scheduler
