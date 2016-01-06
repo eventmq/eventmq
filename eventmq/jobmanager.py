@@ -29,6 +29,7 @@ from .utils.messages import send_emqp_message as sendmsg
 import utils.messages
 from .utils.timeutils import monotonic
 from .worker import MultiprocessWorker as Worker
+from eventmq.log import setup_logger
 
 logger = logging.getLogger(__name__)
 
@@ -274,3 +275,9 @@ class JobManager(HeartbeatMixin):
         in :meth:`self.process_message` as every message is counted as a
         HEARTBEAT
         """
+
+
+def worker_main():
+    setup_logger('')
+    j = JobManager()
+    j.start()
