@@ -8,8 +8,6 @@ import logging
 import zmq
 import zmq.log.handlers
 
-import watchtower
-
 
 FORMAT_STANDARD = logging.Formatter(
     '%(asctime)s - %(name)s  %(levelname)s - %(message)s')
@@ -32,7 +30,6 @@ class handlers(object):
     """
     PUBLISH_HANDLER = PUBHandler
     STREAM_HANDLER = logging.StreamHandler
-    CLOUDWATCH_HANDLER = watchtower.CloudWatchLogHandler
 
 
 def setup_logger(base_name, formatter=FORMAT_STANDARD,
