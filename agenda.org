@@ -1,19 +1,26 @@
-** EventMQ Milestones
-*** 0.2 [16/26] [61%]                                             :milestone:
+* EventMQ Milestones
+** 0.2 [16/27] [59%]                                              :milestone:
 :PROPERTIES:
 :ID:          2954195A-5456-4787-A27F-E64E3B3E84CA
 :DESCRIPTION: Add support for scheduling messages. Bonus: Add support for
               Redwood integration
 :END:
-**** TODO [#A] router MUST receive an ACK when adding a schedule to a scheduler.
+*** NEXT [#A] router MUST receive an ACK when adding a schedule to a scheduler.
 :PROPERTIES:
 :ID:       DF4440E7-58AC-4AE9-8991-F24934C0C370
 :CREATED:   <2015-12-30 Wed 17:00>
 :END:
 :LOGBOOK:
+CLOCK: [2016-01-05 Tue 15:06]
 CLOCK: [2015-12-30 Wed 16:59]--[2015-12-30 Wed 17:10] =>  0:11
 :END:
-**** BUG on_receive_request scheduler infinite loop
+The router needs to check for an ACK when forwarding a SCHEDULE to a
+scheduler if the guarantee header has been set. If no ACK is received after
+<threshold> then the message should be sent to a different scheduler. (Also
+send a remove schedule command in order to disable just in case it was added).
+*** TODO [#A] allow schedules to be updated or removed
+so they can be updated on setting changes (e.g. redwood)
+*** BUG on_receive_request scheduler infinite loop
 :PROPERTIES:
 :ID:       8C5D596A-30B2-4EA1-A715-D3E613A19260
 :END:
@@ -23,26 +30,26 @@ CLOCK: [2015-12-30 Wed 15:05]--[2015-12-30 Wed 15:06] =>  0:01
 [2015-12-30 Wed 15:05]
 [[file:~/Code/enderlabs/eventboard.io/mq/eventmq/router.py::self.on_receive_request(msg)]]
 sending a SUBSCRIBE with no connected schedulers causes an infinite loop
-**** TODO [#B] implement the DISCONNECT frame in scheduler.
+*** TODO [#B] implement the DISCONNECT frame in scheduler.
 :PROPERTIES:
 :ID:       E2D631BE-4F19-45FE-B695-BEAA71D27ADB
 :END:
 Without it tests can't be executed in threads
-**** TODO [#B] add a waiting_messages threshold config for the broker. notify someone when the threshold is hit.
+*** TODO [#B] add a waiting_messages threshold config for the broker. notify someone when the threshold is hit.
 :PROPERTIES:
 :ID:       D233DFD8-67AD-4D55-B123-D75D4C898F9D
 :END:
 [2015-12-07 Mon 10:42]
 [[file:~/Code/enderlabs/mq/eventmq/router.py::#%20workers][file:~/Code/enderlabs/mq/eventmq/router.py::#
 workers]]
-**** TODO [#C] the schedules for plugins like redwood need to be persistant so they can be loaded by the scheduler after crash.
+*** TODO [#C] the schedules for plugins like redwood need to be persistant so they can be loaded by the scheduler after crash.
 :PROPERTIES:
 :ID:       944903B8-BF73-4F73-82E0-4EFD07613118
 :END:
 [2015-12-07 Mon 16:00]
 [[file:~/Code/enderlabs/mq/eventmq/router.py::if%20now%20-%20self._meta%5B'last_sent_heartbeat'%5D%20>%3D%20\][file:~/Code/enderlabs/mq/eventmq/router.py::if now - self._meta['last_sent_heartbeat'] >= \]]
 How would several schedulers partition the data?
-**** TODO [#C] There should be a way to verify the scheduled jobs are still valid in EventMQ
+*** TODO [#C] There should be a way to verify the scheduled jobs are still valid in EventMQ
 :PROPERTIES:
 :ID:       C783B048-777D-424B-B788-D0DEE1C86E6E
 :END:
@@ -55,7 +62,7 @@ CLOCK: [2015-12-22 Tue 15:03]--[2015-12-22 Tue 15:06] =>  0:03
 [[file:~/Code/enderlabs/eventboard.io/mq/eventmq/scheduler.py]]
 for example, a plugin has been disabled, but the schedule hasn't been removed
 for some reason
-**** TODO [#C] rename the json module in jobmanager to serializer and deserializer so they can later be abstracted in to serializers that can be chosen from
+*** TODO [#C] rename the json module in jobmanager to serializer and deserializer so they can later be abstracted in to serializers that can be chosen from
 :PROPERTIES:
 :ID:       E5CF91A2-92B7-4343-BAA4-DBFEDD9689CA
 :END:
@@ -63,7 +70,7 @@ for some reason
 [[file:~/Code/enderlabs/mq/eventmq/jobmanager.py::import%20json][file:~/Code/enderlabs/mq/eventmq/jobmanager.py::import json]]
 This is so that different serializers can be used. msgpack should be the next
 supported codec.
-**** TODO Remove empty queues from router
+*** TODO Remove empty queues from router
 :PROPERTIES:
 :ID:       0258CB3A-6579-4AB0-BCEA-A60DCEF541B1
 :END:
@@ -75,14 +82,14 @@ supported codec.
   'e16f59c1-9a7e-4d8b-9118-fe7dd9cd66cb'],
 'worker':
  []}
-**** TODO [#C] REFACTOR job manager's received_disconnect logic. It's everywhere.
+*** TODO [#C] REFACTOR job manager's received_disconnect logic. It's everywhere.
 :PROPERTIES:
 :ID:       F917AD57-A87E-4059-97D6-E7F572E8C569
 :END:
 [2015-12-30 Wed 21:18]
 [[file:~/Code/enderlabs/eventboard.io/mq/eventmq/jobmanager.py]]
-**** TODO make sure shutting down the box still works
-**** DONE add a header field to SCHEDULE
+*** TODO make sure shutting down the box still works
+*** DONE add a header field to SCHEDULE
 :PROPERTIES:
 :ID:       700FE422-D105-4E59-A806-35868818FAA5
 :END:
@@ -90,47 +97,47 @@ supported codec.
 CLOCK: [2016-01-04 Mon 18:10]--[2016-01-04 Mon 18:35] =>  0:25
 :END:
 default: ensure the message is delivered
-**** DONE [#B] pause the scheduler when the broker is missing
+*** DONE [#B] pause the scheduler when the broker is missing
 :PROPERTIES:
 :ID:       FD0C4F74-4327-4DA3-B75E-367FB47E4595
 :END:
 [2015-12-07 Mon 11:06]
 [[file:~/Code/enderlabs/mq/eventmq/router.py::return]]
-**** DONE [#A] automatic recovery for missing broker/schedulers
+*** DONE [#A] automatic recovery for missing broker/schedulers
 :PROPERTIES:
 :ID:       96C5AFF2-10E4-4ADD-926E-A44E31BD0610
 :END:
-**** DONE [#C] the scheduler should use the monotonic clock to support "run every X" style jobs.
+*** DONE [#C] the scheduler should use the monotonic clock to support "run every X" style jobs.
 :PROPERTIES:
 :ID:       66AD528F-4344-48B1-8701-C0197B57EEC9
 :END:
 [2015-12-07 Mon 10:09]
 [[file:~/Code/enderlabs/mq/eventmq/scheduler.py::for%20i%20in%20range(0,%20len(self.jobs)):][file:~/Code/enderlabs/mq/eventmq/scheduler.py::for i in range(0, len(self.jobs)):]]
-**** DONE [#A] honor the interval SCHEDULE messages into the scheduler
+*** DONE [#A] honor the interval SCHEDULE messages into the scheduler
 :PROPERTIES:
 :ID:       31931D55-626E-4FCA-A4DA-F1C1A9599DD7
 :END:
-**** DONE [#A] implement scheduler's on_schedule method
+*** DONE [#A] implement scheduler's on_schedule method
 :LOGBOOK:
 CLOCK: [2015-12-30 Wed 15:39]--[2015-12-30 Wed 16:09] =>  0:30
 :END:
-**** DONE [#A] add  to router forwarding scheduled messages to the scheduler
-**** DONE [#A] forward only schedule messages to the scheduler, requests to worker
-**** DONE [#A] add logic to the broker to separate out the scheduler and worker tasks
+*** DONE [#A] add  to router forwarding scheduled messages to the scheduler
+*** DONE [#A] forward only schedule messages to the scheduler, requests to worker
+*** DONE [#A] add logic to the broker to separate out the scheduler and worker tasks
 :PROPERTIES:
 :ID:       B09080F1-AF53-4602-894E-726F4ED3DD3B
 :END:
-**** DONE [#C] Refactor common methods for jobmanager and scheduler
+*** DONE [#C] Refactor common methods for jobmanager and scheduler
 :LOGBOOK:
 CLOCK: [2015-12-29 Tue 12:39]--[2015-12-29 Tue 12:46] =>  0:07
 :END:
 :PROPERTIES:
 :ID:       2B6C8141-FE67-4D9F-B6BD-71106189444F
 :END:
-**** DONE when disconnecting on the jobmanager also check that there are no messages in the queue
+*** DONE when disconnecting on the jobmanager also check that there are no messages in the queue
 [2015-12-30 Wed 21:11]
 [[file:~/Code/enderlabs/eventboard.io/mq/eventmq/jobmanager.py::if%20len(self.active_jobs)%20>%200:][file:~/Code/enderlabs/eventboard.io/mq/eventmq/jobmanager.py::if len(self.active_jobs) > 0:]]
-**** DONE Allow input fields to have author defined validation rules
+*** DONE Allow input fields to have author defined validation rules
 :LOGBOOK:
 CLOCK: [2015-12-17 Thu 09:57]--[2015-12-17 Thu 10:11] =>  0:14
 :END:
@@ -140,8 +147,8 @@ CLOCK: [2015-12-17 Thu 09:57]--[2015-12-17 Thu 10:11] =>  0:14
 :END:
 [2015-12-17 Thu 09:57]
 Lucas has hacked in django form validation to config.json
-**** FIXED The worker is being added to the 'worker' queue
-**** DONE Define and create the api for setting a job to run on an interval
+*** FIXED The worker is being added to the 'worker' queue
+*** DONE Define and create the api for setting a job to run on an interval
 :LOGBOOK:
 CLOCK: [2015-12-22 Tue 14:34]--[2015-12-22 Tue 15:03] =>  0:29
 CLOCK: [2015-12-22 Tue 13:34]--[2015-12-22 Tue 14:34] =>  1:00
@@ -173,73 +180,73 @@ that the client application can SHOUT that job be stopped.
  '["run", {"args": [], "class_args": [], "callable": "dumps", "kwargs": {},
    "path": "json", "class_kwargs": {}}]'
 ]
-***** Idea 1
+**** Idea 1
 For a task to be scheduled, it must pass a SUBSCRIBE message to the broker. The
 broker routes this to the scheduler who caches this information in a file to
 read on startup.
-***** Idea 2
+**** Idea 2
 The broker is the maestro, it stores the schedule and which scheduler handles
 which job. This could help enable scale-planning by reporting load & jobs across
 the schedulers.
-**** DONE Test that the job manager waits while jobs are still running
+*** DONE Test that the job manager waits while jobs are still running
 :LOGBOOK:
 CLOCK: [2015-12-30 Wed 18:47]--[2015-12-30 Wed 18:48] =>  0:01
 :END:
 [2015-12-30 Wed 18:47]
 [[file:~/Code/org/eventmq.org::*MEETING%20Review%20the%20onboarding%20process%20(using%20notes)][MEETING Review the onboarding process (using notes)]]
-**** DONE Allow definable available worker slots for jobmanager
+*** DONE Allow definable available worker slots for jobmanager
 :LOGBOOK:
 CLOCK: [2015-12-29 Tue 13:08]--[2015-12-29 Tue 13:09] =>  0:01
 :END:
 [2015-12-29 Tue 13:08]
 [[file:~/Code/enderlabs/eventboard.io/mq/eventmq/jobmanager.py::self.send_ready()]]
-*** 0.3 [0/13] [0%]                                               :milestone:
+** 0.3 [0/13] [0%]                                               :milestone:
 :PROPERTIES:
 :ID:       75C7D0B7-F856-4F2C-8631-637ADCBB873C
 :END:
-**** TODO Convert the interval jobs to cron-style, so they can be used in a pinch
+*** TODO Convert the interval jobs to cron-style, so they can be used in a pinch
 :PROPERTIES:
 :ID:       27CCAF1E-D9B8-496F-A4C2-17E0274D3900
 :END:
-**** TODO add and implement a no-queue header to instruct the broker not to queue a message.
+*** TODO add and implement a no-queue header to instruct the broker not to queue a message.
 :PROPERTIES:
 :ID:       D9C4ACCD-4AA2-4228-A4FD-C3B9CAA3B8CD
 :END:
-**** TODO implement no-queue in the scheduler & SCHEDULE message
+*** TODO implement no-queue in the scheduler & SCHEDULE message
 :PROPERTIES:
 :ID:       63263BEB-08E3-462F-98F5-2A33055C2828
 :END:
 Scheduling a message should be no-queue by default.
 Scheduler should in the future, be capable of error handling and making
 intelligent decisions about retrying messages just as a client would
-**** TODO Add some logic to filter some jobs into eventmq for testing.
+*** TODO Add some logic to filter some jobs into eventmq for testing.
 :PROPERTIES:
 :ID:       845EBCE7-0A28-48C2-8137-0B093438789E
 :END:
-**** TODO allow some of the devices to have a list of addrs so they can automatically connect to backups when primaries go down
+*** TODO allow some of the devices to have a list of addrs so they can automatically connect to backups when primaries go down
 :PROPERTIES:
 :ID:       AD07CE78-1196-42A4-A59F-49B53AC1AB12
 :END:
 [2015-12-08 Tue 11:09]
 [[file:~/Code/enderlabs/mq/eventmq/client/messages.py]]
-**** TODO add a HWM threshold config for dropping messages on the broker
+*** TODO add a HWM threshold config for dropping messages on the broker
 :PROPERTIES:
 :ID:       AC5F7015-AE5F-4EFF-95D0-48E07164C345
 :END:
 [2015-12-07 Mon 10:43]
 [[file:~/Code/enderlabs/mq/eventmq/router.py::#%20workers][file:~/Code/enderlabs/mq/eventmq/router.py::# workers]]
 
-**** TODO receiver.listen - define exception for not being ready to listen/connect/etc
+*** TODO receiver.listen - define exception for not being ready to listen/connect/etc
 :PROPERTIES:
 :ID:       03230F9A-6A66-40BB-8A6C-E991A2BBFF7B
 :END:
-**** TODO EB; add eventmq to the production.txt requriements somehow. it's private and needs an ssh key currently
+*** TODO EB; add eventmq to the production.txt requriements somehow. it's private and needs an ssh key currently
 :PROPERTIES:
 :ID:       79C5893F-1EC0-4946-8E96-61F2F07FB78B
 :END:
 [2015-12-07 Mon 15:28]
 [[file:~/Code/enderlabs/eventboard.io/apps/integrations/plugins/hooks.py]]
-**** TODO EB INTEGRATIONS sign up for new box.com account to replace oauth2 string.
+*** TODO EB INTEGRATIONS sign up for new box.com account to replace oauth2 string.
 :PROPERTIES:
 :ID:       14A6A422-B048-41FA-B966-81C2213592C3
 :END:
@@ -253,7 +260,7 @@ CLOCK: [2015-12-15 Tue 12:57]--[2015-12-15 Tue 13:14] =>  0:17
 :END:
 [2015-12-15 Tue 12:57]
 Tell will to have the company re-authorize the addon.
-**** TODO Take into account other queues that might have waiting messages when a worker returns from duty
+*** TODO Take into account other queues that might have waiting messages when a worker returns from duty
 :PROPERTIES:
 :ID:       2FE9EB47-97AD-447C-9842-BB59A44BAA5A
 :END:
@@ -267,11 +274,11 @@ CLOCK: [2015-12-15 Tue 15:57]--[2015-12-15 Tue 18:45] =>  2:48
 [[file:~/Code/enderlabs/mq/eventmq/router.py::if%20self.workers%5Bsender%5D%5B'queues'%5D%20in%20self.waiting_messages:][file:~/Code/enderlabs/mq/eventmq/router.py::if
 self.workers[sender]['queues'] in self.waiting_messages:]]
 
-**** TODO Fix the log messages so they include things like their own name, and the message id that's being processed
+*** TODO Fix the log messages so they include things like their own name, and the message id that's being processed
 :PROPERTIES:
 :ID:       8647F983-2209-4A23-ABE7-99431B4CA9FF
 :END:
-**** TODO Add logic to end the meeting for longer than the impromptu meeting length if needed
+*** TODO Add logic to end the meeting for longer than the impromptu meeting length if needed
 :PROPERTIES:
 :ID:       4A4EAE0D-AF69-4A19-A96D-102F08B4F7BA
 :END:
@@ -283,7 +290,7 @@ CLOCK: [2015-12-17 Thu 17:41]--[2015-12-17 Thu 18:25] =>  0:44
 :END:
 [2015-12-17 Thu 17:41]
 [[file:~/Code/enderlabs/eventboard.io/apps/integrations/plugins/redwood/rw.py::end%3Ddt_last_motion%20%2B%20datetime.timedelta(][file:~/Code/enderlabs/eventboard.io/apps/integrations/plugins/redwood/rw.py::end=dt_last_motion + datetime.timedelta(]]
-**** TODO User configurable Impromptu event length
+*** TODO User configurable Impromptu event length
 :PROPERTIES:
 :ID:       82B3B512-5B5E-4EC2-8B58-4AC6D80DC52B
 :END:
@@ -295,11 +302,11 @@ CLOCK: [2015-12-16 Wed 18:09]--[2015-12-16 Wed 18:10] =>  0:01
 :END:
 [2015-12-16 Wed 18:09]
 [[file:~/Code/enderlabs/eventboard.io/apps/integrations/plugins/redwood/rw.py::ebroom%20%3D%20Room.objects.get(pk%3Dself.room_map%5Broom_name%5D)][file:~/Code/enderlabs/eventboard.io/apps/integrations/plugins/redwood/rw.py::ebroom = Room.objects.get(pk=self.room_map[room_name])]]
-*** 0.4 [0/1] [0%]                                                :milestone:
+** 0.4 [0/1] [0%]                                                :milestone:
 :PROPERTIES:
 :ID:       51BE0128-D29C-4505-9500-2E29C8BA2F7C
 :END:
-**** TODO Update MultiProcess worker to use long running processes
+*** TODO Update MultiProcess worker to use long running processes
 :PROPERTIES:
 :ID:       3AF0E4C7-406D-4537-8A9D-880FA5AC3049
 :CREATED:    <2015-12-30 Wed 13:19>
@@ -308,31 +315,31 @@ Each time a task is run, the entire Django stack is loaded into memory. If the
 processes were persistent then the loading would only have to happen once.
  - [ ] When a job changes some setting globally, or loads a model that is cached
        how is it cleared so it doesn't poision the task that comes after it?
-*** 0.5 [/] [%]                                                 :milestone:
+** 0.5 [/] [%]                                                   :milestone:
 :PROPERTIES:
 :ID:       FC367F0D-E119-4261-A65E-7955C620C3C6
 :END:
-*** Initiatives
+** Initiatives
 :PROPERTIES:
 :ID:       7A7C2BE1-A14D-4246-8915-AEC4FF86932C
 :END:
-**** Interactive debug mode
+*** Interactive debug mode
 :PROPERTIES:
 :ID:       279381C8-D6EA-41BF-BD2D-B3C1227C2A8B
 :END:
 This is a command line utility (with an interactive mode) that can interact with
 the devices. Akin to EBTerminal
-***** Tasks [0/2] [0%]
+**** Tasks [0/2] [0%]
 :PROPERTIES:
 :ID:       6EBD16C1-8A74-48BE-A447-10CFF1F966C1
 :END:
-****** TODO TRACE frame in all messages
+***** TODO TRACE frame in all messages
 :PROPERTIES:
 :ID:       DE977097-A6E9-4D2C-8F58-525D6B0E4534
 :END:
 This needs to contain some searchable list of values that can be filtered on
 using a trace command. E.g. company_id:139,user_id:4892
-****** TODO TRACE command
+***** TODO TRACE command
 :PROPERTIES:
 :ID:       FC38A986-BD17-47D1-991C-B41CB8A2BE16
 :END:
@@ -342,27 +349,28 @@ For example, this would display only log messages that pertain to processing
 messages with a matching trace frame
 TRACE
 company_id:139
-*** Hopper
+** Hopper
 :PROPERTIES:
 :ID:       E51EF95C-4E7A-4697-855B-572A89AC3F00
 :END:
-**** TODO allow a client to PUBLISH a request for all scheduler's schedules
+*** TODO Add Ruby support
+*** TODO allow a client to PUBLISH a request for all scheduler's schedules
 :PROPERTIES:
 :ID:       CC702374-EFB5-47BB-BAB1-3BB1DBF62684
 :END:
-**** TODO how to add socket to defer_job and allow django to set a socket globally?
+*** TODO how to add socket to defer_job and allow django to set a socket globally?
 :PROPERTIES:
 :ID:       3B53CF21-D99D-44BA-935B-85D1AF2E25E9
 :END:
 [2015-12-08 Tue 10:29]
 [[file:~/Code/enderlabs/mq/eventmq/client/messages.py::}%5D][file:~/Code/enderlabs/mq/eventmq/client/messages.py::}]]]
-**** TODO allow the broker to take args specifying queues.
+*** TODO allow the broker to take args specifying queues.
 :PROPERTIES:
 :ID:       8A184188-303E-447C-9199-62265F1A3E10
 :CREATED:  <2015-12-30 Wed 13:36>
 :END:
 this will allow messages to be queued by the broker while workers are starting up.
-**** TODO Implement a json parser
+*** TODO Implement a json parser
 :PROPERTIES:
 :ID:       8C78C973-DF73-450B-B937-1FD315F1F977
 :END:
@@ -376,18 +384,18 @@ CLOCK: [2015-12-16 Wed 11:07]--[2015-12-16 Wed 11:09] =>  0:02
 [[file:~/Code/enderlabs/eventboard.io/apps/integrations/plugins/redwood/__init__.py]]
 Reading the data from the buffer would be ideal for organizations with huge
 datasets (e.g. Facebook). Version 2.0 should focus on rewriting the logic to do this.
-**** TODO Move version to 0.8 and 0.9 when the analytics and integrations platforms become 1.0 stable
+*** TODO Move version to 0.8 and 0.9 when the analytics and integrations platforms become 1.0 stable
 :PROPERTIES:
 :ID:       9B65290F-F54D-46F3-8E3E-59B80BC9A6A5
 :END:
 [2015-12-16 Wed 10:29]
-**** TODO how do integrations define 3rd party modules that they require?
+*** TODO how do integrations define 3rd party modules that they require?
 :PROPERTIES:
 :ID:       FECB57F0-9283-4174-BC4B-3372C4952600
 :END:
 [2015-12-16 Wed 11:17]
 [[file:~/Code/enderlabs/eventboard.io/apps/integrations/plugins/redwood/__init__.py::class%20Redwood(PluginBase):][file:~/Code/enderlabs/eventboard.io/apps/integrations/plugins/redwood/__init__.py::class Redwood(PluginBase):]]
-**** TODO Research the linger option in the close.
+*** TODO Research the linger option in the close.
 :PROPERTIES:
 :ID:       DA9C1CA7-3256-4DD5-99BF-B4FC3A2FE2BC
 :END:
@@ -400,7 +408,7 @@ CLOCK: [2015-12-15 Tue 19:26]--[2015-12-15 Tue 19:27] =>  0:01
 [2015-12-15 Tue 19:26]
 [[file:~/Code/enderlabs/eventboard.io/apps/integrations/plugins/hooks.py::socket.zsocket.close()]]
 Connect and send aren't going to block but the message needs to be sent before the socket is actually closed
-**** TODO there should be intelligent sender id handling on the ROUTER socket provider
+*** TODO there should be intelligent sender id handling on the ROUTER socket provider
 :PROPERTIES:
 :ID:       64FD1C68-8812-4B0A-BACE-FDD38EAF59A7
 :END:
@@ -411,19 +419,19 @@ Connect and send aren't going to block but the message needs to be sent before t
 # mode: org
 # org-todo-keyword-faces: (("ANSWER" . "orange") ("ARCHIVED" . "blue") ("DATE" . "red") ("NEXT" . "#de5577") ("WAITING" . "orange"))
 # End:
-**** TODO remove watchtower as a requirement from eventmq
+*** TODO remove watchtower as a requirement from eventmq
 :PROPERTIES:
 :ID:       22234AA6-2566-45CB-96F8-F458FD275521
 :END:
 [2015-12-08 Tue 16:03]
 [[file:~/Code/enderlabs/mq/eventmq/sender.py]]
-**** TODO convert all the c-style string replacement with .format
+*** TODO convert all the c-style string replacement with .format
 :PROPERTIES:
 :ID:       D8298E1B-B7FE-492C-AF10-2095EB31B57B
 :END:
 [2015-12-08 Tue 10:09]
 [[file:~/Code/enderlabs/mq/eventmq/client/messages.py::'class_kwargs':%20None][file:~/Code/enderlabs/mq/eventmq/client/messages.py::'class_kwargs': None]]
-**** TODO plugins should log to their company/plugin so the company can debug :EventMQ 1.0:
+*** TODO plugins should log to their company/plugin so the company can debug :EventMQ 1.0:
 :PROPERTIES:
 :ID:       192A6616-F228-4BD3-8071-6E069809F82F
 :END:
@@ -435,12 +443,12 @@ Connect and send aren't going to block but the message needs to be sent before t
 [2015-12-14 Mon 14:38]
 Before calling it 1.0, the plugin should be putting it's logs somewhere that the
 company it's running for can see what it's doing.
-**** TODO All Device objects should inherit from a base device class :EventMQ 1.0:
+*** TODO All Device objects should inherit from a base device class :EventMQ 1.0:
 :PROPERTIES:
 :ID:       5670DFCD-6B04-4D31-8D2C-E79C72498291
 :END:
 The class should define common things such as `self._meta`
-**** TODO 100% test coverage with some functional tests & benchmarks :EventMQ 1.0:
+*** TODO 100% test coverage with some functional tests & benchmarks :EventMQ 1.0:
 :PROPERTIES:
 :ID:       4C027E33-A368-4E99-B040-C29E552345B9
 :END:
@@ -454,7 +462,7 @@ CLOCK: [2015-12-15 Tue 15:22]--[2015-12-15 Tue 15:48] =>  0:26
 [2015-12-15 Tue 15:22]
 [[file:~/Code/enderlabs/mq/eventmq/jobmanager.py::self.poller.unregister(self.incoming)]]
 
-**** TODO Target PyCharm as the official plugin creator.
+*** TODO Target PyCharm as the official plugin creator.
 :PROPERTIES:
 :ID:       C8124C2E-24CB-4F5B-999E-CB749A253F58
 :END:
@@ -468,7 +476,7 @@ CLOCK: [2015-12-17 Thu 16:40]--[2015-12-17 Thu 16:54] =>  0:14
 :END:
 [2015-12-17 Thu 16:40]
 
-**** TODO Come up with a better plan for redwood's self.save_data/save_settings so the saves are batched
+*** TODO Come up with a better plan for redwood's self.save_data/save_settings so the saves are batched
 :PROPERTIES:
 :ID:       30049D1F-C95B-4DCD-A589-716CBB4878BC
 :END:
@@ -483,7 +491,7 @@ CLOCK: [2015-12-17 Thu 18:25]--[2015-12-17 Thu 18:41] =>  0:16
 If too many of these show up within the loop, then it's going to slow down
 everything. Add something (at the top of the loop) that checks to see if the
 settings/config are dirty, if they are, then save it.
-**** TODO Test for daylight savings time
+*** TODO Test for daylight savings time
 :PROPERTIES:
 :ID:       2CF6F1F5-3291-4E67-9059-076DD210FBEF
 :END:
@@ -499,14 +507,14 @@ CLOCK: [2015-12-17 Thu 19:54]--[2015-12-18 Fri 11:10] => 15:16
 [[file:~/Code/enderlabs/eventboard.io/apps/integrations/plugins/redwood/tests.py::now%20%3D%20int(time.time())][file:~/Code/enderlabs/eventboard.io/apps/integrations/plugins/redwood/tests.py::now = int(time.time())]]
 If Redwood's currentTime is on DST, and we are not (e.g. in the east coast)
 If we are and Redwood is not (e.g. in the west coast)
-**** TODO Test-mode with the Django environment warmed up once?
+*** TODO Test-mode with the Django environment warmed up once?
 :PROPERTIES:
 :ID:       6E2CFD3C-7AE4-4B37-866E-BD697F07BC8B
 :END:
 [2015-12-17 Thu 19:45]
 It takes awhile to import all of the modules that we use. If there is a way to
 keep that environment warmed up it should result in a performance increase.
-**** TODO Revisit Eventboard vagrant's logging setup. Make it personalizable
+*** TODO Revisit Eventboard vagrant's logging setup. Make it personalizable
 :PROPERTIES:
 :ID:       EF74FFEC-098E-4750-9F32-EF55A7579A86
 :END:
@@ -518,7 +526,7 @@ CLOCK: [2015-12-17 Thu 17:32]--[2015-12-17 Thu 17:33] =>  0:01
 :END:
 [2015-12-17 Thu 17:32]
 [[file:~/Code/enderlabs/eventboard.io/apps/eventboard/settings/local_settings.py::'level':%20'DEBUG',][file:~/Code/enderlabs/eventboard.io/apps/eventboard/settings/local_settings.py::'level': 'DEBUG',]]
-**** TODO Add a logging level to log raw data for a 'replication/backup/bin?/wal? log'?
+*** TODO Add a logging level to log raw data for a 'replication/backup/bin?/wal? log'?
 :PROPERTIES:
 :ID:       238EDFBB-24A6-4FD8-B434-F2A28B02A41F
 :END:
@@ -529,7 +537,7 @@ CLOCK: [2015-12-16 Wed 21:53]--[2015-12-16 Wed 21:54] =>  0:01
 :ID:       F933F84D-1F2C-44AA-9405-363E2CBBEA5D
 :END:
 [2015-12-16 Wed 21:53]
-**** TODO Make eventboard.settings.base_test.py:10 a toggleable option from local_settings
+*** TODO Make eventboard.settings.base_test.py:10 a toggleable option from local_settings
 :PROPERTIES:
 :ID:       DC4A957C-FF72-4928-B942-273E7FFF64E8
 :END:
@@ -541,7 +549,7 @@ CLOCK: [2015-12-16 Wed 20:02]--[2015-12-16 Wed 20:03] =>  0:01
 :END:
 [2015-12-16 Wed 20:02]
 local_settings should be for developers only. used to tweak the system
-**** TODO Possibly add back in the lag peice to Redwood.
+*** TODO Possibly add back in the lag peice to Redwood.
 :PROPERTIES:
 :ID:       06DB7F22-56FF-4623-BC79-9B1DFE33B77C
 :END:
@@ -557,7 +565,7 @@ Possibly divide the number by 2 to account for the first half of the request
 where it wasn't that time.
 Possibly subtract the seconds difference from now() and the reported redwood
 room, assuming the clocks are in sync. ** Document setting this up in Redwood
-**** TODO Create a test framework for testing all the plugins, including o365
+*** TODO Create a test framework for testing all the plugins, including o365
 :PROPERTIES:
 :ID:       52D6BA64-0293-45ED-8B4C-E19DE224EB40
 :END:
@@ -569,13 +577,13 @@ CLOCK: [2015-12-16 Wed 14:26]--[2015-12-16 Wed 14:27] =>  0:01
 :END:
 [2015-12-16 Wed 14:26]
 [[file:~/Code/enderlabs/eventboard.io/apps/integrations/plugins/redwood/tests.py]]
-**** TODO monitor that the actual processes are serving the content expected on a server, not just that it is up
+*** TODO monitor that the actual processes are serving the content expected on a server, not just that it is up
 :PROPERTIES:
 :ID:       C02480E1-8E61-46ED-8416-317EA3006225
 :END:
 [2015-12-15 Tue 14:15]
 3 of the 5 webservers had frozen or dead gunircorn processes.
-**** TODO Schedule meeting with Insights to ask them how they are using "EVENT_CHANGE" if there are going to be a lot of very specific event_change types.
+*** TODO Schedule meeting with Insights to ask them how they are using "EVENT_CHANGE" if there are going to be a lot of very specific event_change types.
 :PROPERTIES:
 :ID:       4A31C47A-E635-41D1-BEC6-68D6281483EA
 :END:
@@ -586,7 +594,7 @@ CLOCK: [2015-12-22 Tue 11:11]--[2015-12-22 Tue 11:12] =>  0:01
 They will need to be more or less dynamic without a "Choices" helper otherwise
 the data structure is going to get out of hand. The data for the specific types
 should live in their specific implementation (e.g. Redwood_Cancellation))
-**** TODO Don't silently drop non-ack messages while waiting for an ack at startup.
+*** TODO Don't silently drop non-ack messages while waiting for an ack at startup.
 :PROPERTIES:
 :ID:       B7C79866-C7CD-4898-A654-7960EE185046
 :END:
@@ -597,7 +605,7 @@ CLOCK: [2015-12-29 Tue 12:46]--[2015-12-29 Tue 13:08] =>  0:22
 [2015-12-29 Tue 12:46]
 [[file:~/Code/enderlabs/eventboard.io/mq/eventmq/utils/classes.py::#%20TODO%20This%20will%20silently%20drop%20messages%20that%20aren't%20ACK][file:~/Code/enderlabs/eventboard.io/mq/eventmq/utils/classes.py::# TODO This will silently drop messages that aren't ACK]]
 
-**** TODO How to prevent duplicate schedules from being executed?
+*** TODO How to prevent duplicate schedules from being executed?
 :PROPERTIES:
 :ID:       E0E19A5F-D230-4F47-AB76-F76FCD07D542
 :END:
@@ -610,13 +618,13 @@ CLOCK: [2015-12-30 Wed 21:23]--[2015-12-30 Wed 21:24] =>  0:01
 if a schedule for the same thing is received more than once, the scheduler will
 happily execute all jobs. How can this be prevented in the plugin system. Does
 it need prevented in eventmq core?
-**** TODO !!!! It sounds like they will want to have user plugins, that needs to be accounted for.
+*** TODO !!!! It sounds like they will want to have user plugins, that needs to be accounted for.
 :PROPERTIES:
 :ID:       0D298B52-EDB2-4DFD-A3B8-AF3849A348C1
 :END:
 [2015-12-22 Tue 15:17]
 [[file:~/Code/enderlabs/eventboard.io/apps/integrations/plugins/hooks.py::socket.connect(addr%3D'tcp://127.0.0.1:47290')][file:~/Code/enderlabs/eventboard.io/apps/integrations/plugins/hooks.py::socket.connect(addr='tcp://127.0.0.1:47290')]]
-**** TODO the eventboard plugin.hooks.schedule method needs to define some way that the company id can be passed to the plugin.
+*** TODO the eventboard plugin.hooks.schedule method needs to define some way that the company id can be passed to the plugin.
 :PROPERTIES:
 :ID:       2CABD377-FE25-4E9F-870B-A1A22706841B
 :END:
@@ -625,18 +633,18 @@ CLOCK: [2015-12-22 Tue 15:11]--[2015-12-22 Tue 15:17] =>  0:06
 :END:
 [2015-12-22 Tue 15:11]
 [[file:~/Code/enderlabs/eventboard.io/apps/integrations/plugins/hooks.py]]
-**** TODO The new integrations.plugins.hooks.publish hook needs to have a config value specify the broker address
+*** TODO The new integrations.plugins.hooks.publish hook needs to have a config value specify the broker address
 :PROPERTIES:
 :ID:       2A1F725A-6C7B-4D42-9674-CAD6A9D412B1
 :END:
 [2015-12-22 Tue 15:06]
 [[file:~/Code/enderlabs/eventboard.io/apps/integrations/plugins/hooks.py::socket.connect(addr%3D'tcp://127.0.0.1:47290')][file:~/Code/enderlabs/eventboard.io/apps/integrations/plugins/hooks.py::socket.connect(addr='tcp://127.0.0.1:47290')]]
-**** TODO Last Value Caching. Add an option to send the last value to a connecting worker?
+*** TODO Last Value Caching. Add an option to send the last value to a connecting worker?
 :PROPERTIES:
 :ID:       CB99FB3D-4C1B-42AE-BFC6-B0167B806A9D
 :END:
 [2015-12-22 Tue 14:34]
-**** TODO When receiving an invalid message from the router, don't just ignore it
+*** TODO When receiving an invalid message from the router, don't just ignore it
 :PROPERTIES:
 :ID:       465B5CA2-8433-4E9D-8975-AF3CFAAFFDF7
 :END:
@@ -645,14 +653,14 @@ CLOCK: [2015-12-29 Tue 13:11]--[2015-12-29 Tue 13:12] =>  0:01
 :END:
 [2015-12-29 Tue 13:11]
 [[file:~/Code/enderlabs/eventboard.io/mq/eventmq/utils/classes.py::return]]
-**** TODO Add the ability to shutdown a cluster
+*** TODO Add the ability to shutdown a cluster
 The router would send DISCONNECT messages to everything, then it would itself
 shutdown. Require and log a reason why the cluster was shutdown
-*** Milestone Archive
+** Milestone Archive
 :PROPERTIES:
 :ID:       F993214D-CFAD-49A8-84C5-40BE3B730B58
 :END:
-**** 0.1 [10/10] [100%]                                           :milestone:
+*** 0.1 [10/10] [100%]                                          :milestone:
 :PROPERTIES:
 :ID:       F200B701-97E4-41B4-A6F5-C9529AD224AF
 :END:
@@ -685,12 +693,12 @@ defer_job(hello_world, args=("Hello World!",))
 
 You should see Hello World print out in the worker window.
 
-***** DONE defer_job function for deferring callable to an external worker. optionally
+**** DONE defer_job function for deferring callable to an external worker. optionally
 :PROPERTIES:
 :ID:       5A1057CA-3A93-492D-B1BD-5F44A10A843B
 :END:
 specify class instantiation information (args, kwargs) for methods.
-***** DONE Execute current plugin jobs in worker.
+**** DONE Execute current plugin jobs in worker.
 :LOGBOOK:
 CLOCK: [2015-12-14 Mon 12:26]--[2015-12-14 Mon 13:00] =>  0:34
 CLOCK: [2015-12-14 Mon 12:06]--[2015-12-14 Mon 12:17] =>  0:11
@@ -698,20 +706,20 @@ CLOCK: [2015-12-14 Mon 12:06]--[2015-12-14 Mon 12:17] =>  0:11
 :PROPERTIES:
 :ID:       22BE9CA4-6A70-4C69-8775-269098A09E75
 :END:
-***** DONE The job manager needs to check path for a colon. If one exists instantiate the object
+**** DONE The job manager needs to check path for a colon. If one exists instantiate the object
 :PROPERTIES:
 :ID:       F4CED12E-9FB4-4BBD-96A1-868C10D01AD2
 :END:
 [2015-12-07 Mon 10:08]
 [[file:~/Code/enderlabs/mq/bin/send_msg::'args':%20('arg1',%20'arg2'),][file:~/Code/enderlabs/mq/bin/send_msg::'args': ('arg1', 'arg2'),]]
 
-***** DONE import eventmq.client.messages.defer_job so it can be imported via w/ eventmq import defer_job
+**** DONE import eventmq.client.messages.defer_job so it can be imported via w/ eventmq import defer_job
 :PROPERTIES:
 :ID:       D95393F0-5614-472B-B078-AC6138721F5B
 :END:
 [2015-12-07 Mon 10:32]
 
-***** FIXED sometimes worker dies on startup
+**** FIXED sometimes worker dies on startup
 :PROPERTIES:
 :ID:       03D735AC-F1E7-4DD1-8753-8AD20F4D40B3
 :END:
@@ -726,7 +734,7 @@ Traceback (most recent call last):
     self.on_receive_request(msg)
   File "/Users/jason/Code/enderlabs/mq/eventmq/router.py", line 266, in on_receive_request
   worker_addr = self.queues[queue_name].pop()
-***** FIXED Router crashes when fwdmsg to dead worker
+**** FIXED Router crashes when fwdmsg to dead worker
 Updated fwd_emqp_router_message to raise an EventMQError instead of passing the ZMQError upstream
 
 Fixed by catching the exeception and calling the process method recursively
@@ -738,7 +746,7 @@ CLOCK: [2015-12-14 Mon 11:45]--[2015-12-14 Mon 11:49] =>  0:04
 :PROPERTIES:
 :ID:       1C45D4E4-4636-413A-ADB1-5C7D3A671AF1
 :END:
-****** Traceback (most recent call last):
+***** Traceback (most recent call last):
 :PROPERTIES:
 :ID:       B36689ED-9B28-4CC9-883F-53D2A8C72E18
 :END:
@@ -760,7 +768,7 @@ CLOCK: [2015-12-14 Mon 11:45]--[2015-12-14 Mon 11:49] =>  0:04
   File "zmq/backend/cython/checkrc.pxd", line 25, in zmq.backend.cython.checkrc._check_rc (zmq/backend/cython/socket.c:7535)
   zmq.error.ZMQError: No route to host
 
-****** 2015-12-14 14:11:09,674 - eventmq.router  ERROR - No route to host
+***** 2015-12-14 14:11:09,674 - eventmq.router  ERROR - No route to host
 :PROPERTIES:
 :ID:       CA47D7CE-6707-43BA-B501-C1BA2CFE70C3
 :END:
@@ -770,7 +778,7 @@ Traceback (most recent call last):
   File "/home/vagrant/.virtualenvs/eventboard/local/lib/python2.7/site-packages/eventmq/utils/messages.py", line 155, in fwd_emqp_router_message
     raise exceptions.PeerGoneAwayError(e)
 PeerGoneAwayError: No route to host
-***** DONE [#A] Run the actual functions somewhere else.     :jobmanager:
+**** DONE [#A] Run the actual functions somewhere else.       :jobmanager:
 :LOGBOOK:
 CLOCK: [2015-12-15 Tue 12:28]--[2015-12-15 Tue 12:57] =>  0:29
 :END:
@@ -780,7 +788,7 @@ CLOCK: [2015-12-15 Tue 12:28]--[2015-12-15 Tue 12:57] =>  0:29
 [2015-12-07 Mon 14:39]
 Doing this will free up the event loop to continue sending heartbeat commands to
 prevent disconnects.
-***** DONE implement credit-based flow control so job managers spin up a sane number of jobs :jobmanager:
+**** DONE implement credit-based flow control so job managers spin up a sane number of jobs :jobmanager:
 :LOGBOOK:
 CLOCK: [2015-12-15 Tue 18:58]--[2015-12-15 Tue 20:47] =>  1:49
 CLOCK: [2015-12-15 Tue 18:45]--[2015-12-15 Tue 18:58] =>  0:13
@@ -799,15 +807,32 @@ be referred to.
 workers.
 - [X] The JobManager should be logging worker output so that the entirety of a
 message's job can be traced out.
-***** FIXED When a second worker joins, it is immediatly disconnected from the router :router:
+**** FIXED When a second worker joins, it is immediatly disconnected from the router :router:
 :LOGBOOK:
 :END:
 :PROPERTIES:
 :ID:       5DC671EB-8C37-4DE7-8863-D77494DE4CE9
 :END:
 [2015-12-14 Mon 15:35]
-***** DONE spwan jobs in jobmanager based on message         :jobmanager:
+**** DONE spwan jobs in jobmanager based on message           :jobmanager:
 :PROPERTIES:
 :ID:       C397FCC8-2AE5-4129-8663-F1B42B7A3CD1
 :END:
 [2015-12-06 Sun 22:10]
+* Deployment 0.1 & test plugins
+** DELEGATED Trent to spin up a high memory for broker, and a high cpu for worker
+:PROPERTIES:
+:ID:       9522397F-B17A-47AC-939B-FD4C5BB3DBE2
+:JIRA:     [[https://eventboard.atlassian.net/browse/SYS-35][SYS-35]]
+:END:
+** TODO Define a better configuration system
+** TODO Make a pip installable eventmq (setup.py) (or libs/modified)
+** TODO Update EB requirements
+** TODO update the hard coded addresses in integrations.plugins.hooks with settings
+** TODO convert the existing plugins to not pass model objects around
+** TODO Merge EB branch supporting eventmq, then test it with the existing plugins
+** TODO test the code thoroughly
+** TODO Enable Cloudwatch logging on the servers
+** TODO Deploy the code
+** DONE Merge David's Slack branch
+* Before open sourcing
