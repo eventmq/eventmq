@@ -2,8 +2,6 @@ pyzmq
 six
 monotonic==0.4    # A clock who's time is not changed. used for scheduling
 croniter
-watchtower        # Logging to AWS CloudWatch. TODO This needs to be removed
-                  # from requirements.txt
 
 # Documentation
 sphinxcontrib-napoleon

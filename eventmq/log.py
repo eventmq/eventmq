@@ -1,3 +1,4 @@
+
 """
 log module for eventmq
 
@@ -51,8 +52,6 @@ def setup_logger(base_name, formatter=FORMAT_STANDARD,
 
         handler = handler(_handler_sock)
         handler.root_topic = base_name
-    elif handler == handlers.CLOUDWATCH_HANDLER:
-        handler = handler(log_group='eventmq-dev')
     else:
         handler = handler()
 
