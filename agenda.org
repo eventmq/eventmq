@@ -1,16 +1,11 @@
 * EventMQ Milestones
-** 0.2 [15/26] [57%]                                             :milestone:
+** 0.2 [16/27] [59%]                                              :milestone:
 :PROPERTIES:
 :ID:          2954195A-5456-4787-A27F-E64E3B3E84CA
 :DESCRIPTION: Add support for scheduling messages. Bonus: Add support for
               Redwood integration
 :END:
-*** NEXT add a header field to SCHEDULE
-:PROPERTIES:
-:ID:       700FE422-D105-4E59-A806-35868818FAA5
-:END:
-default: ensure the message is delivered with an ack
-*** TODO [#A] router MUST receive an ACK when adding a schedule to a scheduler.
+*** NEXT [#A] router MUST receive an ACK when adding a schedule to a scheduler.
 :PROPERTIES:
 :ID:       DF4440E7-58AC-4AE9-8991-F24934C0C370
 :CREATED:   <2015-12-30 Wed 17:00>
@@ -18,6 +13,12 @@ default: ensure the message is delivered with an ack
 :LOGBOOK:
 CLOCK: [2015-12-30 Wed 16:59]--[2015-12-30 Wed 17:10] =>  0:11
 :END:
+The router needs to check for an ACK when forwarding a SCHEDULE to a
+scheduler if the guarantee header has been set. If no ACK is received after
+<threshold> then the message should be sent to a different scheduler. (Also
+send a remove schedule command in order to disable just in case it was added).
+*** TODO [#A] allow schedules to be updated or removed
+so they can be updated on setting changes (e.g. redwood)
 *** BUG on_receive_request scheduler infinite loop
 :PROPERTIES:
 :ID:       8C5D596A-30B2-4EA1-A715-D3E613A19260
@@ -87,13 +88,21 @@ supported codec.
 [2015-12-30 Wed 21:18]
 [[file:~/Code/enderlabs/eventboard.io/mq/eventmq/jobmanager.py]]
 *** TODO make sure shutting down the box still works
+*** DONE add a header field to SCHEDULE
+:PROPERTIES:
+:ID:       700FE422-D105-4E59-A806-35868818FAA5
+:END:
+:LOGBOOK:
+CLOCK: [2016-01-04 Mon 18:10]--[2016-01-04 Mon 18:35] =>  0:25
+:END:
+default: ensure the message is delivered
 *** DONE [#B] pause the scheduler when the broker is missing
 :PROPERTIES:
 :ID:       FD0C4F74-4327-4DA3-B75E-367FB47E4595
 :END:
 [2015-12-07 Mon 11:06]
 [[file:~/Code/enderlabs/mq/eventmq/router.py::return]]
-*** DONE [#A] automatic recovery for missing broker/schedulers
+*** DONE  [#A] automatic recovery for missing broker/schedulers
 :PROPERTIES:
 :ID:       96C5AFF2-10E4-4ADD-926E-A44E31BD0610
 :END:
@@ -343,6 +352,7 @@ company_id:139
 :PROPERTIES:
 :ID:       E51EF95C-4E7A-4697-855B-572A89AC3F00
 :END:
+*** TODO Add Ruby support
 *** TODO allow a client to PUBLISH a request for all scheduler's schedules
 :PROPERTIES:
 :ID:       CC702374-EFB5-47BB-BAB1-3BB1DBF62684
@@ -808,3 +818,20 @@ message's job can be traced out.
 :ID:       C397FCC8-2AE5-4129-8663-F1B42B7A3CD1
 :END:
 [2015-12-06 Sun 22:10]
+* Deployment 0.1 & test plugins
+** DELEGATED Trent to spin up a high memory for broker, and a high cpu for worker
+:PROPERTIES:
+:ID:       9522397F-B17A-47AC-939B-FD4C5BB3DBE2
+:JIRA:     [[https://eventboard.atlassian.net/browse/SYS-35][SYS-35]]
+:END:
+** TODO Define a better configuration system
+** TODO Make a pip installable eventmq (setup.py) (or libs/modified)
+** TODO Update EB requirements
+** TODO update the hard coded addresses in integrations.plugins.hooks with settings
+** TODO convert the existing plugins to not pass model objects around
+** TODO Merge EB branch supporting eventmq, then test it with the existing plugins
+** TODO test the code thoroughly
+** TODO Enable Cloudwatch logging on the servers
+** TODO Deploy the code
+** DONE Merge David's Slack branch
+* Before open sourcing
