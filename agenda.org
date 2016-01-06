@@ -11,6 +11,7 @@
 :CREATED:   <2015-12-30 Wed 17:00>
 :END:
 :LOGBOOK:
+CLOCK: [2016-01-05 Tue 15:06]
 CLOCK: [2015-12-30 Wed 16:59]--[2015-12-30 Wed 17:10] =>  0:11
 :END:
 The router needs to check for an ACK when forwarding a SCHEDULE to a
@@ -102,7 +103,7 @@ default: ensure the message is delivered
 :END:
 [2015-12-07 Mon 11:06]
 [[file:~/Code/enderlabs/mq/eventmq/router.py::return]]
-*** DONE  [#A] automatic recovery for missing broker/schedulers
+*** DONE [#A] automatic recovery for missing broker/schedulers
 :PROPERTIES:
 :ID:       96C5AFF2-10E4-4ADD-926E-A44E31BD0610
 :END:
