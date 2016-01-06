@@ -21,6 +21,8 @@ from importlib import import_module
 import logging
 import multiprocessing
 
+from eventmq.log import setup_logger
+
 logger = logging.getLogger(__name__)
 
 
@@ -95,3 +97,8 @@ class MultiprocessWorker(object):
         if self.process:
             return self.process.is_alive()
         return False
+
+def worker_main():
+    setup_logger('')
+    j = JobManager()
+    j.start()

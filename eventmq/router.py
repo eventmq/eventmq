@@ -32,6 +32,7 @@ from .utils.messages import (
 )
 from .utils.devices import generate_device_name
 from .utils.timeutils import monotonic, timestamp
+from eventmq.log import setup_logger
 
 
 logger = logging.getLogger(__name__)
@@ -370,3 +371,8 @@ class Router(HeartbeatMixin):
         if hasattr(self, "on_%s" % command.lower()):
             func = getattr(self, "on_%s" % command.lower())
             func(sender, msgid, message)
+
+def router_main():
+    setup_logger('eventmq')
+    r = Router()
+    r.start()
