@@ -321,7 +321,7 @@ class ZMQReceiveMixin(object):
         if conf.SUPER_DEBUG:
             # If it's not at least 4 frames long then most likely it isn't an
             # eventmq message
-            if len(msg) == 4 and \
+            if len(msg) >= 4 and \
                not ("HEARTBEAT" == msg[2] or "HEARTBEAT" == msg[3]) or \
                not conf.HIDE_HEARTBEAT_LOGS:
                 logger.debug('Received message: {}'.format(msg))

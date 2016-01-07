@@ -28,6 +28,7 @@ from .utils.devices import generate_device_name
 from .utils.messages import send_emqp_message as sendmsg
 from .utils.timeutils import monotonic
 from .worker import MultiprocessWorker as Worker
+from eventmq.log import setup_logger
 
 logger = logging.getLogger(__name__)
 
@@ -169,3 +170,9 @@ class JobManager(HeartbeatMixin, EMQPService):
 
                 if not self.received_disconnect:
                     self.send_ready()
+
+
+def worker_main():
+    setup_logger('')
+    j = JobManager()
+    j.start()

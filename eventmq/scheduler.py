@@ -30,6 +30,7 @@ from .utils.classes import EMQPService, HeartbeatMixin
 from .utils.timeutils import seconds_until, timestamp, monotonic
 from .client.messages import send_request
 
+from eventmq.log import setup_logger
 
 logger = logging.getLogger(__name__)
 
@@ -173,3 +174,9 @@ def test_job():
     print "hello!"
     print "hello!"
     time.sleep(4)
+
+
+def scheduler_main():
+    setup_logger("eventmq")
+    s = Scheduler()
+    s.start()
