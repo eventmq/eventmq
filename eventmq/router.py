@@ -199,9 +199,10 @@ class Router(HeartbeatMixin):
         # Note: This is only taking into account the queue the worker is
         # returning from, and not other queue_names that might have had
         # messages waiting even longer.
-        if self.workers[sender]['queues'] in self.waiting_messages:
-            queue_name = self.workers[sender]['queues']
 
+        queue_name, = self.workers[sender]['queues']
+
+        if queue_name in self.waiting_messages.keys():
             logger.debug('Found waiting message in the %s waiting messages '
                          'queue' % queue_name)
             msg = self.waiting_messages[queue_name].pop()
@@ -215,7 +216,7 @@ class Router(HeartbeatMixin):
                              'Removing from list...' % queue_name)
                 del self.waiting_messages[queue_name]
         else:
-                self.requeue_worker(sender)
+            self.requeue_worker(sender)
 
     def clean_up_dead_workers(self):
         """
