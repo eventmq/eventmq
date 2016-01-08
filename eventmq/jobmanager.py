@@ -19,6 +19,8 @@ Ensures things about jobs and spawns the actual tasks
 """
 import json
 import logging
+import os
+import ConfigParser
 
 from . import conf, constants, exceptions, utils
 from .poller import Poller, POLLIN
@@ -276,8 +278,18 @@ class JobManager(HeartbeatMixin):
         HEARTBEAT
         """
 
+    def jobmanager_main(self):
+        setup_logger('')
 
-def worker_main():
-    setup_logger('')
-    j = JobManager()
-    j.start()
+        config = ConfigParser.ConfigParser()
+
+        if os.path.exists(conf.CONFIG_FILE):
+            config.read(conf.CONFIG_FILE)
+            for name, value in config.items('settings'):
+                if hasattr(conf, name.upper()):
+                    setattr(conf, name.upper(), value)
+                    logger.debug("Setting conf.%s to %s" % (name, value))
+                else:
+                    logger.warning('Tried to set invalid setting: %s' % name)
+
+        self.start(addr=conf.WORKER_ADDR)

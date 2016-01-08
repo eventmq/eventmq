@@ -21,6 +21,8 @@ from copy import copy
 import logging
 import threading
 import warnings
+import ConfigParser
+import os
 
 from . import conf, exceptions, poller, receiver
 from .constants import STATUS
@@ -84,8 +86,8 @@ class Router(HeartbeatMixin):
         self.waiting_messages = {}
 
     def start(self,
-              frontend_addr='tcp://127.0.0.1:47290',
-              backend_addr='tcp://127.0.0.1:47291'):
+              frontend_addr=conf.FRONTEND_ADDR,
+              backend_addr=conf.BACKEND_ADDR):
         """
         Begin listening for connections on the provided connection strings
 
@@ -373,7 +375,18 @@ class Router(HeartbeatMixin):
             func = getattr(self, "on_%s" % command.lower())
             func(sender, msgid, message)
 
-def router_main():
-    setup_logger('eventmq')
-    r = Router()
-    r.start()
+    def router_main(self):
+        setup_logger('eventmq')
+
+        config = ConfigParser.ConfigParser()
+
+        if os.path.exists(conf.CONFIG_FILE):
+            config.read(conf.CONFIG_FILE)
+            for name, value in config.items('settings'):
+                if hasattr(conf, name.upper()):
+                    setattr(conf, name.upper(), value)
+                    logger.debug("Setting conf.%s to %s" % (name, value))
+                else:
+                    logger.warning('Tried to set invalid setting: %s' % name)
+
+        self.start()
