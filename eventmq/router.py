@@ -21,8 +21,6 @@ from copy import copy
 import logging
 import threading
 import warnings
-import ConfigParser
-import os
 
 from . import conf, exceptions, poller, receiver
 from .constants import STATUS
@@ -32,6 +30,7 @@ from .utils.messages import (
     fwd_emqp_router_message as fwdmsg,
     parse_router_message
 )
+from .utils.settings import import_settings
 from .utils.devices import generate_device_name
 from .utils.timeutils import monotonic, timestamp
 from eventmq.log import setup_logger
@@ -376,17 +375,9 @@ class Router(HeartbeatMixin):
             func(sender, msgid, message)
 
     def router_main(self):
+        """
+        Kick off router with logging and settings import
+        """
         setup_logger('eventmq')
-
-        config = ConfigParser.ConfigParser()
-
-        if os.path.exists(conf.CONFIG_FILE):
-            config.read(conf.CONFIG_FILE)
-            for name, value in config.items('settings'):
-                if hasattr(conf, name.upper()):
-                    setattr(conf, name.upper(), value)
-                    logger.debug("Setting conf.%s to %s" % (name, value))
-                else:
-                    logger.warning('Tried to set invalid setting: %s' % name)
-
+        import_settings()
         self.start()

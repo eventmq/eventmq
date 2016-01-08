@@ -19,8 +19,6 @@ Handles cron and other scheduled tasks
 """
 import logging
 import time
-import os
-import ConfigParser
 
 from croniter import croniter
 from six import next
@@ -28,6 +26,7 @@ from six import next
 from . import conf
 from .sender import Sender
 from .utils.classes import HeartbeatMixin
+from .utils.settings import import_settings
 from .utils.timeutils import seconds_until, timestamp
 from .client.messages import send_request
 
@@ -118,19 +117,11 @@ class Scheduler(HeartbeatMixin):
             time.sleep(0.1)
 
     def scheduler_main(self):
+        """
+        Kick off scheduler with logging and settings import
+        """
         setup_logger("eventmq")
-
-        config = ConfigParser.ConfigParser()
-
-        if os.path.exists(conf.CONFIG_FILE):
-            config.read(conf.CONFIG_FILE)
-            for name, value in config.items('settings'):
-                if hasattr(conf, name.upper()):
-                    setattr(conf, name.upper(), value)
-                    logger.debug("Setting conf.%s to %s" % (name, value))
-                else:
-                    logger.warning('Tried to set invalid setting: %s' % name)
-
+        import_settings()
         self.start(addr=conf.SCHEDULER_ADDR)
 
 

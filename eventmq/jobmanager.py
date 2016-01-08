@@ -19,13 +19,12 @@ Ensures things about jobs and spawns the actual tasks
 """
 import json
 import logging
-import os
-import ConfigParser
 
 from . import conf, constants, exceptions, utils
 from .poller import Poller, POLLIN
 from .sender import Sender
 from .utils.classes import HeartbeatMixin
+from .utils.settings import import_settings
 from .utils.devices import generate_device_name
 from .utils.messages import send_emqp_message as sendmsg
 import utils.messages
@@ -279,17 +278,9 @@ class JobManager(HeartbeatMixin):
         """
 
     def jobmanager_main(self):
+        """
+        Kick off jobmanager with logging and settings import
+        """
         setup_logger('')
-
-        config = ConfigParser.ConfigParser()
-
-        if os.path.exists(conf.CONFIG_FILE):
-            config.read(conf.CONFIG_FILE)
-            for name, value in config.items('settings'):
-                if hasattr(conf, name.upper()):
-                    setattr(conf, name.upper(), value)
-                    logger.debug("Setting conf.%s to %s" % (name, value))
-                else:
-                    logger.warning('Tried to set invalid setting: %s' % name)
-
+        import_settings()
         self.start(addr=conf.WORKER_ADDR)
