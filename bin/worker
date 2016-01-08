@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- mode: python -*-
 from eventmq.jobmanager import JobManager
-from eventmq.log import setup_logger
 
 if __name__ == "__main__":
-    setup_logger('')
     j = JobManager()
-    j.start()
+    j.jobmanager_main()

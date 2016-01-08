@@ -4,6 +4,5 @@ from eventmq.log import setup_logger
 from eventmq.router import Router
 
 if __name__ == "__main__":
-    setup_logger('eventmq')
     r = Router()
-    r.start()
+    r.router_main()

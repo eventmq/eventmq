@@ -24,6 +24,7 @@ from . import conf, constants, exceptions, utils
 from .poller import Poller, POLLIN
 from .sender import Sender
 from .utils.classes import HeartbeatMixin
+from .utils.settings import import_settings
 from .utils.devices import generate_device_name
 from .utils.messages import send_emqp_message as sendmsg
 import utils.messages
@@ -276,8 +277,10 @@ class JobManager(HeartbeatMixin):
         HEARTBEAT
         """
 
-
-def worker_main():
-    setup_logger('')
-    j = JobManager()
-    j.start()
+    def jobmanager_main(self):
+        """
+        Kick off jobmanager with logging and settings import
+        """
+        setup_logger('')
+        import_settings()
+        self.start(addr=conf.WORKER_ADDR)

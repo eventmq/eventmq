@@ -30,6 +30,7 @@ from .utils.messages import (
     fwd_emqp_router_message as fwdmsg,
     parse_router_message
 )
+from .utils.settings import import_settings
 from .utils.devices import generate_device_name
 from .utils.timeutils import monotonic, timestamp
 from eventmq.log import setup_logger
@@ -84,8 +85,8 @@ class Router(HeartbeatMixin):
         self.waiting_messages = {}
 
     def start(self,
-              frontend_addr='tcp://127.0.0.1:47290',
-              backend_addr='tcp://127.0.0.1:47291'):
+              frontend_addr=conf.FRONTEND_ADDR,
+              backend_addr=conf.BACKEND_ADDR):
         """
         Begin listening for connections on the provided connection strings
 
@@ -373,7 +374,10 @@ class Router(HeartbeatMixin):
             func = getattr(self, "on_%s" % command.lower())
             func(sender, msgid, message)
 
-def router_main():
-    setup_logger('eventmq')
-    r = Router()
-    r.start()
+    def router_main(self):
+        """
+        Kick off router with logging and settings import
+        """
+        setup_logger('eventmq')
+        import_settings()
+        self.start()
