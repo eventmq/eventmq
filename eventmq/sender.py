@@ -98,6 +98,24 @@ class Sender(ZMQSendMixin, ZMQReceiveMixin):
             raise exceptions.EventMQError('Not ready. status=%s' %
                                           (self.status))
 
+    def unbind(self, addr):
+        """
+        Unbinds current socket
+
+        Args:
+            addr (str): Address to disconnect from as a string
+
+        Raises:
+           :class:`Exception`
+        """
+
+        if self.status == constants.STATUS.listening:
+            self.zsocket.unbind(addr)
+            self.status = constants.STATUS.ready
+        else:
+            raise Exception('Receiver %s is %s, but is tring to unbind'
+                            % (self.name, self.status))
+
     def rebuild(self, *args, **kwargs):
         """
         Rebuilds the socket. This is useful when you need to reconnect to

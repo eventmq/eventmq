@@ -15,6 +15,8 @@
 import unittest
 
 import zmq
+import signal
+import os
 
 from .. import sender
 
@@ -63,6 +65,17 @@ class TestCase(unittest.TestCase):
 
         self.sender.status = sender.constants.STATUS.ready
         self.sender.connect('ipc://emq-test_sender.ipc')
+
+    def test_disconnect(self):
+        with self.assertRaises(Exception):
+            self.sender.status = sender.constants.STATUS.ready
+            self.sender.listen('ipc://emq-test_sender.ipc')
+            self.sender.status = 'bogus'
+            self.sender.unbind('ipc://emq-test_sender.ipc')
+
+        self.sender.status = sender.constants.STATUS.ready
+        self.sender.listen('ipc://emq-test_sender.ipc')
+        self.sender.unbind('ipc://emq-test_sender.ipc')
 
     def test_rebuild(self):
         self.sender.listen('ipc://emq-test_sender.ipc')
