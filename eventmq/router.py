@@ -382,7 +382,8 @@ class Router(HeartbeatMixin):
         self.incoming.unbind(conf.FRONTEND_ADDR)
         self.outgoing.unbind(conf.BACKEND_ADDR)
         import_settings()
-        self.start()
+        self.start(frontend_addr=conf.FRONTEND_ADDR,
+                   backend_addr=conf.BACKEND_ADDR)
 
     def router_main(self):
         """
@@ -390,7 +391,14 @@ class Router(HeartbeatMixin):
         """
         setup_logger('eventmq')
         import_settings()
-        self.start()
+        self.start(frontend_addr=conf.FRONTEND_ADDR,
+                   backend_addr=conf.BACKEND_ADDR)
+
+
+# Entry point for pip console scripts
+def router_main():
+    r = Router()
+    r.router_main()
 
 
 # Entry point for pip console scripts

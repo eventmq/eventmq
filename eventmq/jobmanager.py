@@ -297,6 +297,11 @@ class JobManager(HeartbeatMixin):
         self.start(addr=conf.WORKER_ADDR)
 
 
+def jobmanager_main():
+    j = JobManager()
+    j.jobmanager_main()
+
+
 def jobmanager_main(self):
     j = JobManager()
     j.jobmanager_main()
