@@ -103,7 +103,7 @@ class Sender(ZMQSendMixin, ZMQReceiveMixin):
         Unbinds current socket
 
         Args:
-            addr (str): Address to disconnect from as a string
+            addr (str): Address to unbind from as a string
 
         Raises:
            :class:`Exception`

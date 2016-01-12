@@ -379,8 +379,8 @@ class Router(HeartbeatMixin):
 
     def sighup_handler(self, signum, frame):
         logger.debug('Caught signame %s' % signum)
-        self.incoming.disconnect(conf.FRONTEND_ADDR)
-        self.outgoing.disconnect(conf.BACKEND_ADDR)
+        self.incoming.unbind(conf.FRONTEND_ADDR)
+        self.outgoing.unbind(conf.BACKEND_ADDR)
         import_settings()
         self.start()
 
