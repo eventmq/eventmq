@@ -47,7 +47,7 @@ setup(
     entry_points={
         'console_scripts': [
             'emq-router = eventmq.router:router_main',
-            'emq-worker = eventmq.jobmanager:worker_main',
+            'emq-jobmanager = eventmq.jobmanager:jobmanager_main',
             'emq-scheduler = eventmq.scheduler:scheduler_main'
         ]
     }
