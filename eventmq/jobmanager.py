@@ -283,7 +283,7 @@ class JobManager(HeartbeatMixin):
         """
 
     def sighup_handler(self, signum, frame):
-        logger.debug('Caught signal %s' % signum)
+        logger.info('Caught signal %s' % signum)
         self.incoming.unbind(conf.FRONTEND_ADDR)
         import_settings()
         self.start()
@@ -295,3 +295,8 @@ class JobManager(HeartbeatMixin):
         setup_logger('')
         import_settings()
         self.start(addr=conf.WORKER_ADDR)
+
+
+def jobmanager_main(self):
+    j = JobManager()
+    j.jobmanager_main()

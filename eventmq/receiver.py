@@ -113,7 +113,7 @@ class Receiver(ZMQReceiveMixin, ZMQSendMixin):
             self.zsocket.unbind(addr)
             self.status = constants.STATUS.ready
         else:
-            raise Exception('Receiver %s is %s, but is tring to unbind'
+            raise Exception('Receiver %s is %s, but is trying to unbind'
                             % (self.name, self.status))
 
     @property

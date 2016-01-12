@@ -378,7 +378,7 @@ class Router(HeartbeatMixin):
             func(sender, msgid, message)
 
     def sighup_handler(self, signum, frame):
-        logger.debug('Caught signame %s' % signum)
+        logger.info('Caught signame %s' % signum)
         self.incoming.unbind(conf.FRONTEND_ADDR)
         self.outgoing.unbind(conf.BACKEND_ADDR)
         import_settings()
@@ -391,3 +391,9 @@ class Router(HeartbeatMixin):
         setup_logger('eventmq')
         import_settings()
         self.start()
+
+
+# Entry point for pip console scripts
+def router_main():
+    r = Router()
+    r.router_main()
