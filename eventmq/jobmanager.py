@@ -19,6 +19,7 @@ Ensures things about jobs and spawns the actual tasks
 """
 import json
 import logging
+import signal
 
 from . import conf, constants, exceptions, utils
 from .poller import Poller, POLLIN
@@ -124,6 +125,10 @@ class JobManager(HeartbeatMixin):
 
             self.status = constants.STATUS.connected
             logger.info('Starting to listen for jobs')
+
+            # handle any sighups by reloading config
+            signal.signal(signal.SIGHUP, self.sighup_handler)
+
             self._start_event_loop()
             # When we return, soemthing has gone wrong and we should try to
             # reconnect
@@ -277,6 +282,12 @@ class JobManager(HeartbeatMixin):
         HEARTBEAT
         """
 
+    def sighup_handler(self, signum, frame):
+        logger.info('Caught signal %s' % signum)
+        self.incoming.unbind(conf.FRONTEND_ADDR)
+        import_settings()
+        self.start()
+
     def jobmanager_main(self):
         """
         Kick off jobmanager with logging and settings import
@@ -284,3 +295,8 @@ class JobManager(HeartbeatMixin):
         setup_logger('')
         import_settings()
         self.start(addr=conf.WORKER_ADDR)
+
+
+def jobmanager_main(self):
+    j = JobManager()
+    j.jobmanager_main()

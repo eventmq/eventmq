@@ -21,6 +21,7 @@ from copy import copy
 import logging
 import threading
 import warnings
+import signal
 
 from . import conf, exceptions, poller, receiver
 from .constants import STATUS
@@ -102,6 +103,8 @@ class Router(HeartbeatMixin):
         self.status = STATUS.listening
         logger.info('Listening for requests on %s' % frontend_addr)
         logger.info('Listening for workers on %s' % backend_addr)
+
+        signal.signal(signal.SIGHUP, self.sighup_handler)
 
         self._start_event_loop()
 
@@ -374,6 +377,13 @@ class Router(HeartbeatMixin):
             func = getattr(self, "on_%s" % command.lower())
             func(sender, msgid, message)
 
+    def sighup_handler(self, signum, frame):
+        logger.info('Caught signame %s' % signum)
+        self.incoming.unbind(conf.FRONTEND_ADDR)
+        self.outgoing.unbind(conf.BACKEND_ADDR)
+        import_settings()
+        self.start()
+
     def router_main(self):
         """
         Kick off router with logging and settings import
@@ -381,3 +391,9 @@ class Router(HeartbeatMixin):
         setup_logger('eventmq')
         import_settings()
         self.start()
+
+
+# Entry point for pip console scripts
+def router_main():
+    r = Router()
+    r.router_main()

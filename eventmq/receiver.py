@@ -98,6 +98,24 @@ class Receiver(ZMQReceiveMixin, ZMQSendMixin):
             raise Exception('Receiver %s not ready. status=%s' %
                             (self.name, self.status))
 
+    def unbind(self, addr):
+        """
+        Unbinds current socket
+
+        Args:
+            addr (str): Address to disconnect from as a string
+
+        Raises:
+           :class:`Exception`
+        """
+
+        if self.status == constants.STATUS.listening:
+            self.zsocket.unbind(addr)
+            self.status = constants.STATUS.ready
+        else:
+            raise Exception('Receiver %s is %s, but is trying to unbind'
+                            % (self.name, self.status))
+
     @property
     def ready(self):
         """

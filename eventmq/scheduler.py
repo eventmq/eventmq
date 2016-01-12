@@ -125,6 +125,12 @@ class Scheduler(HeartbeatMixin):
         self.start(addr=conf.SCHEDULER_ADDR)
 
 
+# Entry point for pip console scripts
+def scheduler_main():
+    s = Scheduler()
+    s.scheduler_main()
+
+
 def test_job():
     print "hello!"
     print "hello!"
