@@ -22,4 +22,11 @@ HEARTBEAT_TIMEOUT = 5
 # How often should a heartbeat be sent? This should be lower than
 # HEARTBEAT_TIMEOUT for the broker
 HEARTBEAT_INTERVAL = 3
+# Default configuration file
+CONFIG_FILE = '/etc/eventmq'
+# Default addresses to localhost
+FRONTEND_ADDR = 'tcp://127.0.0.1:47290'
+BACKEND_ADDR = 'tcp://127.0.0.1:47291'
+SCHEDULER_ADDR = 'tcp://127.0.0.1:47291'
+WORKER_ADDR = 'tcp://127.0.0.1:47291'
 # }}}

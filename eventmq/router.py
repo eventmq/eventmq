@@ -20,6 +20,7 @@ Routes messages to workers (that are in named queues).
 from copy import copy
 import logging
 import warnings
+import signal
 
 from . import conf, exceptions, poller, receiver
 from .constants import STATUS, CLIENT_TYPE
@@ -29,6 +30,7 @@ from .utils.messages import (
     fwd_emqp_router_message as fwdmsg,
     parse_router_message
 )
+from .utils.settings import import_settings
 from .utils.devices import generate_device_name
 from .utils.timeutils import monotonic, timestamp
 from eventmq.log import setup_logger
@@ -98,8 +100,8 @@ class Router(HeartbeatMixin):
         self.schedulers = {}
 
     def start(self,
-              frontend_addr='tcp://127.0.0.1:47290',
-              backend_addr='tcp://127.0.0.1:47291'):
+              frontend_addr=conf.FRONTEND_ADDR,
+              backend_addr=conf.BACKEND_ADDR):
         """
         Begin listening for connections on the provided connection strings
 
@@ -115,6 +117,8 @@ class Router(HeartbeatMixin):
         self.status = STATUS.listening
         logger.info('Listening for requests on %s' % frontend_addr)
         logger.info('Listening for workers on %s' % backend_addr)
+
+        signal.signal(signal.SIGHUP, self.sighup_handler)
 
         self._start_event_loop()
 
@@ -484,7 +488,31 @@ class Router(HeartbeatMixin):
             func = getattr(self, "on_%s" % command.lower())
             func(sender, msgid, message)
 
+    def sighup_handler(self, signum, frame):
+        logger.info('Caught signame %s' % signum)
+        self.incoming.unbind(conf.FRONTEND_ADDR)
+        self.outgoing.unbind(conf.BACKEND_ADDR)
+        import_settings()
+        self.start(frontend_addr=conf.FRONTEND_ADDR,
+                   backend_addr=conf.BACKEND_ADDR)
+
+    def router_main(self):
+        """
+        Kick off router with logging and settings import
+        """
+        setup_logger('eventmq')
+        import_settings()
+        self.start(frontend_addr=conf.FRONTEND_ADDR,
+                   backend_addr=conf.BACKEND_ADDR)
+
+
+# Entry point for pip console scripts
 def router_main():
-    setup_logger('eventmq')
     r = Router()
-    r.start()
+    r.router_main()
+
+
+# Entry point for pip console scripts
+def router_main():
+    r = Router()
+    r.router_main()

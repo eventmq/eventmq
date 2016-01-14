@@ -24,9 +24,11 @@ import time
 from croniter import croniter
 from six import next
 
+from . import conf
 from .sender import Sender
 from .poller import Poller, POLLIN
 from .utils.classes import EMQPService, HeartbeatMixin
+from .utils.settings import import_settings
 from .utils.timeutils import seconds_until, timestamp, monotonic
 from .client.messages import send_request
 
@@ -169,14 +171,22 @@ class Scheduler(HeartbeatMixin, EMQPService):
         Noop command. The logic for heartbeating is in the event loop.
         """
 
+    def scheduler_main(self):
+        """
+        Kick off scheduler with logging and settings import
+        """
+        setup_logger("eventmq")
+        import_settings()
+        self.start(addr=conf.SCHEDULER_ADDR)
+
+
+# Entry point for pip console scripts
+def scheduler_main():
+    s = Scheduler()
+    s.scheduler_main()
+
 
 def test_job():
     print "hello!"
     print "hello!"
     time.sleep(4)
-
-
-def scheduler_main():
-    setup_logger("eventmq")
-    s = Scheduler()
-    s.start()

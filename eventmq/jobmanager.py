@@ -19,11 +19,13 @@ Ensures things about jobs and spawns the actual tasks
 """
 import json
 import logging
+import signal
 
 from . import conf
 from .poller import Poller, POLLIN
 from .sender import Sender
 from .utils.classes import EMQPService, HeartbeatMixin
+from .utils.settings import import_settings
 from .utils.devices import generate_device_name
 from .utils.messages import send_emqp_message as sendmsg
 from .utils.timeutils import monotonic
@@ -85,6 +87,10 @@ class JobManager(HeartbeatMixin, EMQPService):
         # Send a READY for each available worker
         for i in range(0, self.available_workers):
             self.send_ready()
+
+
+            # handle any sighups by reloading config
+            signal.signal(signal.SIGHUP, self.sighup_handler)
 
         while True:
             if self.received_disconnect:
@@ -171,8 +177,26 @@ class JobManager(HeartbeatMixin, EMQPService):
                 if not self.received_disconnect:
                     self.send_ready()
 
+    def sighup_handler(self, signum, frame):
+        logger.info('Caught signal %s' % signum)
+        self.incoming.unbind(conf.FRONTEND_ADDR)
+        import_settings()
+        self.start()
 
-def worker_main():
-    setup_logger('')
+    def jobmanager_main(self):
+        """
+        Kick off jobmanager with logging and settings import
+        """
+        setup_logger('')
+        import_settings()
+        self.start(addr=conf.WORKER_ADDR)
+
+
+def jobmanager_main():
     j = JobManager()
-    j.start()
+    j.jobmanager_main()
+
+
+def jobmanager_main(self):
+    j = JobManager()
+    j.jobmanager_main()

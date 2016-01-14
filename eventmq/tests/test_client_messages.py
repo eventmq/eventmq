@@ -15,6 +15,7 @@
 import os.path  # used for deferjob test
 from testfixtures import LogCapture
 import unittest
+import signal
 
 from ..receiver import Receiver
 from ..sender import Sender
@@ -112,3 +113,4 @@ class TestCase(unittest.TestCase):
         self.assertEqual(funcpath, ('posixpath', 'walk'))
         self.assertEqual(methpath,
             ('eventmq.tests.test_client_messages:TestClass', 'mymethod'))
+

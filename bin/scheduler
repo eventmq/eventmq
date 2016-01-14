@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # -*- mode: python -*-
-from eventmq.log import setup_logger
 from eventmq.scheduler import Scheduler
 
 if __name__ == "__main__":
-    setup_logger("eventmq")
     s = Scheduler()
-    s.start(addr='tcp://127.0.0.1:47290')
+    s.scheduler_main()
