@@ -419,18 +419,18 @@ class Router(HeartbeatMixin):
                                   queue_name))
                     return
 
-                try:
-                    # strip off the client id before forwarding because the
-                    # worker isn't expecting it, and the zmq socket is going
-                    # to put this router's id on it.
-                    fwdmsg(self.outgoing, worker_addr, msg[1:])
-                except exceptions.PeerGoneAwayError:
-                    logger.debug("Worker {} has unexpectedly gone away. "
-                                 "Trying another worker".format(worker_addr))
+            try:
+                # strip off the client id before forwarding because the
+                # worker isn't expecting it, and the zmq socket is going
+                # to put this router's id on it.
+                fwdmsg(self.outgoing, worker_addr, msg[1:])
+            except exceptions.PeerGoneAwayError:
+                logger.debug("Worker {} has unexpectedly gone away. "
+                             "Trying another worker".format(worker_addr))
 
-                    # TODO: Rewrite this logic as a loop, so it can't recurse
-                    # into oblivion
-                    self.on_receive_request(msg)
+                # TODO: Rewrite this logic as a loop, so it can't recurse
+                # into oblivion
+                self.on_receive_request(msg)
         # elif command == "HEARTBEAT":
         #     # The scheduler is heartbeating
 
