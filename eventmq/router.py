@@ -438,7 +438,7 @@ class Router(HeartbeatMixin):
             # This is a scheduler trying join
             self.on_inform(message[0], message[2], message[3])
 
-        elif command == "SCHEDULE":
+        elif command == "SCHEDULE" or command == "UNSCHEDULE":
             # Forward the schedule message to the schedulers
             scheduler_addr = self.scheduler_queue.pop()
             self.scheduler_queue.append(scheduler_addr)

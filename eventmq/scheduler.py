@@ -53,8 +53,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
         # Open connection to redis server for persistance
         self.redis_server = redis.StrictRedis(host='localhost',
                                               port=6379,
-                                              db=0,
-                                              max_connections=1)
+                                              db=0)
 
         # contains 4-item lists representing cron jobs
         # IDX     Description
@@ -203,7 +202,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
         if (self.redis_server):
             if (self.redis_server.get(schedule_hash)):
                 self.redis_server.delete(schedule_hash)
-                self.redis_server.set('interval_jobs', self.interval_jobs)
+                self.redis_server.set('interval_jobs', self.interval_jobs.keys())
                 self.redis_server.save()
 
     def on_schedule(self, msgid, message):
