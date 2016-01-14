@@ -2,6 +2,7 @@ pyzmq==14.6.0
 six==1.10.0
 monotonic==0.4    # A clock who's time is not changed. used for scheduling
 croniter==0.3.10
+redis==2.10.5
 
 # Documentation
 sphinxcontrib-napoleon==0.4.3
