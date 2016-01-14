@@ -30,6 +30,7 @@ from .sender import Sender
 from .poller import Poller, POLLIN
 from .utils.classes import EMQPService, HeartbeatMixin
 from .utils.settings import import_settings
+from .utils.timeutils import IntervalIter
 from .utils.timeutils import seconds_until, timestamp, monotonic
 from .client.messages import send_request
 
@@ -108,11 +109,21 @@ class Scheduler(HeartbeatMixin, EMQPService):
         if (self.redis_server):
             interval_job_list = self.redis_server.get('interval_jobs')
             for i in interval_job_list:
-                if (self.redis_server.get(i)):
-                    self.interval_jobs.append(i, self.redis_server.get(i))
-                else:
+                try:
+                    message = self.redis_server.get(i)
+                    queue = message[0]
+                    interval = int(message[1])
+                    inter_iter = IntervalIter(monotonic(), interval)
+
+                    self.interval_jobs[i] = [
+                        next(inter_iter),
+                        message[2],
+                        inter_iter,
+                        queue
+                    ]
+                except:
                     logger.warning('Expected scheduled job in redis server,' +
-                                   'but none was found')
+                                   'but none was found with hash %s' % i)
 
     def _start_event_loop(self):
         """
@@ -198,8 +209,6 @@ class Scheduler(HeartbeatMixin, EMQPService):
     def on_schedule(self, msgid, message):
         """
         """
-        from .utils.timeutils import IntervalIter
-
         logger.info("Received new SCHEDULE request: {}".format(message))
 
         queue = message[0]
@@ -233,7 +242,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
         # Persist the scheduled job
         if (self.redis_server):
-            self.redis_server.set(schedule_hash, message[2])
+            self.redis_server.set(schedule_hash, message)
             self.redis_server.set('interval_jobs', self.interval_jobs.keys())
             self.redis_server.save()
 
