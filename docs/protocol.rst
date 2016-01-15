@@ -104,6 +104,20 @@ FRAME   Value         Description
 6      _MSG_          The message to send
 ====== ============== ===========
 
+An **UNSCHEDULE** command consists of a 7-frame multipart message, formatted as follows.
+
+====== ============== ===========
+FRAME   Value         Description
+====== ============== ===========
+0      _EMPTY_        leave empty
+1      eMQP/1.0       Protocol version
+2      UNSCHEDULE     command
+3      _MSGID_        A unique id for the msg
+4      _TOPIC_NAME_   ignored for this command, broadcasted to all queues
+5      _HEADERS_      csv list of headers for this message
+6      _MSG_          The message to send
+====== ============== ===========
+
 eMQP / Scheduler
 ----------------
 An **INFORM** command consists of a 6-frame multipart message, formatted as follows.
