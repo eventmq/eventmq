@@ -90,6 +90,7 @@ class Router(HeartbeatMixin):
 
         #: Queue for schedulers to use:
         self.scheduler_queue = []
+
         #: Scheduler clients. Clients are able to send SCHEDULE commands that
         #: need to be routed to a scheduler, which will keep track of time and
         #: run the job.
@@ -98,6 +99,9 @@ class Router(HeartbeatMixin):
         #:       'hb': <last_recv_heartbeat>,
         #:     }
         self.schedulers = {}
+
+        #: Set to True when the router should die.
+        self.received_disconnect = False
 
     def start(self,
               frontend_addr=conf.FRONTEND_ADDR,
@@ -127,6 +131,10 @@ class Router(HeartbeatMixin):
         Starts the actual eventloop. Usually called by :meth:`Router.start`
         """
         while True:
+
+            if self.received_disconnect:
+                break
+
             now = monotonic()
             events = self.poller.poll()
 
@@ -232,6 +240,10 @@ class Router(HeartbeatMixin):
         elif client_type == CLIENT_TYPE.scheduler:
             self.add_scheduler(sender)
             self.send_ack(self.incoming, sender, msgid)
+
+    def on_disconnect(self, msgid, msg):
+        # Loops event loops should check for this and break out
+        self.received_disconnect = True
 
     def on_ready(self, sender, msgid, msg):
         """

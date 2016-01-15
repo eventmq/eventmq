@@ -17,6 +17,7 @@ import threading
 import time
 import unittest
 
+import mock
 import zmq
 
 from .. import conf, constants, jobmanager
@@ -62,7 +63,8 @@ class TestCase(unittest.TestCase):
         self.assertFalse(self.jm.awaiting_startup_ack)
         self.assertEqual(self.jm.status, constants.STATUS.ready)
 
-    def test_start(self):
+    @mock.patch('signal.signal')
+    def test_start(self, mock_signal_signal):
         sock = FakeDevice()
 
         self.jm_thread.start()
@@ -87,7 +89,8 @@ class TestCase(unittest.TestCase):
     def send_ack(self, sock, jm_addr, msgid):
         send_emqp_router_message(sock, jm_addr, "ACK", msgid)
 
-    def test__start_event_loop(self):
+    @mock.patch('signal.signal')
+    def test__start_event_loop(self, mock_signal_signal):
         # Tests the first part of the event loop
         sock = FakeDevice()
         sock.zsocket.bind(ADDR)
@@ -109,7 +112,8 @@ class TestCase(unittest.TestCase):
         # to be sent.
         self.assertEqual(ready_msg_count, self.jm.available_workers)
 
-    def test_on_request(self):
+    @mock.patch('signal.signal')
+    def test_on_request(self, mock_signal_signal):
         from ..client.messages import build_module_path
         sock = FakeDevice()
         sock.zsocket.bind(ADDR)
