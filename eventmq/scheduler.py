@@ -194,9 +194,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
         # in memory
         if (self.redis_server):
             if (self.redis_server.get(schedule_hash)):
-                self.redis_server.lpop(schedule_hash)
-                self.redis_server.set('interval_jobs',
-                                      self.interval_jobs.keys())
+                self.redis_server.lrem('interval_jobs', 0, schedule_hash)
                 self.redis_server.save()
 
     def load_job_from_redis(self, message):

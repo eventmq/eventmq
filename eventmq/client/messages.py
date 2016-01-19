@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 def schedule(socket, func, interval_secs, args=(), kwargs=None, class_args=(),
              class_kwargs=None, headers=('guarantee',),
-             queue=conf.DEFAULT_QUEUE_NAME):
+             queue=conf.DEFAULT_QUEUE_NAME, unschedule=False):
     """
     Execute a task on a defined interval.
 
@@ -83,7 +83,8 @@ def schedule(socket, func, interval_secs, args=(), kwargs=None, class_args=(),
     }]
 
     send_schedule_request(socket, interval_secs=interval_secs,
-                          message=msg, headers=headers, queue=queue)
+                          message=msg, headers=headers, queue=queue,
+                          unschedule=unschedule)
 
 
 def defer_job(socket, func, args=(), kwargs=None, class_args=(),
@@ -257,9 +258,9 @@ def send_request(socket, message, reply_requested=False, guarantee=False,
 
 
 def send_schedule_request(socket, interval_secs, message, headers=(),
-                          queue=None):
+                          queue=None, unschedule=False):
     """
-    Send a SCHEDULE command.
+    Send a SCHEDULE or UNSCHEDULE command.
 
     Queues a message requesting that something happens on an
     interval for the scheduler.
@@ -271,7 +272,13 @@ def send_schedule_request(socket, interval_secs, message, headers=(),
         headers (list): List of headers for the message
         queue (str): name of queue the job should be executed in
     """
-    send_emqp_message(socket, 'SCHEDULE',
+
+    if unschedule:
+        command = 'UNSCHEDULE'
+    else:
+        command = 'SCHEDULE'
+
+    send_emqp_message(socket, command,
                       (queue or conf.DEFAULT_QUEUE_NAME,
                        ','.join(headers),
                        str(interval_secs),
