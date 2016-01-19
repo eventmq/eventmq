@@ -111,7 +111,9 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
         # Restore persisted data if redis connection is alive and has jobs
         if (self.redis_server):
-            interval_job_list = self.redis_server.lrange('interval_jobs', 0, -1)
+            interval_job_list = self.redis_server.lrange('interval_jobs',
+                                                         0,
+                                                         -1)
             if interval_job_list is not None:
                 for i in interval_job_list:
                     logger.debug('Restoring job with hash %s' % i)
@@ -119,7 +121,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
                         self.load_job_from_redis(
                             message=deserialize(self.redis_server.get(i)))
                     else:
-                        logger.warning('Expected scheduled job in redis server,' +
+                        logger.warning('Expected scheduled job in redis,' +
                                        'but none was found with hash %s' % i)
             else:
                 logger.warning('Unabled to talk to redis server')
@@ -180,13 +182,6 @@ class Scheduler(HeartbeatMixin, EMQPService):
         logger.info("Received new UNSCHEDULE request: {}".format(message))
 
         schedule_hash = self.schedule_hash(message)
-        
-        # Items to use for uniquely identifying this scheduled job
-        # TODO: Pass company_id in a more rigid place
-        msg = deserialize(message[3])[1]
-        schedule_hash_items = {'company_id': msg['class_args'][0],
-                               'path': msg['path'],
-                               'callable': msg['callable']}
 
         if schedule_hash in self.interval_jobs:
             # Remove scheduled job
@@ -212,17 +207,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
         queue = message[0].encode('utf-8')
         interval = int(message[2])
         inter_iter = IntervalIter(monotonic(), interval)
-
-        # Items to use for uniquely identifying this scheduled job
-        # TODO: Pass company_id in a more rigid place
-	msg = deserialize(message[3])[1]
-        schedule_hash_items = {'company_id': msg['class_args'][0],
-                               'path': msg['path'],
-                               'callable': msg['callable']}
-
-        # Hash the sorted, immutable set of items in our identifying dict
-        schedule_hash = str(hash(tuple(frozenset(sorted(
-            schedule_hash_items.items())))))
+        schedule_hash = self.schedule_hash(message)
 
         self.interval_jobs[schedule_hash] = [
             next(inter_iter),
@@ -241,13 +226,6 @@ class Scheduler(HeartbeatMixin, EMQPService):
         inter_iter = IntervalIter(monotonic(), interval)
         schedule_hash = self.schedule_hash(message)
 
-        # Items to use for uniquely identifying this scheduled job
-        # TODO: Pass company_id in a more rigid place
-	msg = deserialize(message[3])[1]
-        schedule_hash_items = {'company_id': msg['class_args'][0],
-                               'path': msg['path'],
-                               'callable': msg['callable']}
-
         # Notify if this is updating existing, or new
         if (schedule_hash in self.interval_jobs):
             logger.debug('Update existing scheduled job with %s'
@@ -265,7 +243,9 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
         # Persist the scheduled job
         if (self.redis_server):
-            if schedule_hash not in self.redis_server.lrange('interval_jobs', 0, -1):
+            if schedule_hash not in self.redis_server.lrange('interval_jobs',
+                                                             0,
+                                                             -1):
                 self.redis_server.lpush('interval_jobs', schedule_hash)
             self.redis_server.set(schedule_hash, serialize(message))
             self.redis_server.save()
@@ -284,9 +264,10 @@ class Scheduler(HeartbeatMixin, EMQPService):
         """
         # Items to use for uniquely identifying this scheduled job
         # TODO: Pass company_id in a more rigid place
-        schedule_hash_items = {'company_id': message[2]['args'][0],
-                               'path': message[2]['path'],
-                               'callable': message[2]['callable']}
+        msg = deserialize(message[3])[1]
+        schedule_hash_items = {'company_id': msg['class_args'][0],
+                               'path': msg['path'],
+                               'callable': msg['callable']}
 
         # Hash the sorted, immutable set of items in our identifying dict
         schedule_hash = str(hash(tuple(frozenset(sorted(
