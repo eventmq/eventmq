@@ -26,7 +26,7 @@ from ..utils.messages import send_emqp_message
 logger = logging.getLogger(__name__)
 
 
-def schedule(socket, func, interval_mins, args=(), kwargs=None, class_args=(),
+def schedule(socket, func, interval_secs, args=(), kwargs=None, class_args=(),
              class_kwargs=None, headers=('guarantee',),
              queue=conf.DEFAULT_QUEUE_NAME):
     """
@@ -82,8 +82,7 @@ def schedule(socket, func, interval_mins, args=(), kwargs=None, class_args=(),
         'class_kwargs': class_kwargs,
     }]
 
-    send_schedule_request(socket, 300, msg, queue)
-
+    send_schedule_request(socket, interval_secs=interval_secs, message=msg, headers=headers, queue=queue)
 
 def defer_job(socket, func, args=(), kwargs=None, class_args=(),
               class_kwargs=None, reply_requested=False, guarantee=False,

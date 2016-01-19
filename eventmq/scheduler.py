@@ -29,6 +29,8 @@ from . import conf
 from .sender import Sender
 from .poller import Poller, POLLIN
 from .utils.classes import EMQPService, HeartbeatMixin
+from json import loads as deserialize
+from json import dumps as serialize
 from .utils.settings import import_settings
 from .utils.timeutils import IntervalIter
 from .utils.timeutils import seconds_until, timestamp, monotonic
@@ -109,23 +111,18 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
         # Restore persisted data if redis connection is alive and has jobs
         if (self.redis_server):
-            interval_job_list = self.redis_server.get('interval_jobs')
-            for i in interval_job_list:
-                try:
-                    message = self.redis_server.get(i)
-                    queue = message[0]
-                    interval = int(message[1])
-                    inter_iter = IntervalIter(monotonic(), interval)
-
-                    self.interval_jobs[i] = [
-                        next(inter_iter),
-                        message[2],
-                        inter_iter,
-                        queue
-                    ]
-                except:
-                    logger.warning('Expected scheduled job in redis server,' +
-                                   'but none was found with hash %s' % i)
+            interval_job_list = self.redis_server.lrange('interval_jobs', 0, -1)
+            if interval_job_list is not None:
+                for i in interval_job_list:
+                    logger.debug('Restoring job with hash %s' % i)
+                    if (self.redis_server.get(i)):
+                        self.load_job_from_redis(
+                            message=deserialize(self.redis_server.get(i)))
+                    else:
+                        logger.warning('Expected scheduled job in redis server,' +
+                                       'but none was found with hash %s' % i)
+            else:
+                logger.warning('Unabled to talk to redis server')
 
     def _start_event_loop(self):
         """
@@ -158,16 +155,16 @@ class Scheduler(HeartbeatMixin, EMQPService):
                     logger.debug("Next execution will be in %ss" %
                                  seconds_until(self.cron_jobs[i][0]))
 
-            for k, v in self.interval_jobs:
+            for k, v in self.interval_jobs.iteritems():
                 if v[0] <= m_now:
                     msg = v[1]
-                    queue = v[i][3]
+                    queue = v[3]
 
                     logger.debug("Time is: %s; Schedule is: %s - Running %s"
-                                 % (ts_now, v[i][0], msg))
+                                 % (ts_now, v[0], msg))
 
                     self.send_request(msg, queue=queue)
-                    v[i][0] = next(v[i][2])
+                    v[0] = next(v[2])
 
             if not self.maybe_send_heartbeat(events):
                 break
@@ -183,11 +180,17 @@ class Scheduler(HeartbeatMixin, EMQPService):
         logger.info("Received new UNSCHEDULE request: {}".format(message))
 
         schedule_hash = self.schedule_hash(message)
+        
+        # Items to use for uniquely identifying this scheduled job
+        # TODO: Pass company_id in a more rigid place
+        msg = deserialize(message[3])[1]
+        schedule_hash_items = {'company_id': msg['class_args'][0],
+                               'path': msg['path'],
+                               'callable': msg['callable']}
 
         if schedule_hash in self.interval_jobs:
             # Remove scheduled job
             self.interval_jobs.pop(schedule_hash)
-
         else:
             logger.debug("Couldn't find matching schedule for unschedule " +
                          "request")
@@ -196,10 +199,37 @@ class Scheduler(HeartbeatMixin, EMQPService):
         # in memory
         if (self.redis_server):
             if (self.redis_server.get(schedule_hash)):
-                self.redis_server.delete(schedule_hash)
+                self.redis_server.lpop(schedule_hash)
                 self.redis_server.set('interval_jobs',
                                       self.interval_jobs.keys())
                 self.redis_server.save()
+
+    def load_job_from_redis(self, message):
+        """
+        """
+        from .utils.timeutils import IntervalIter
+
+        queue = message[0].encode('utf-8')
+        interval = int(message[2])
+        inter_iter = IntervalIter(monotonic(), interval)
+
+        # Items to use for uniquely identifying this scheduled job
+        # TODO: Pass company_id in a more rigid place
+	msg = deserialize(message[3])[1]
+        schedule_hash_items = {'company_id': msg['class_args'][0],
+                               'path': msg['path'],
+                               'callable': msg['callable']}
+
+        # Hash the sorted, immutable set of items in our identifying dict
+        schedule_hash = str(hash(tuple(frozenset(sorted(
+            schedule_hash_items.items())))))
+
+        self.interval_jobs[schedule_hash] = [
+            next(inter_iter),
+            message[3],
+            inter_iter,
+            queue
+        ]
 
     def on_schedule(self, msgid, message):
         """
@@ -207,24 +237,40 @@ class Scheduler(HeartbeatMixin, EMQPService):
         logger.info("Received new SCHEDULE request: {}".format(message))
 
         queue = message[0]
-        interval = int(message[1])
+        interval = int(message[2])
         inter_iter = IntervalIter(monotonic(), interval)
         schedule_hash = self.schedule_hash(message)
 
+        # Items to use for uniquely identifying this scheduled job
+        # TODO: Pass company_id in a more rigid place
+	msg = deserialize(message[3])[1]
+        schedule_hash_items = {'company_id': msg['class_args'][0],
+                               'path': msg['path'],
+                               'callable': msg['callable']}
+
+        # Notify if this is updating existing, or new
+        if (schedule_hash in self.interval_jobs):
+            logger.debug('Update existing scheduled job with %s'
+                         % schedule_hash)
+        else:
+            logger.debug('Creating a new scheduled job with %s'
+                         % schedule_hash)
+
         self.interval_jobs[schedule_hash] = [
             next(inter_iter),
-            message[2],
+            message[3],
             inter_iter,
             queue
         ]
 
         # Persist the scheduled job
         if (self.redis_server):
-            self.redis_server.set(schedule_hash, message)
-            self.redis_server.set('interval_jobs', self.interval_jobs.keys())
+            if schedule_hash not in self.redis_server.lrange('interval_jobs', 0, -1):
+                self.redis_server.lpush('interval_jobs', schedule_hash)
+            self.redis_server.set(schedule_hash, serialize(message))
             self.redis_server.save()
 
-        self.send_request(message[2], queue=queue)
+        self.send_request(message[3], queue=queue)
 
     def on_heartbeat(self, msgid, message):
         """
@@ -254,6 +300,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
         """
         setup_logger("eventmq")
         import_settings()
+        self.__init__()
         self.start(addr=conf.SCHEDULER_ADDR)
 
 
