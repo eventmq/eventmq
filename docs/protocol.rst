@@ -1,4 +1,4 @@
-******************************
+/****************************e
 EventMQ Protocol Specification
 ******************************
 *The status of this document is alpha and subject to heavy change*
@@ -207,7 +207,7 @@ Heartbeating
 
 REQUEST Headers
 ---------------
-Headers MUST be 0 to many comma seperated values inserted into the header field. If there are no headers requried, send an empty string MUST be sent where headers are required.
+Headers MUST be 0 to many comma seperated values inserted into the header field. If there are no headers required, send an empty string MUST be sent where headers are required.
 
 Below is a table which defines and describes the headers.
 
