@@ -8,5 +8,11 @@ class STATUS(object):
     stopping = 300
     stopped = 301
 
+
+class CLIENT_TYPE(object):
+    worker = 'worker'
+    scheduler = 'scheduler'
+
+
 # See doc/protocol.rst
 PROTOCOL_VERSION = 'eMQP/1.0'
