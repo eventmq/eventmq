@@ -19,12 +19,11 @@ Routes messages to workers (that are in named queues).
 """
 from copy import copy
 import logging
-import threading
 import warnings
 import signal
 
 from . import conf, exceptions, poller, receiver
-from .constants import STATUS
+from .constants import STATUS, CLIENT_TYPE
 from .utils.classes import HeartbeatMixin
 from .utils.messages import (
     send_emqp_router_message as sendmsg,
@@ -85,6 +84,25 @@ class Router(HeartbeatMixin):
         #: workers available to take the job
         self.waiting_messages = {}
 
+        #: Tracks the last time the scheduler queue was cleaned out of dead
+        #: schedulers
+        self._meta['last_scheduler_cleanup'] = 0
+
+        #: Queue for schedulers to use:
+        self.scheduler_queue = []
+
+        #: Scheduler clients. Clients are able to send SCHEDULE commands that
+        #: need to be routed to a scheduler, which will keep track of time and
+        #: run the job.
+        #: Contains dictionaries:
+        #:     self.schedulers[<scheduler_zmq_id>] = {
+        #:       'hb': <last_recv_heartbeat>,
+        #:     }
+        self.schedulers = {}
+
+        #: Set to True when the router should die.
+        self.received_disconnect = False
+
     def start(self,
               frontend_addr=conf.FRONTEND_ADDR,
               backend_addr=conf.BACKEND_ADDR):
@@ -113,6 +131,10 @@ class Router(HeartbeatMixin):
         Starts the actual eventloop. Usually called by :meth:`Router.start`
         """
         while True:
+
+            if self.received_disconnect:
+                break
+
             now = monotonic()
             events = self.poller.poll()
 
@@ -136,6 +158,22 @@ class Router(HeartbeatMixin):
                     # Loop through the next worker queue and clean up any dead
                     # ones so the next one is alive
                     self.clean_up_dead_workers()
+
+                if now - self._meta['last_sent_scheduler_heartbeat'] >= \
+                   conf.HEARTBEAT_INTERVAL:
+                    self.send_schedulers_heartbeats()
+
+                if now - self._meta['last_scheduler_cleanup'] >= 10:
+                    self.clean_up_dead_schedulers()
+
+    def reset_heartbeat_counters(self):
+        """
+        Reset all the counters for heartbeats back to 0
+        """
+        super(Router, self).reset_heartbeat_counters()
+
+        # track the last time the router sent a heartbeat to the schedulers
+        self._meta['last_sent_scheduler_heartbeat'] = 0
 
     def send_ack(self, socket, recipient, msgid):
         """
@@ -162,12 +200,21 @@ class Router(HeartbeatMixin):
 
     def send_workers_heartbeats(self):
         """
-        Send heartbeats to all registered workers.
+        Send HEARTBEATs to all registered workers.
         """
         self._meta['last_sent_heartbeat'] = monotonic()
 
         for worker_id in self.workers:
             self.send_heartbeat(self.outgoing, worker_id)
+
+    def send_schedulers_heartbeats(self):
+        """
+        Send HEARTBEATs to all registered schedulers
+        """
+        self._meta['last_sent_scheduler_heartbeat'] = monotonic()
+
+        for scheduler_id in self.schedulers:
+            self.send_heartbeat(self.incoming, scheduler_id)
 
     def on_heartbeat(self, sender, msgid, msg):
         """
@@ -181,12 +228,22 @@ class Router(HeartbeatMixin):
         Handles an INFORM message. This happens when new worker coming online
         and announces itself.
         """
-        logger.info('Received INFORM request from %s' % sender)
         queue_name = msg[0]
+        client_type = msg[1]
 
-        self.add_worker(sender, queue_name)
+        logger.info('Received INFORM request from {} (type: {})'.format(
+            sender, client_type))
 
-        self.send_ack(self.outgoing, sender, msgid)
+        if client_type == CLIENT_TYPE.worker:
+            self.add_worker(sender, queue_name)
+            self.send_ack(self.outgoing, sender, msgid)
+        elif client_type == CLIENT_TYPE.scheduler:
+            self.add_scheduler(sender)
+            self.send_ack(self.incoming, sender, msgid)
+
+    def on_disconnect(self, msgid, msg):
+        # Loops event loops should check for this and break out
+        self.received_disconnect = True
 
     def on_ready(self, sender, msgid, msg):
         """
@@ -252,7 +309,7 @@ class Router(HeartbeatMixin):
         Adds a worker to worker queues
 
         Args:
-            worker_id: unique id of the worker to add
+            worker_id (str): unique id of the worker to add
             queues: queue or queues this worker should be a member of
         """
         # Add the worker to our worker dict
@@ -262,6 +319,36 @@ class Router(HeartbeatMixin):
 
         logger.debug('Adding {} to the self.workers for queues:{}'.format(
                      worker_id, str(queues)))
+
+    def clean_up_dead_schedulers(self):
+        """
+        Loops through the list of schedulers and remove any schedulers who
+        the router hasn't received a heartbeat in HEARTBEAT_TIMEOUT
+        """
+        now = monotonic()
+        self._meta['last_scheduler_cleanup'] = now
+        schedulers = copy(self.scheduler_queue)
+
+        for scheduler_id in schedulers:
+            last_hb_seconds = now - self.schedulers[scheduler_id]['hb']
+            if last_hb_seconds >= conf.HEARTBEAT_TIMEOUT:
+                logger.info("No HEARTBEAT from scheduler {} in {} Removing "
+                            "from the queue".format(scheduler_id,
+                                                    last_hb_seconds))
+                del self.schedulers[scheduler_id]
+                self.scheduler_queue.remove(scheduler_id)
+
+    def add_scheduler(self, scheduler_id):
+        """
+        Adds a scheduler to the queue to receive SCHEDULE commands
+
+        Args:
+            scheduler_id (str): unique id of the scheduler to add
+        """
+        self.scheduler_queue.append(scheduler_id)
+        self.schedulers[scheduler_id] = {}
+        self.schedulers[scheduler_id]['hb'] = monotonic()
+        logger.debug('Adding {} to self.schedulers'.format(scheduler_id))
 
     def requeue_worker(self, worker_id):
         """
@@ -295,10 +382,6 @@ class Router(HeartbeatMixin):
 
     def on_receive_request(self, msg):
         """
-        This function is called when a message comes in from the client socket.
-        It then calls `on_command`. If `on_command` isn't found, then a
-        warning is created.
-
         Args:
             msg: The untouched message from zmq
         """
@@ -307,43 +390,83 @@ class Router(HeartbeatMixin):
         except exceptions.InvalidMessageError:
             logger.exception('Invalid message from clients: %s' % str(msg))
 
-        queue_name = message[3][0]
+        sender = message[0]
+        command = message[1]
 
-        # If we have no workers for the queue TODO something about it
-        if queue_name not in self.queues:
-            logger.warning("Received REQUEST with a queue I don't recognize: "
-                           "%s" % queue_name)
-            logger.critical("Discarding message")
-            # TODO: Don't discard the message
-            return
+        # Count this message as a heart beat if it came from a scheduler that
+        # the router is aware of.
+        if sender in self.schedulers and sender in self.scheduler_queue:
+            self.schedulers[sender]['hb'] = monotonic()
 
-        try:
-            worker_addr = self.queues[queue_name].pop()
-        except KeyError:
-            logger.critical("REQUEST for an unknown queue caught in exception")
-            logger.critical("Discarding message")
-            return
-        except IndexError:
-            logger.warning('No available workers for queue "%s". Buffering '
-                           'message to send later.' % queue_name)
-            if queue_name not in self.waiting_messages:
-                self.waiting_messages[queue_name] = []
-            self.waiting_messages[queue_name].append(msg)
-            logger.debug('%d waiting messages in queue "%s"' %
-                         (len(self.waiting_messages[queue_name]), queue_name))
-            return
+            # If it is a heartbeat then there is nothing left to do
+            if command == "HEARTBEAT":
+                return
 
-        try:
-            # strip off the client id before forwarding because the worker
-            # isn't expecting it, and the zmq socket is going to put our
-            # id on it.
-            fwdmsg(self.outgoing, worker_addr, msg[1:])
-        except exceptions.PeerGoneAwayError:
-            logger.debug("Worker {} has unexpectedly gone away. Trying "
-                         "another worker".format(worker_addr))
+        # REQUEST is the most common message so it goes at the top
+        if command == "REQUEST":
+            queue_name = message[3][0]
+            # If we have no workers for the queue TODO something about it
+            if queue_name not in self.queues:
+                logger.warning("Received %s with a queue I don't recognize: "
+                               "%s" % (msg[3], queue_name))
+                logger.critical("Discarding message")
+                # TODO: Don't discard the message
+                return
 
-            # TODO: Rewrite this logic as a loop
-            self.on_receive_request(msg)
+            try:
+                worker_addr = self.queues[queue_name].pop()
+            except KeyError:
+                logger.critical("REQUEST for an unknown queue caught in "
+                                "exception")
+                logger.critical("Discarding message")
+                return
+            except IndexError:
+                logger.warning('No available workers for queue "%s". '
+                               'Buffering message to send later.' % queue_name)
+                if queue_name not in self.waiting_messages:
+                    self.waiting_messages[queue_name] = []
+                    self.waiting_messages[queue_name].append(msg)
+                    logger.debug('%d waiting messages in queue "%s"' %
+                                 (len(self.waiting_messages[queue_name]),
+                                  queue_name))
+                    return
+
+            try:
+                # strip off the client id before forwarding because the
+                # worker isn't expecting it, and the zmq socket is going
+                # to put this router's id on it.
+                fwdmsg(self.outgoing, worker_addr, msg[1:])
+            except exceptions.PeerGoneAwayError:
+                logger.debug("Worker {} has unexpectedly gone away. "
+                             "Trying another worker".format(worker_addr))
+
+                # TODO: Rewrite this logic as a loop, so it can't recurse
+                # into oblivion
+                self.on_receive_request(msg)
+        # elif command == "HEARTBEAT":
+        #     # The scheduler is heartbeating
+
+        elif command == "INFORM":
+            # This is a scheduler trying join
+            self.on_inform(message[0], message[2], message[3])
+
+        elif command == "SCHEDULE" or command == "UNSCHEDULE":
+            # Forward the schedule message to the schedulers
+            scheduler_addr = self.scheduler_queue.pop()
+            self.scheduler_queue.append(scheduler_addr)
+            self.schedulers[scheduler_addr] = {
+                'hb': monotonic(),
+            }
+
+            try:
+                # Strips off the client id before forwarding because the
+                # scheduler isn't expecting it.
+                fwdmsg(self.incoming, scheduler_addr, msg[1:])
+            except exceptions.PeerGoneAwayError:
+                logger.debug("Scheduler {} has unexpectedly gone away. Trying "
+                             "another scheduler.".format(scheduler_addr))
+                # TODO: rewrite this in a loop
+                self.on_receive_request(msg)
 
     def process_worker_message(self, msg):
         """

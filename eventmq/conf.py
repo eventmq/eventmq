@@ -25,8 +25,14 @@ HEARTBEAT_INTERVAL = 3
 # Default configuration file
 CONFIG_FILE = '/etc/eventmq'
 # Default addresses to localhost
-FRONTEND_ADDR = 'tcp://127.0.0.1:47290'
-BACKEND_ADDR = 'tcp://127.0.0.1:47291'
+FRONTEND_ADDR = 'tcp://127.0.0.1:47291'
+BACKEND_ADDR = 'tcp://127.0.0.1:47290'
 SCHEDULER_ADDR = 'tcp://127.0.0.1:47291'
-WORKER_ADDR = 'tcp://127.0.0.1:47291'
+WORKER_ADDR = 'tcp://127.0.0.1:47290'
+
+# Redis settings
+RQ_HOST = 'localhost'
+RQ_PORT = 6379
+RQ_DB = 0
+RQ_PASSWORD = ''
 # }}}

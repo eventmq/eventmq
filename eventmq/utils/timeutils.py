@@ -44,3 +44,45 @@ def seconds_until(ts):
     time.time()
     """
     return ts - timestamp()
+
+
+class IntervalIter(object):
+    """
+    represents an interval (in seconds) and it's `next()` execution time
+
+    Usage:
+        # interval of 5min using monotonic clock (assume it starts at 0 for the
+        # sake of the example)
+        interval = IntervalIter(monotonic, 300)
+        # Py2
+
+        interval.next()  # 300
+        interval.next()  # 600
+
+        # Py3
+        next(interval)  # 300
+        next(interval)  # 600
+    """
+    def __init__(self, start_value, interval_secs):
+        """
+        Args:
+            start_value (numeric) - the timestamp to begin with. usually gotten
+                via :func:`monotonic` or :func:`timestamp`
+            interval_secs (int) - the number of seconds between intervals
+        """
+        self.current = start_value
+        self.interval_secs = interval_secs
+
+        # iterate the first time so the first call to .next() is interval_secs
+        # + start_value
+        self.__next__()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):  # Py3
+        self.current += self.interval_secs
+        return self.current - self.interval_secs
+
+    def next(self):
+        return self.__next__()

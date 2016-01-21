@@ -7,10 +7,10 @@ from setuptools import setup, find_packages
 
 setup(
     name='eventmq',
-    version='0.1.0',
+    version='0.1.3',
     description='EventMQ messaging system based off ZeroMQ',
     packages=find_packages(),
-    install_requires=['pyzmq>=15.1.0',
+    install_requires=['pyzmq>=14.6.0',
                       'six>=1.5.2',
                       'monotonic==0.4',
                       'croniter',
@@ -20,6 +20,7 @@ setup(
                       'nose',
                       'coverage',
                       'testfixtures',
+                      'future==0.15.2',
                       'python-dateutil>=2.1,<3.0.0'],
 
 
