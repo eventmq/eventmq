@@ -10,7 +10,7 @@ setup(
     version='0.1.0',
     description='EventMQ messaging system based off ZeroMQ',
     packages=find_packages(),
-    install_requires=['pyzmq>=15.1.0',
+    install_requires=['pyzmq>=14.6.0',
                       'six>=1.5.2',
                       'monotonic==0.4',
                       'croniter',
