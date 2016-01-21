@@ -20,6 +20,7 @@ setup(
                       'nose',
                       'coverage',
                       'testfixtures',
+                      'future==0.15.2'
                       'python-dateutil>=2.1,<3.0.0'],
 
 
