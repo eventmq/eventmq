@@ -27,7 +27,7 @@ CONFIG_FILE = '/etc/eventmq'
 # Default addresses to localhost
 FRONTEND_ADDR = 'tcp://127.0.0.1:47290'
 BACKEND_ADDR = 'tcp://127.0.0.1:47291'
-SCHEDULER_ADDR = 'tcp://127.0.0.1:47291'
+SCHEDULER_ADDR = 'tcp://127.0.0.1:47290'
 WORKER_ADDR = 'tcp://127.0.0.1:47291'
 
 # Redis settings
