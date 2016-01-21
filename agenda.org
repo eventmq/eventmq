@@ -1,5 +1,5 @@
 * EventMQ Milestones
-** 0.2 [16/27] [59%]                                              :milestone:
+** 0.2 [18/28] [64%]                                              :milestone:
 :PROPERTIES:
 :ID:          2954195A-5456-4787-A27F-E64E3B3E84CA
 :DESCRIPTION: Add support for scheduling messages. Bonus: Add support for
@@ -11,15 +11,14 @@
 :CREATED:   <2015-12-30 Wed 17:00>
 :END:
 :LOGBOOK:
-CLOCK: [2016-01-05 Tue 15:06]
 CLOCK: [2015-12-30 Wed 16:59]--[2015-12-30 Wed 17:10] =>  0:11
 :END:
 The router needs to check for an ACK when forwarding a SCHEDULE to a
 scheduler if the guarantee header has been set. If no ACK is received after
 <threshold> then the message should be sent to a different scheduler. (Also
 send a remove schedule command in order to disable just in case it was added).
-*** TODO [#A] allow schedules to be updated or removed
-so they can be updated on setting changes (e.g. redwood)
+*** TODO Scheduler needs to broadcast UNSUBSCRIBE command to all schedulers
+*** TODO Create a logster script for graphs
 *** BUG on_receive_request scheduler infinite loop
 :PROPERTIES:
 :ID:       8C5D596A-30B2-4EA1-A715-D3E613A19260
@@ -30,11 +29,6 @@ CLOCK: [2015-12-30 Wed 15:05]--[2015-12-30 Wed 15:06] =>  0:01
 [2015-12-30 Wed 15:05]
 [[file:~/Code/enderlabs/eventboard.io/mq/eventmq/router.py::self.on_receive_request(msg)]]
 sending a SUBSCRIBE with no connected schedulers causes an infinite loop
-*** TODO [#B] implement the DISCONNECT frame in scheduler.
-:PROPERTIES:
-:ID:       E2D631BE-4F19-45FE-B695-BEAA71D27ADB
-:END:
-Without it tests can't be executed in threads
 *** TODO [#B] add a waiting_messages threshold config for the broker. notify someone when the threshold is hit.
 :PROPERTIES:
 :ID:       D233DFD8-67AD-4D55-B123-D75D4C898F9D
@@ -89,6 +83,13 @@ supported codec.
 [2015-12-30 Wed 21:18]
 [[file:~/Code/enderlabs/eventboard.io/mq/eventmq/jobmanager.py]]
 *** TODO make sure shutting down the box still works
+*** DONE [#A] allow schedules to be updated or removed
+so they can be updated on setting changes (e.g. redwood)
+*** DONE [#B] implement the DISCONNECT frame in scheduler.
+:PROPERTIES:
+:ID:       E2D631BE-4F19-45FE-B695-BEAA71D27ADB
+:END:
+Without it tests can't be executed in threads
 *** DONE add a header field to SCHEDULE
 :PROPERTIES:
 :ID:       700FE422-D105-4E59-A806-35868818FAA5
