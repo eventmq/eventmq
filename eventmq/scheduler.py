@@ -53,9 +53,10 @@ class Scheduler(HeartbeatMixin, EMQPService):
         self.outgoing = Sender()
 
         # Open connection to redis server for persistance
-        self.redis_server = redis.StrictRedis(host='localhost',
-                                              port=6379,
-                                              db=0)
+        self.redis_server = redis.StrictRedis(host=conf.RQ_HOST,
+                                              port=conf.RQ_PORT,
+                                              db=conf.RQ_DB,
+                                              password=conf.RQ_PASSWORD)
 
         # contains 4-item lists representing cron jobs
         # IDX     Description
