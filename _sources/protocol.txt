@@ -1,4 +1,4 @@
-******************************
+/****************************e
 EventMQ Protocol Specification
 ******************************
 *The status of this document is alpha and subject to heavy change*
@@ -86,8 +86,51 @@ FRAME  Value          Description
 2      PUBLISH        command
 3      _MSGID_        A unique id for the msg
 4      _TOPIC_NAME_   the name of the queue the worker belongs to
-5      _HEADERS_      dictionary of headers. can be an empty set
+5      _HEADERS_      csv list of headers
 6      _MSG_          The message to send
+====== ============== ===========
+
+A **SCHEDULE** command consists of a 7-frame multipart message, formatted as follows.
+
+====== ============== ===========
+FRAME   Value         Description
+====== ============== ===========
+0      _EMPTY_        leave empty
+1      eMQP/1.0       Protocol version
+2      SCHEDULE       command
+3      _MSGID_        A unique id for the msg
+4      _TOPIC_NAME_   name of queue that the job should run in
+5      _HEADERS_      csv list of headers for this message
+6      _MSG_          The message to send
+====== ============== ===========
+
+An **UNSCHEDULE** command consists of a 7-frame multipart message, formatted as follows.
+
+====== ============== ===========
+FRAME   Value         Description
+====== ============== ===========
+0      _EMPTY_        leave empty
+1      eMQP/1.0       Protocol version
+2      UNSCHEDULE     command
+3      _MSGID_        A unique id for the msg
+4      _TOPIC_NAME_   ignored for this command, broadcasted to all queues
+5      _HEADERS_      csv list of headers for this message
+6      _MSG_          The message to send
+====== ============== ===========
+
+eMQP / Scheduler
+----------------
+An **INFORM** command consists of a 6-frame multipart message, formatted as follows.
+
+====== ============== ===========
+FRAME   Value         Description
+====== ============== ===========
+0      _EMPTY_        leave empty
+1      eMQP/1.0       Protocol version
+2      INFORM         command
+3      _MSGID_        A unique id for the msg
+4      _QUEUE_NAME_   csv seperated names of queue the worker belongs to
+5      scheduler      type of peer connecting
 ====== ============== ===========
 
 eMQP / Worker
@@ -102,6 +145,7 @@ FRAME   Value         Description
 2      INFORM         command
 3      _MSGID_        A unique id for the msg
 4      _QUEUE_NAME_   csv seperated names of queue the worker belongs to
+5      worker         type of peer connecting
 ====== ============== ===========
 
 A **READY** frame consists of a 4-frame multipart message, formatted as follows.
@@ -154,13 +198,16 @@ Heartbeating
 ------------
  * HEARTBEAT commands are valid at any time after an INFORM command
  * Any command except DISCONNECT act as a heartbeat. Peers SHOULD NOT send HEARTBEAT commands while sending other commands.
- * Both worker and broker MUST send heartbeats at regular and agreed-upon intervals.
+ * Worker and broker MUST send heartbeats at regular and agreed-upon intervals.
+ * Scheduler and broker MUST send heartbeats at regular and agreed-upon intervals.
  * If the worker detects that the broker disconnected it SHOULD restart the conversation.
  * If the broker detects that a worker has disconnected it should stop sending it a message of any type.
+ * If the scheduler detects that the broker disconnects it SHOULD restart the conversation.
+ * If the broker detects that a scheduler has disconnected it should ??????????.
 
-Request Headers
+REQUEST Headers
 ---------------
-Headers MUST be 0 to many comma seperated values inserted into the header field. If there are no headers requried, send an empty string MUST be sent where headers are required.
+Headers MUST be 0 to many comma seperated values inserted into the header field. If there are no headers required, send an empty string MUST be sent where headers are required.
 
 Below is a table which defines and describes the headers.
 

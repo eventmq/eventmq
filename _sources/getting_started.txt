@@ -1,0 +1,11 @@
+Getting Started
+===============
+
+To run a simple messaging system run the following
+
+pip install -r requirements.
+
+ln -s path/to/eventmq/eventmq /home/vagrant/.virtualenvs/lib/python2.7/site-packages/eventmq
+
+path/to/eventmq/bin/router - run the router
+path/to/eventmq/bin/worker - run a worker. run this command more than once to run more than one worker.

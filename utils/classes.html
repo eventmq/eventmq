@@ -84,6 +84,7 @@
             
                 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../client.html"><code class="docutils literal"><span class="pre">client</span></code> &#8211; Client Utilities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../exceptions.html"><code class="docutils literal"><span class="pre">exceptions</span></code> &#8211; Exceptions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../jobmanager.html"><code class="docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../poller.html"><code class="docutils literal"><span class="pre">poller</span></code> &#8211; Poller</a></li>
@@ -150,6 +151,117 @@
   <span class="target" id="module-eventmq.utils.classes"></span><div class="section" id="classes-utility-classes">
 <h1><code class="xref py py-mod docutils literal"><span class="pre">classes</span></code> &#8211; Utility Classes<a class="headerlink" href="#classes-utility-classes" title="Permalink to this headline">¶</a></h1>
 <p>Defines some classes to use when implementing ZMQ devices</p>
+<dl class="class">
+<dt id="eventmq.utils.classes.EMQPService">
+<em class="property">class </em><code class="descclassname">eventmq.utils.classes.</code><code class="descname">EMQPService</code><a class="headerlink" href="#eventmq.utils.classes.EMQPService" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper for devices that connect to brokers.</p>
+<p>Implements utility methods for sending EMQP messages for the following
+EMQP commands.</p>
+<blockquote>
+<div><ul class="simple">
+<li>INFORM</li>
+</ul>
+</div></blockquote>
+<p>Also implements utlitiy methods for managing long-running processes.</p>
+<dl class="docutils">
+<dt>To use you must define:</dt>
+<dd><ul class="first last simple">
+<li><cite>self.outgoing</cite> - socket where messages can be sent to the Router</li>
+<li><cite>self.SERVICE_TYPE</cite> - defines the service type for INFORM. See
+<a class="reference internal" href="#eventmq.utils.classes.EMQPService.send_inform" title="eventmq.utils.classes.EMQPService.send_inform"><code class="xref py py-meth docutils literal"><span class="pre">send_inform()</span></code></a> for more information.</li>
+<li><cite>self.poller</cite> - the poller that <cite>self.outgoing</cite> will be using.
+Usually: <cite>self.poller = eventmq.poller.Poller()</cite></li>
+</ul>
+</dd>
+</dl>
+<p>When messages are received from the router, they are processed in
+<a class="reference internal" href="#eventmq.utils.classes.EMQPService.process_message" title="eventmq.utils.classes.EMQPService.process_message"><code class="xref py py-meth docutils literal"><span class="pre">process_message()</span></code></a> which then calls <cite>on_COMMAND</cite>. This should be used
+in the event loop so if you want to respond to the SCHEDULE command, you
+would define the method <cite>on_schedule</cite> in your service class.</p>
+<p>See the code for <code class="xref py py-class docutils literal"><span class="pre">Scheduler</span></code> and <code class="xref py py-class docutils literal"><span class="pre">JobManager</span></code> for examples.</p>
+<dl class="attribute">
+<dt id="eventmq.utils.classes.EMQPService.__weakref__">
+<code class="descname">__weakref__</code><a class="headerlink" href="#eventmq.utils.classes.EMQPService.__weakref__" title="Permalink to this definition">¶</a></dt>
+<dd><p>list of weak references to the object (if defined)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="eventmq.utils.classes.EMQPService.is_heartbeat_enabled">
+<code class="descname">is_heartbeat_enabled</code><a class="headerlink" href="#eventmq.utils.classes.EMQPService.is_heartbeat_enabled" title="Permalink to this definition">¶</a></dt>
+<dd><p>Property to check if heartbeating is enabled. Useful when certain
+properties must be updated for heartbeating
+:returns: bool - True if heartbeating is enabled, False if it isn&#8217;t</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.utils.classes.EMQPService.on_ack">
+<code class="descname">on_ack</code><span class="sig-paren">(</span><em>msgid</em>, <em>ackd_msgid</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.classes.EMQPService.on_ack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets <code class="xref py py-attr docutils literal"><span class="pre">awaiting_ack</span></code> to False</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.utils.classes.EMQPService.process_message">
+<code class="descname">process_message</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.classes.EMQPService.process_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Processes a message. Processing takes form of calling an
+<cite>on_EMQP_COMMAND</cite> method. The method must accept <cite>msgid</cite> and <cite>message</cite>
+as the first arguments.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>msg</strong> &#8211; The message received from the socket to parse and process.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.utils.classes.EMQPService.reset">
+<code class="descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.classes.EMQPService.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resets the current connection by closing and reopening the socket</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.utils.classes.EMQPService.send_inform">
+<code class="descname">send_inform</code><span class="sig-paren">(</span><em>queue=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.classes.EMQPService.send_inform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Queues an INFORM command to <cite>self.outgoing</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>type</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Either &#8216;worker&#8217; or &#8216;scheduler&#8217;</li>
+<li><strong>queue</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; <ul>
+<li>For &#8216;worker&#8217; type, the queues the worker is listening on</li>
+<li>Ignored for &#8216;scheduler&#8217; type</li>
+</ul>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">ValueError</span></code> &#8211; When <cite>type_</cite> does not match a specified type</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.utils.classes.EMQPService.start">
+<code class="descname">start</code><span class="sig-paren">(</span><em>addr</em>, <em>queues='default'</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.classes.EMQPService.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connect to <cite>addr</cite> and begin listening for job requests</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>addr</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; connection string to connect to</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
 <dl class="class">
 <dt id="eventmq.utils.classes.HeartbeatMixin">
 <em class="property">class </em><code class="descclassname">eventmq.utils.classes.</code><code class="descname">HeartbeatMixin</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.classes.HeartbeatMixin" title="Permalink to this definition">¶</a></dt>

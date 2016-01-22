@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Contributing to EventMQ &mdash; EventMQ 0 documentation</title>
+  <title>Getting Started &mdash; EventMQ 0 documentation</title>
   
 
   
@@ -30,9 +30,7 @@
   
 
   
-    <link rel="top" title="EventMQ 0 documentation" href="index.html"/>
-        <link rel="next" title="Goals" href="protocol.html"/>
-        <link rel="prev" title="timeutils – Time Utilites" href="utils/timeutils.html"/> 
+    <link rel="top" title="EventMQ 0 documentation" href="index.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -81,17 +79,9 @@
           
             
             
-                <ul class="current">
+                <ul>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="">Contributing to EventMQ</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="protocol.html">Goals</a></li>
-<li class="toctree-l2"><a class="reference internal" href="protocol.html#license">License</a></li>
-<li class="toctree-l2"><a class="reference internal" href="protocol.html#language">Language</a></li>
-<li class="toctree-l2"><a class="reference internal" href="protocol.html#architecture">Architecture</a></li>
-<li class="toctree-l2"><a class="reference external" href="https://github.com/enderlabs/eventmq">Source Code</a></li>
-<li class="toctree-l2"><a class="reference external" href="https://github.com/enderlabs/eventmq/issues">Issues</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to EventMQ</a></li>
 </ul>
 
             
@@ -122,11 +112,11 @@
   <ul class="wy-breadcrumbs">
     <li><a href="index.html">Docs</a> &raquo;</li>
       
-    <li>Contributing to EventMQ</li>
+    <li>Getting Started</li>
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="_sources/contributing.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/getting_started.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -136,39 +126,19 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="contributing-to-eventmq">
-<h1>Contributing to EventMQ<a class="headerlink" href="#contributing-to-eventmq" title="Permalink to this headline">¶</a></h1>
-<p>A few tips when working on the code</p>
-<blockquote>
-<div><ul class="simple">
-<li>Use relative imports. If you use absolute imports then when you <cite>import eventmq.exceptions</cite> it&#8217;s possible that you receive in return a different version of eventmq. exceptions installed somewhere else on the system.</li>
-</ul>
-</div></blockquote>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="protocol.html">Goals</a></li>
-<li class="toctree-l1"><a class="reference internal" href="protocol.html#license">License</a></li>
-<li class="toctree-l1"><a class="reference internal" href="protocol.html#language">Language</a></li>
-<li class="toctree-l1"><a class="reference internal" href="protocol.html#architecture">Architecture</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://github.com/enderlabs/eventmq">Source Code</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://github.com/enderlabs/eventmq/issues">Issues</a></li>
-</ul>
-</div>
+  <div class="section" id="getting-started">
+<h1>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
+<p>To run a simple messaging system run the following</p>
+<p>pip install -r requirements.</p>
+<p>ln -s path/to/eventmq/eventmq /home/vagrant/.virtualenvs/lib/python2.7/site-packages/eventmq</p>
+<p>path/to/eventmq/bin/router - run the router
+path/to/eventmq/bin/worker - run a worker. run this command more than once to run more than one worker.</p>
 </div>
 
 
            </div>
           </div>
           <footer>
-  
-    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-      
-        <a href="protocol.html" class="btn btn-neutral float-right" title="Goals" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
-      
-      
-        <a href="utils/timeutils.html" class="btn btn-neutral" title="timeutils – Time Utilites" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
-      
-    </div>
   
 
   <hr/>

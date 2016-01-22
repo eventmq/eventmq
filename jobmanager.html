@@ -84,6 +84,7 @@
             
                 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="client.html"><code class="docutils literal"><span class="pre">client</span></code> &#8211; Client Utilities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="exceptions.html"><code class="docutils literal"><span class="pre">exceptions</span></code> &#8211; Exceptions</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href=""><code class="docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager</a></li>
 <li class="toctree-l2"><a class="reference internal" href="poller.html"><code class="docutils literal"><span class="pre">poller</span></code> &#8211; Poller</a></li>
@@ -167,10 +168,32 @@ generated.</td>
 </table>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="eventmq.jobmanager.JobManager.active_jobs">
+<code class="descname">active_jobs</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.jobmanager.JobManager.active_jobs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Jobs that are running should be stored in <cite>active_jobs</cite>. There
+should always be at most <cite>available_workers</cite> count of active jobs.
+this point the manager should wait for a slot to free up.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="eventmq.jobmanager.JobManager.available_workers">
+<code class="descname">available_workers</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.jobmanager.JobManager.available_workers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of workers that are available to have a job executed. This
+number changes as workers become busy with jobs</p>
+</dd></dl>
+
 <dl class="method">
-<dt id="eventmq.jobmanager.JobManager.on_ack">
-<code class="descname">on_ack</code><span class="sig-paren">(</span><em>msgid</em>, <em>ackd_msgid</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.on_ack" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sets <code class="xref py py-attr docutils literal"><span class="pre">awaiting_ack</span></code> to False</p>
+<dt id="eventmq.jobmanager.JobManager.jobmanager_main">
+<code class="descname">jobmanager_main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.jobmanager_main" title="Permalink to this definition">¶</a></dt>
+<dd><p>Kick off jobmanager with logging and settings import</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="eventmq.jobmanager.JobManager.name">
+<code class="descname">name</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.jobmanager.JobManager.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Define the name of this JobManager instance. Useful to know when
+referring to the logs.</p>
 </dd></dl>
 
 <dl class="method">
@@ -213,31 +236,12 @@ HEARTBEAT</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
-<dt id="eventmq.jobmanager.JobManager.process_message">
-<code class="descname">process_message</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.process_message" title="Permalink to this definition">¶</a></dt>
-<dd><p>Processes a message</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>msg</strong> &#8211; The message received from the socket to parse and process.
-Processing takes form of calling an <cite>on_COMMAND</cite> method.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="eventmq.jobmanager.JobManager.reset">
-<code class="descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.reset" title="Permalink to this definition">¶</a></dt>
-<dd><p>Resets the current connection by closing and reopening the socket</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="eventmq.jobmanager.JobManager.send_inform">
-<code class="descname">send_inform</code><span class="sig-paren">(</span><em>queue=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.send_inform" title="Permalink to this definition">¶</a></dt>
-<dd><p>Send an INFORM command</p>
+<dl class="attribute">
+<dt id="eventmq.jobmanager.JobManager.outgoing">
+<code class="descname">outgoing</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.jobmanager.JobManager.outgoing" title="Permalink to this definition">¶</a></dt>
+<dd><p>JobManager starts out by INFORMing the router of it&#8217;s existance,
+then telling the router that it is READY. The reply will be the unit
+of work.</p>
 </dd></dl>
 
 <dl class="method">
@@ -245,20 +249,6 @@ Processing takes form of calling an <cite>on_COMMAND</cite> method.</td>
 <code class="descname">send_ready</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.send_ready" title="Permalink to this definition">¶</a></dt>
 <dd><p>send the READY command upstream to indicate that JobManager is ready
 for another REQUEST message.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="eventmq.jobmanager.JobManager.start">
-<code class="descname">start</code><span class="sig-paren">(</span><em>addr='tcp://127.0.0.1:47291'</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.start" title="Permalink to this definition">¶</a></dt>
-<dd><p>Connect to <cite>addr</cite> and begin listening for job requests</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>addr</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; connection string to connect to</td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
 </dd></dl>

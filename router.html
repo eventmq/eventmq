@@ -84,6 +84,7 @@
             
                 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="client.html"><code class="docutils literal"><span class="pre">client</span></code> &#8211; Client Utilities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="exceptions.html"><code class="docutils literal"><span class="pre">exceptions</span></code> &#8211; Exceptions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="jobmanager.html"><code class="docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager</a></li>
 <li class="toctree-l2"><a class="reference internal" href="poller.html"><code class="docutils literal"><span class="pre">poller</span></code> &#8211; Poller</a></li>
@@ -148,6 +149,20 @@
 <em class="property">class </em><code class="descclassname">eventmq.router.</code><code class="descname">Router</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router" title="Permalink to this definition">¶</a></dt>
 <dd><p>A simple router of messages</p>
 <dl class="method">
+<dt id="eventmq.router.Router.add_scheduler">
+<code class="descname">add_scheduler</code><span class="sig-paren">(</span><em>scheduler_id</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.add_scheduler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a scheduler to the queue to receive SCHEDULE commands</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>scheduler_id</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; unique id of the scheduler to add</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="eventmq.router.Router.add_worker">
 <code class="descname">add_worker</code><span class="sig-paren">(</span><em>worker_id</em>, <em>queues=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.add_worker" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds a worker to worker queues</p>
@@ -156,13 +171,20 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>worker_id</strong> &#8211; unique id of the worker to add</li>
+<li><strong>worker_id</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; unique id of the worker to add</li>
 <li><strong>queues</strong> &#8211; queue or queues this worker should be a member of</li>
 </ul>
 </td>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.router.Router.clean_up_dead_schedulers">
+<code class="descname">clean_up_dead_schedulers</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.clean_up_dead_schedulers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loops through the list of schedulers and remove any schedulers who
+the router hasn&#8217;t received a heartbeat in HEARTBEAT_TIMEOUT</p>
 </dd></dl>
 
 <dl class="method">
@@ -209,10 +231,7 @@ and announces itself.</p>
 <dl class="method">
 <dt id="eventmq.router.Router.on_receive_request">
 <code class="descname">on_receive_request</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.on_receive_request" title="Permalink to this definition">¶</a></dt>
-<dd><p>This function is called when a message comes in from the client socket.
-It then calls <cite>on_command</cite>. If <cite>on_command</cite> isn&#8217;t found, then a
-warning is created.</p>
-<table class="docutils field-list" frame="void" rules="none">
+<dd><table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
@@ -239,9 +258,70 @@ a warning is created.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="eventmq.router.Router.queue_message">
+<code class="descname">queue_message</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.queue_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a message to the queue for processing later</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="eventmq.router.Router.queues">
+<code class="descname">queues</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.router.Router.queues" title="Permalink to this definition">¶</a></dt>
+<dd><p>JobManager address by queue name. The lists here are Last Recently
+Used queues where a worker is popped off when given a job, and
+appeneded when one finishes. There is one entry per available
+worker slot, so you may see duplicate addresses.</p>
+<p class="rubric">Example</p>
+<p>{&#8216;default&#8217;: [&#8216;w1&#8217;, &#8216;w2&#8217;, &#8216;w1&#8217;, &#8216;w4&#8217;]}</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="eventmq.router.Router.received_disconnect">
+<code class="descname">received_disconnect</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.router.Router.received_disconnect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set to True when the router should die.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="eventmq.router.Router.requeue_worker">
 <code class="descname">requeue_worker</code><span class="sig-paren">(</span><em>worker_id</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.requeue_worker" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add a worker back to the queue pool</p>
+<dd><p>Add a worker back to the pools for which it is a member of.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This will (correctly) add duplicate items into the queues.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.router.Router.reset_heartbeat_counters">
+<code class="descname">reset_heartbeat_counters</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.reset_heartbeat_counters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reset all the counters for heartbeats back to 0</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.router.Router.router_main">
+<code class="descname">router_main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.router_main" title="Permalink to this definition">¶</a></dt>
+<dd><p>Kick off router with logging and settings import</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="eventmq.router.Router.scheduler_queue">
+<code class="descname">scheduler_queue</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.router.Router.scheduler_queue" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>Queue for schedulers to use</em></p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="eventmq.router.Router.schedulers">
+<code class="descname">schedulers</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.router.Router.schedulers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scheduler clients. Clients are able to send SCHEDULE commands that
+need to be routed to a scheduler, which will keep track of time and
+run the job.
+Contains dictionaries:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>self.schedulers[&lt;scheduler_zmq_id&gt;] = {</dt>
+<dd>&#8216;hb&#8217;: &lt;last_recv_heartbeat&gt;,</dd>
+</dl>
+<p>}</p>
+</div></blockquote>
 </dd></dl>
 
 <dl class="method">
@@ -283,14 +363,20 @@ needed when building messages</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="eventmq.router.Router.send_schedulers_heartbeats">
+<code class="descname">send_schedulers_heartbeats</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.send_schedulers_heartbeats" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send HEARTBEATs to all registered schedulers</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="eventmq.router.Router.send_workers_heartbeats">
 <code class="descname">send_workers_heartbeats</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.send_workers_heartbeats" title="Permalink to this definition">¶</a></dt>
-<dd><p>Send heartbeats to all registered workers.</p>
+<dd><p>Send HEARTBEATs to all registered workers.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="eventmq.router.Router.start">
-<code class="descname">start</code><span class="sig-paren">(</span><em>frontend_addr='tcp://127.0.0.1:47290'</em>, <em>backend_addr='tcp://127.0.0.1:47291'</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.start" title="Permalink to this definition">¶</a></dt>
+<code class="descname">start</code><span class="sig-paren">(</span><em>frontend_addr='tcp://127.0.0.1:47291'</em>, <em>backend_addr='tcp://127.0.0.1:47290'</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Begin listening for connections on the provided connection strings</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -304,6 +390,29 @@ needed when building messages</p>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="eventmq.router.Router.waiting_messages">
+<code class="descname">waiting_messages</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.router.Router.waiting_messages" title="Permalink to this definition">¶</a></dt>
+<dd><p>Message buffer. When messages can&#8217;t be sent because there are no
+workers available to take the job</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="eventmq.router.Router.workers">
+<code class="descname">workers</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.router.Router.workers" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of queues by workers. Meta data about the worker such as the
+queue memebership and timestamp of last message received are stored
+here.</p>
+<dl class="docutils">
+<dt><strong>Keys</strong></dt>
+<dd><ul class="first last simple">
+<li>queues: list() of queues the worker belongs to</li>
+<li>hb: monotonic timestamp of the last received message from worker</li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </dd></dl>
