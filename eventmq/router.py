@@ -450,7 +450,7 @@ class Router(HeartbeatMixin):
             # This is a scheduler trying join
             self.on_inform(message[0], message[2], message[3])
 
-        elif command == "SCHEDULE" or command == "UNSCHEDULE":
+        elif command == "SCHEDULE":
             # Forward the schedule message to the schedulers
             scheduler_addr = self.scheduler_queue.pop()
             self.scheduler_queue.append(scheduler_addr)
@@ -467,6 +467,22 @@ class Router(HeartbeatMixin):
                              "another scheduler.".format(scheduler_addr))
                 # TODO: rewrite this in a loop
                 self.on_receive_request(msg)
+
+        elif command == "UNSCHEDULE":
+            # Forward the unschedule message to all schedulers
+            for scheduler_addr, scheduler in self.schedulers:
+                self.schedulers[scheduler_addr] = {
+                    'hb': monotonic(),
+                }
+
+                try:
+                    # Strips off the client id before forwarding because the
+                    # scheduler isn't expecting it.
+                    fwdmsg(self.incoming, scheduler_addr, msg[1:])
+                except exceptions.PeerGoneAwayError:
+                    logger.debug("Scheduler {} has unexpectedly gone away."
+                                 " Schedule may still exist.".
+                                 format(scheduler_addr))
 
     def process_worker_message(self, msg):
         """
@@ -516,12 +532,6 @@ class Router(HeartbeatMixin):
         import_settings()
         self.start(frontend_addr=conf.FRONTEND_ADDR,
                    backend_addr=conf.BACKEND_ADDR)
-
-
-# Entry point for pip console scripts
-def router_main():
-    r = Router()
-    r.router_main()
 
 
 # Entry point for pip console scripts
