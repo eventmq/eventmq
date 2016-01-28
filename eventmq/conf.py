@@ -23,7 +23,7 @@ HEARTBEAT_TIMEOUT = 5
 # HEARTBEAT_TIMEOUT for the broker
 HEARTBEAT_INTERVAL = 3
 # Default configuration file
-CONFIG_FILE = '/etc/eventmq'
+CONFIG_FILE = '/etc/eventmq.conf'
 # Default addresses to localhost
 FRONTEND_ADDR = 'tcp://127.0.0.1:47291'
 BACKEND_ADDR = 'tcp://127.0.0.1:47290'
