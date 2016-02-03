@@ -17,7 +17,7 @@
 ================================
 Ensures things about jobs and spawns the actual tasks
 """
-import json.loads as serializer
+from json import loads as serializer
 import logging
 import signal
 
