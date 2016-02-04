@@ -20,10 +20,62 @@ Defines different short-lived workers that execute jobs
 from importlib import import_module
 import logging
 from multiprocessing import Pool
+import multiprocessing
 
 from eventmq.log import setup_logger
 
 logger = logging.getLogger(__name__)
+
+def _run(payload):
+    """
+    process a run message and execute a job
+
+    This is designed to run in a seperate process.
+    """
+    # Spawn in a new multiprocess
+    if ":" in payload["path"]:
+        _pkgsplit = payload["path"].split(':')
+        s_package = _pkgsplit[0]
+        s_cls = _pkgsplit[1]
+    else:
+        s_package = payload["path"]
+        s_cls = None
+
+    s_callable = payload["callable"]
+
+    package = import_module(s_package)
+    if s_cls:
+        cls = getattr(package, s_cls)
+
+        if "class_args" in payload:
+            class_args = payload["class_args"]
+        else:
+            class_args = ()
+
+        if "class_kwargs" in payload:
+            class_kwargs = payload["class_kwargs"]
+        else:
+            class_kwargs = {}
+
+        obj = cls(*class_args, **class_kwargs)
+        callable_ = getattr(obj, s_callable)
+    else:
+        callable_ = getattr(package, s_callable)
+
+    if "args" in payload:
+        args = payload["args"]
+    else:
+        args = ()
+
+    if "kwargs" in payload:
+        kwargs = payload["kwargs"]
+    else:
+        kwargs = {}
+
+    try:
+        callable_(*args, **kwargs)
+    except Exception as e:
+        logger.exception(e.message)
 
 
 class MultiprocessWorker(object):
@@ -37,62 +89,10 @@ class MultiprocessWorker(object):
         """
         Begins processing a job in another process
         """
-	self.process = self.pool.apply_async(self._run, (payload,))
+	self.process = self.pool.apply(_run, (payload,))
 
-    def _run(self, payload):
-        """
-        process a run message and execute a job
-
-        This is designed to run in a seperate process.
-        """
-        # Spawn in a new multiprocess
-        if ":" in payload["path"]:
-            _pkgsplit = payload["path"].split(':')
-            s_package = _pkgsplit[0]
-            s_cls = _pkgsplit[1]
-        else:
-            s_package = payload["path"]
-            s_cls = None
-
-        s_callable = payload["callable"]
-
-        package = import_module(s_package)
-        if s_cls:
-            cls = getattr(package, s_cls)
-
-            if "class_args" in payload:
-                class_args = payload["class_args"]
-            else:
-                class_args = ()
-
-            if "class_kwargs" in payload:
-                class_kwargs = payload["class_kwargs"]
-            else:
-                class_kwargs = {}
-
-            obj = cls(*class_args, **class_kwargs)
-            callable_ = getattr(obj, s_callable)
-        else:
-            callable_ = getattr(package, s_callable)
-
-        if "args" in payload:
-            args = payload["args"]
-        else:
-            args = ()
-
-        if "kwargs" in payload:
-            kwargs = payload["kwargs"]
-        else:
-            kwargs = {}
-
-        try:
-            callable_(*args, **kwargs)
-        except Exception as e:
-            logger.exception(e.message)
 
     def is_alive(self):
-	if self.process:
-            return not self.process.ready()
         return False
 
 def worker_main():

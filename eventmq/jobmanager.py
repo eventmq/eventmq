@@ -62,7 +62,7 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         #: Number of workers that are available to have a job executed. This
         #: number changes as workers become busy with jobs
-        self.available_workers = 4
+        self.available_workers = 20
 
         #: Setup worker pool
         self.worker_pool = []
