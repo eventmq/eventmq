@@ -64,6 +64,11 @@ class JobManager(HeartbeatMixin, EMQPService):
         #: number changes as workers become busy with jobs
         self.available_workers = 4
 
+        #: Setup worker pool
+        self.worker_pool = []
+        for i in range(self.available_workers):
+            self.worker_pool.append(Worker())
+
         #: JobManager starts out by INFORMing the router of it's existance,
         #: then telling the router that it is READY. The reply will be the unit
         #: of work.
@@ -87,7 +92,6 @@ class JobManager(HeartbeatMixin, EMQPService):
         # Send a READY for each available worker
         for i in range(0, self.available_workers):
             self.send_ready()
-
 
             # handle any sighups by reloading config
             signal.signal(signal.SIGHUP, self.sighup_handler)
@@ -147,7 +151,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         # subcmd = payload[0]
         params = payload[1]
 
-        w = Worker()
+        w = self.worker_pool.pop()
         w.run(params)  # Spawns job w/ multiprocess
         self.active_jobs.append(w)
 
@@ -172,6 +176,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         for job in self.active_jobs:
             if not job.is_alive():
                 self.active_jobs.remove(job)
+                self.worker_pool.append(job)
                 self.available_workers += 1
 
                 if not self.received_disconnect:
@@ -195,3 +200,4 @@ class JobManager(HeartbeatMixin, EMQPService):
 def jobmanager_main():
     j = JobManager()
     j.jobmanager_main()
+

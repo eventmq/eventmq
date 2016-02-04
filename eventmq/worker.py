@@ -19,7 +19,7 @@ Defines different short-lived workers that execute jobs
 """
 from importlib import import_module
 import logging
-import multiprocessing
+from multiprocessing import Pool
 
 from eventmq.log import setup_logger
 
@@ -31,16 +31,13 @@ class MultiprocessWorker(object):
     Defines a worker that spans the job in a multiprocessing task
     """
     def __init__(self):
-        self.process = None
+        self.pool = Pool(processes=1)
 
     def run(self, payload):
         """
         Begins processing a job in another process
         """
-        self.process = multiprocessing.Process(
-            target=self._run, args=(payload,)
-        )
-        self.process.start()
+	self.process = self.pool.apply_async(self._run, (payload,))
 
     def _run(self, payload):
         """
@@ -94,8 +91,8 @@ class MultiprocessWorker(object):
             logger.exception(e.message)
 
     def is_alive(self):
-        if self.process:
-            return self.process.is_alive()
+	if self.process:
+            return not self.process.ready()
         return False
 
 def worker_main():
