@@ -19,7 +19,6 @@ Defines different short-lived workers that execute jobs
 """
 from importlib import import_module
 import logging
-import multiprocessing
 from multiprocessing import Pool
 
 from eventmq.log import setup_logger
