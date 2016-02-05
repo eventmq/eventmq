@@ -82,7 +82,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         """
         # Acknowledgment has come
         # Send a READY for each available worker
-        for i in range(0, CONF.WORKERS):
+        for i in range(0, conf.WORKERS):
             self.send_ready()
             Worker(self.request_queue,
                    self.finished_queue).start()
@@ -108,7 +108,6 @@ class JobManager(HeartbeatMixin, EMQPService):
                 except Queue.Empty:
                     break
                 else:
-                    logger.debug('Job done, sending ready')
                     self.send_ready()
 
             if not self.maybe_send_heartbeat(events):
