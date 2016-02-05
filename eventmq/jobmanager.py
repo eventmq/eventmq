@@ -17,7 +17,7 @@
 ================================
 Ensures things about jobs and spawns the actual tasks
 """
-from json import loads as serializer
+import json
 import logging
 import signal
 
@@ -31,6 +31,8 @@ from .utils.messages import send_emqp_message as sendmsg
 from .utils.timeutils import monotonic
 from .worker import MultiprocessWorker as Worker
 from eventmq.log import setup_logger
+from multiprocessing import Queue as mp_queue, Process
+import Queue
 
 logger = logging.getLogger(__name__)
 
@@ -60,25 +62,15 @@ class JobManager(HeartbeatMixin, EMQPService):
         self.name = kwargs.pop('name', generate_device_name())
         logger.info('Initializing JobManager {}...'.format(self.name))
 
-        #: Number of workers that are available to have a job executed. This
-        #: number changes as workers become busy with jobs
-        self.available_workers = 20
-
-        #: Setup worker pool
-        self.worker_pool = []
-        for i in range(self.available_workers):
-            self.worker_pool.append(Worker())
+        #: Setup worker queues
+        self.request_queue = mp_queue()
+        self.finished_queue = mp_queue()
 
         #: JobManager starts out by INFORMing the router of it's existance,
         #: then telling the router that it is READY. The reply will be the unit
         #: of work.
         # Despite the name, jobs are received on this socket
         self.outgoing = Sender(name=self.name)
-
-        #: Jobs that are running should be stored in `active_jobs`. There
-        #: should always be at most `available_workers` count of active jobs.
-        #: this point the manager should wait for a slot to free up.
-        self.active_jobs = []
 
         self.poller = Poller()
 
@@ -90,19 +82,16 @@ class JobManager(HeartbeatMixin, EMQPService):
         """
         # Acknowledgment has come
         # Send a READY for each available worker
-        for i in range(0, self.available_workers):
+        for i in range(0, CONF.WORKERS):
             self.send_ready()
+            Worker(self.request_queue,
+                   self.finished_queue).start()
 
+        while True:
             # handle any sighups by reloading config
             signal.signal(signal.SIGHUP, self.sighup_handler)
 
-        while True:
             if self.received_disconnect:
-                # self.reset()
-                # Shut down if there are no active jobs waiting
-                if len(self.active_jobs) > 0:
-                    self.prune_active_jobs()
-                    continue
                 break
 
             now = monotonic()
@@ -112,7 +101,15 @@ class JobManager(HeartbeatMixin, EMQPService):
                 msg = self.outgoing.recv_multipart()
                 self.process_message(msg)
 
-            self.prune_active_jobs()
+            # Send readys for each finished job
+            while True:
+                try:
+                    self.finished_queue.get_nowait()
+                except Queue.Empty:
+                    break
+                else:
+                    logger.debug('Job done, sending ready')
+                    self.send_ready()
 
             if not self.maybe_send_heartbeat(events):
                 break
@@ -147,15 +144,11 @@ class JobManager(HeartbeatMixin, EMQPService):
         # queue_name = msg[0]
 
         # run callable
-        payload = serializer(msg[2])
+        payload = json.loads(msg[2])
         # subcmd = payload[0]
         params = payload[1]
 
-        w = self.worker_pool.pop()
-        w.run(params)  # Spawns job w/ multiprocess
-        self.active_jobs.append(w)
-
-        self.available_workers -= 1
+        self.request_queue.put(params)
 
     def send_ready(self):
         """
@@ -170,17 +163,6 @@ class JobManager(HeartbeatMixin, EMQPService):
         in :meth:`self.process_message` as every message is counted as a
         HEARTBEAT
         """
-
-    def prune_active_jobs(self):
-        # Maintain the list of active jobs
-        for job in self.active_jobs:
-            if not job.is_alive():
-                self.active_jobs.remove(job)
-                self.worker_pool.append(job)
-                self.available_workers += 1
-
-                if not self.received_disconnect:
-                    self.send_ready()
 
     def sighup_handler(self, signum, frame):
         logger.info('Caught signal %s' % signum)
