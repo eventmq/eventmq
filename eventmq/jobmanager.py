@@ -42,7 +42,7 @@ class JobManager(HeartbeatMixin, EMQPService):
     The exposed portion of the worker. The job manager's main responsibility is
     to manage the resources on the server it's running.
 
-    This job manager uses tornado's eventloop.
+    This job manager uses multiprocessing Queues
     """
     SERVICE_TYPE = 'worker'
 

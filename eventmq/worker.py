@@ -43,7 +43,7 @@ class MultiprocessWorker(Process):
 
         This is designed to run in a seperate process.
         """
-        # Spawn in a new multiprocess
+        # Pull the payload off the queue and run it
         for payload in iter(self.input_queue.get, None):
             if ":" in payload["path"]:
                 _pkgsplit = payload["path"].split(':')
@@ -89,4 +89,5 @@ class MultiprocessWorker(Process):
             except Exception as e:
                 logger.exception(e.message)
 
+            # Signal that we're done with this job
             self.output_queue.put('DONE')
