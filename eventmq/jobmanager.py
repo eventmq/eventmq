@@ -17,7 +17,7 @@
 ================================
 Ensures things about jobs and spawns the actual tasks
 """
-import json
+from json import loads as serializer
 import logging
 import signal
 
@@ -144,7 +144,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         # queue_name = msg[0]
 
         # run callable
-        payload = json.loads(msg[2])
+        payload = serializer(msg[2])
         # subcmd = payload[0]
         params = payload[1]
 
