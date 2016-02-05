@@ -19,11 +19,7 @@ Defines different short-lived workers that execute jobs
 """
 from importlib import import_module
 import logging
-from multiprocessing import Pool
-import multiprocessing
-from multiprocessing import Queue, Process
-
-from eventmq.log import setup_logger
+from multiprocessing import Process
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +32,7 @@ class MultiprocessWorker(Process):
         super(MultiprocessWorker, self).__init__()
         self.input_queue = input_queue
         self.output_queue = output_queue
-        
+
     def run(self):
         """
         process a run message and execute a job

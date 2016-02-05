@@ -31,7 +31,7 @@ from .utils.messages import send_emqp_message as sendmsg
 from .utils.timeutils import monotonic
 from .worker import MultiprocessWorker as Worker
 from eventmq.log import setup_logger
-from multiprocessing import Queue as mp_queue, Process
+from multiprocessing import Queue as mp_queue
 import Queue
 
 logger = logging.getLogger(__name__)
