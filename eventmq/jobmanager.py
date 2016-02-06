@@ -181,4 +181,3 @@ class JobManager(HeartbeatMixin, EMQPService):
 def jobmanager_main():
     j = JobManager()
     j.jobmanager_main()
-
