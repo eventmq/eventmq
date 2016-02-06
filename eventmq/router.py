@@ -17,6 +17,7 @@
 =======================
 Routes messages to workers (that are in named queues).
 """
+from collections import deque
 from copy import copy
 import logging
 import warnings
@@ -266,7 +267,7 @@ class Router(HeartbeatMixin):
         if queue_name in self.waiting_messages.keys():
             logger.debug('Found waiting message in the %s waiting messages '
                          'queue' % queue_name)
-            msg = self.waiting_messages[queue_name].pop()
+            msg = self.waiting_messages[queue_name].popleft()
             fwdmsg(self.outgoing, sender, msg[1:])  # strip off client id.
 
             # It is easier to check if a key exists rather than the len of a
@@ -424,7 +425,7 @@ class Router(HeartbeatMixin):
                 logger.warning('No available workers for queue "%s". '
                                'Buffering message to send later.' % queue_name)
                 if queue_name not in self.waiting_messages:
-                    self.waiting_messages[queue_name] = []
+                    self.waiting_messages[queue_name] = deque()
                     self.waiting_messages[queue_name].append(msg)
                     logger.debug('%d waiting messages in queue "%s"' %
                                  (len(self.waiting_messages[queue_name]),
