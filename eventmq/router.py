@@ -368,7 +368,7 @@ class Router(HeartbeatMixin):
 
         for queue in queues:
             if queue not in self.queues:
-                self.queues[queue] = []
+                self.queues[queue] = deque()
             self.queues[queue].append(worker_id)
 
             if conf.SUPER_DEBUG:
@@ -415,7 +415,7 @@ class Router(HeartbeatMixin):
                 return
 
             try:
-                worker_addr = self.queues[queue_name].pop()
+                worker_addr = self.queues[queue_name].popleft()
             except KeyError:
                 logger.critical("REQUEST for an unknown queue caught in "
                                 "exception")
