@@ -33,7 +33,8 @@ def import_settings():
         config.read(conf.CONFIG_FILE)
         for name, value in config.items('settings'):
             if hasattr(conf, name.upper()):
-                setattr(conf, name.upper(), value)
+                t = type(getattr(conf, name.upper()))
+                setattr(conf, name.upper(), t(value))
                 logger.debug("Setting conf.%s to %s" % (name, value))
             else:
                 logger.warning('Tried to set invalid setting: %s' % name)
