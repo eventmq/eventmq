@@ -381,11 +381,15 @@ class Router(HeartbeatMixin):
         """
         raise NotImplementedError()
 
-    def on_receive_request(self, msg):
+    def on_receive_request(self, msg, depth=0):
         """
         Args:
             msg: The untouched message from zmq
         """
+        # Limit recusive depth (timeout on PeerGoneAwayError)
+        if (depth > 100):
+            return
+
         try:
             message = parse_router_message(msg)
         except exceptions.InvalidMessageError:
@@ -441,9 +445,7 @@ class Router(HeartbeatMixin):
                 logger.debug("Worker {} has unexpectedly gone away. "
                              "Trying another worker".format(worker_addr))
 
-                # TODO: Rewrite this logic as a loop, so it can't recurse
-                # into oblivion
-                self.on_receive_request(msg)
+                self.on_receive_request(msg, depth+1)
         # elif command == "HEARTBEAT":
         #     # The scheduler is heartbeating
 
@@ -466,8 +468,7 @@ class Router(HeartbeatMixin):
             except exceptions.PeerGoneAwayError:
                 logger.debug("Scheduler {} has unexpectedly gone away. Trying "
                              "another scheduler.".format(scheduler_addr))
-                # TODO: rewrite this in a loop
-                self.on_receive_request(msg)
+                self.on_receive_request(msg, depth+1)
 
         elif command == "UNSCHEDULE":
             # Forward the unschedule message to all schedulers
