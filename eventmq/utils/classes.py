@@ -21,6 +21,7 @@ import logging
 
 import zmq.error
 
+from collections import deque
 from .. import conf, constants, exceptions, poller, utils
 from ..utils.messages import send_emqp_message as sendmsg
 from ..utils.timeutils import monotonic, timestamp
@@ -388,3 +389,57 @@ class ZMQSendMixin(object):
                 you may explicitly specify None to skip adding the version
         """
         self.send_multipart((message, ), protocol_version)
+
+
+class EMQdeque(object):
+    """
+    EventMQ deque based on python's collections.deque with full and
+    programmable full
+    """
+    def __init__(self, full=None, pfull=None):
+        """
+
+        Args:
+            full (int): Hard limit on deque size
+            pfull (int): Programmable limit on deque size, defaults
+                 to full length
+        """
+        self.full = full if not None else 0
+        self.pfull = pfull if not None else full
+
+        self._queue = deque(maxlen=self.full)
+
+    def __len__(self):
+        return len(self._queue)
+
+    def append(self, item):
+        if len(self._queue) == self.full:
+            # TODO: Discard Item and notify
+            return False
+        else:
+            self._queue.append(item)
+            return True
+
+    def is_full(self):
+        if self.full is not 0:
+            return len(self._queue) >= self.full
+        else:
+            return False
+
+    def is_empty(self):
+        return len(self._queue) == 0
+
+    def is_pfull(self):
+        if self.pfull is not 0:
+            return len(self._queue) >= self.pfull
+        else:
+            return False
+
+    def pop(self):
+        return self._queue.pop()
+
+    def popleft(self):
+        return self._queue.popleft()
+
+    def insert(self, pos, item):
+        self._queue.insert(pos, item)

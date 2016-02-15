@@ -35,6 +35,6 @@ RQ_HOST = 'localhost'
 RQ_PORT = 6379
 RQ_DB = 0
 RQ_PASSWORD = ''
-
-WORKERS=4
+WORKERS = 4
+HWM = 10000
 # }}}
