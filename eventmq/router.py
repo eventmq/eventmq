@@ -17,10 +17,9 @@
 =======================
 Routes messages to workers (that are in named queues).
 """
-from collections import deque
+from .utils.classes import EMQdeque
 from copy import copy
 import logging
-import warnings
 import signal
 
 from . import conf, exceptions, poller, receiver
@@ -368,7 +367,7 @@ class Router(HeartbeatMixin):
 
         for queue in queues:
             if queue not in self.queues:
-                self.queues[queue] = deque()
+                self.queues[queue] = EMQdeque()
             self.queues[queue].append(worker_id)
 
             if conf.SUPER_DEBUG:
@@ -429,11 +428,15 @@ class Router(HeartbeatMixin):
                 logger.warning('No available workers for queue "%s". '
                                'Buffering message to send later.' % queue_name)
                 if queue_name not in self.waiting_messages:
-                    self.waiting_messages[queue_name] = deque()
-                self.waiting_messages[queue_name].append(msg)
+                    self.waiting_messages[queue_name] = \
+                        EMQdeque(full=conf.HWM,
+                                 on_full=router_on_full)
+                if self.waiting_messages[queue_name].append(msg):
                 logger.debug('%d waiting messages in queue "%s"' %
                              (len(self.waiting_messages[queue_name]),
                               queue_name))
+                else:
+                    logger.warning('High Watermark hit, notifying')
                 return
 
             try:
@@ -534,6 +537,10 @@ class Router(HeartbeatMixin):
         import_settings()
         self.start(frontend_addr=conf.FRONTEND_ADDR,
                    backend_addr=conf.BACKEND_ADDR)
+
+
+def router_on_full():
+    logger.critical('High watermark hit in router')
 
 
 # Entry point for pip console scripts
