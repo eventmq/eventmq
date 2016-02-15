@@ -396,25 +396,28 @@ class EMQdeque(object):
     EventMQ deque based on python's collections.deque with full and
     programmable full
     """
-    def __init__(self, full=None, pfull=None):
+    def __init__(self, full=None, pfull=None, on_full=None):
         """
 
         Args:
             full (int): Hard limit on deque size
             pfull (int): Programmable limit on deque size, defaults
                  to full length
+            on_full (func): callback for on_full event
         """
         self.full = full if not None else 0
         self.pfull = pfull if not None else full
 
         self._queue = deque(maxlen=self.full)
+        self.on_full = on_full
 
     def __len__(self):
         return len(self._queue)
 
     def append(self, item):
         if len(self._queue) == self.full:
-            # TODO: Discard Item and notify
+            if self.on_full:
+                self.on_full()
             return False
         else:
             self._queue.append(item)

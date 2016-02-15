@@ -424,7 +424,9 @@ class Router(HeartbeatMixin):
                 logger.warning('No available workers for queue "%s". '
                                'Buffering message to send later.' % queue_name)
                 if queue_name not in self.waiting_messages:
-                    self.waiting_messages[queue_name] = EMQdeque(conf.HWM)
+                    self.waiting_messages[queue_name] = \
+                        EMQdeque(full=conf.HWM,
+                                 on_full=router_on_full)
                 if self.waiting_messages[queue_name].append(msg):
                     logger.debug('%d waiting messages in queue "%s"' %
                                  (len(self.waiting_messages[queue_name]),
@@ -534,6 +536,10 @@ class Router(HeartbeatMixin):
         import_settings()
         self.start(frontend_addr=conf.FRONTEND_ADDR,
                    backend_addr=conf.BACKEND_ADDR)
+
+
+def router_on_full():
+    logger.critical('High watermark hit in router')
 
 
 # Entry point for pip console scripts
