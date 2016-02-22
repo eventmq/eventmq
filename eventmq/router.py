@@ -432,9 +432,9 @@ class Router(HeartbeatMixin):
                         EMQdeque(full=conf.HWM,
                                  on_full=router_on_full)
                 if self.waiting_messages[queue_name].append(msg):
-                logger.debug('%d waiting messages in queue "%s"' %
-                             (len(self.waiting_messages[queue_name]),
-                              queue_name))
+                    logger.debug('%d waiting messages in queue "%s"' %
+                                 (len(self.waiting_messages[queue_name]),
+                                  queue_name))
                 else:
                     logger.warning('High Watermark hit, notifying')
                 return
