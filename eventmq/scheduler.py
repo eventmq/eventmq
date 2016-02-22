@@ -49,6 +49,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
     def __init__(self, *args, **kwargs):
         logger.info('Initializing Scheduler...')
+        import_settings()
         super(Scheduler, self).__init__(*args, **kwargs)
         self.outgoing = Sender()
 
