@@ -411,6 +411,9 @@ class EMQdeque(object):
         self._queue = deque(maxlen=self.full)
         self.on_full = on_full
 
+    def __iter__(self):
+        return self._queue.__iter__()
+
     def __len__(self):
         return len(self._queue)
 
