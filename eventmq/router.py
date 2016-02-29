@@ -475,7 +475,7 @@ class Router(HeartbeatMixin):
 
         elif command == "UNSCHEDULE":
             # Forward the unschedule message to all schedulers
-            for scheduler_addr, scheduler in self.schedulers:
+            for scheduler_addr, scheduler in self.schedulers.items():
                 self.schedulers[scheduler_addr] = {
                     'hb': monotonic(),
                 }
