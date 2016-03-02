@@ -197,7 +197,11 @@ class Scheduler(HeartbeatMixin, EMQPService):
         if (self.redis_server):
             if (self.redis_server.get(schedule_hash)):
                 self.redis_server.lrem('interval_jobs', 0, schedule_hash)
-                self.redis_server.save()
+                try:
+                    self.redis_server.save()
+                except:
+                    logger.warning('Failed to save redis data, is persistance '
+                                   'enabled?')
 
     def load_job_from_redis(self, message):
         """
@@ -248,7 +252,11 @@ class Scheduler(HeartbeatMixin, EMQPService):
                                                              -1):
                 self.redis_server.lpush('interval_jobs', schedule_hash)
             self.redis_server.set(schedule_hash, serialize(message))
-            self.redis_server.save()
+            try:
+                self.redis_server.save()
+            except:
+                logger.warning('Failed to save redis data, is persistance '
+                               'enabled?')
 
         self.send_request(message[3], queue=queue)
 
