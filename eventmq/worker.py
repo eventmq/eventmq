@@ -83,7 +83,7 @@ class MultiprocessWorker(Process):
             try:
                 callable_(*args, **kwargs)
             except Exception as e:
-                logger.exception(e.message)
+                logger.exception(e)
 
             # Signal that we're done with this job
             self.output_queue.put('DONE')
