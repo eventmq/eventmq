@@ -28,7 +28,6 @@ from .utils.classes import EMQPService, HeartbeatMixin
 from .utils.settings import import_settings
 from .utils.devices import generate_device_name
 from .utils.messages import send_emqp_message as sendmsg
-from .utils.timeutils import monotonic
 from .worker import MultiprocessWorker as Worker
 from eventmq.log import setup_logger
 from multiprocessing import Queue as mp_queue
@@ -48,7 +47,8 @@ class JobManager(HeartbeatMixin, EMQPService):
 
     def __init__(self, *args, **kwargs):
         """
-        .. note ::
+        .. note::
+
            All args are optional unless otherwise noted.
 
         Args:
@@ -65,6 +65,13 @@ class JobManager(HeartbeatMixin, EMQPService):
         #: Setup worker queues
         self.request_queue = mp_queue()
         self.finished_queue = mp_queue()
+
+        #: keep track of workers
+        self.workers = []
+
+        if not kwargs.pop('skip_signal', False):
+            # handle any sighups by reloading config
+            signal.signal(signal.SIGHUP, self.sighup_handler)
 
         #: JobManager starts out by INFORMing the router of it's existance,
         #: then telling the router that it is READY. The reply will be the unit
@@ -84,17 +91,16 @@ class JobManager(HeartbeatMixin, EMQPService):
         # Send a READY for each available worker
         for i in range(0, conf.WORKERS):
             self.send_ready()
-            Worker(self.request_queue,
-                   self.finished_queue).start()
+            w = Worker(self.request_queue, self.finished_queue)
+            w.start()
+            self.workers.append(w)
 
         while True:
-            # handle any sighups by reloading config
-            signal.signal(signal.SIGHUP, self.sighup_handler)
-
             if self.received_disconnect:
+                for w in self.workers:
+                    w.terminate()
                 break
 
-            now = monotonic()
             events = self.poller.poll()
 
             if events.get(self.outgoing) == POLLIN:

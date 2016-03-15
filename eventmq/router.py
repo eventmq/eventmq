@@ -103,6 +103,9 @@ class Router(HeartbeatMixin):
         #: Set to True when the router should die.
         self.received_disconnect = False
 
+        if not kwargs.pop('skip_signal', False):
+            signal.signal(signal.SIGHUP, self.sighup_handler)
+
     def start(self,
               frontend_addr=conf.FRONTEND_ADDR,
               backend_addr=conf.BACKEND_ADDR):
@@ -121,8 +124,6 @@ class Router(HeartbeatMixin):
         self.status = STATUS.listening
         logger.info('Listening for requests on %s' % frontend_addr)
         logger.info('Listening for workers on %s' % backend_addr)
-
-        signal.signal(signal.SIGHUP, self.sighup_handler)
 
         self._start_event_loop()
 
