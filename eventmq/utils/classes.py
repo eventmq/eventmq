@@ -426,6 +426,9 @@ class EMQdeque(object):
             self._queue.append(item)
             return True
 
+    def remove(self, item):
+        return self._queue(item)
+
     def is_full(self):
         if self.full is not 0:
             return len(self._queue) >= self.full
