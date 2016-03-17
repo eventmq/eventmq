@@ -427,7 +427,7 @@ class EMQdeque(object):
             return True
 
     def remove(self, item):
-        return self._queue(item)
+        return self._queue.remove(item)
 
     def is_full(self):
         if self.full is not 0:

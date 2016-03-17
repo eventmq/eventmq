@@ -13,9 +13,11 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
 import unittest
+import random
 
 from .. import exceptions
 from ..utils import messages
+from ..utils import classes
 
 
 class TestCase(unittest.TestCase):
@@ -55,3 +57,50 @@ class TestCase(unittest.TestCase):
 
     def test_parse_router_message(self):
         ['aef451a0-5cef-4f03-818a-221061c8ab68', '', 'eMQP/1.0', 'INFORM', '5caeb5fd-15d4-4b08-89e8-4e536672eef3', 'default', 'worker']
+
+    def test_emqDeque(self):
+
+        full = random.randint(1, 100)
+        pfull = random.randint(1, full-1)
+
+        q = classes.EMQdeque(full=full,
+                             pfull=pfull)
+
+        # P Fill
+        for i in range(0, pfull):
+            q.append(i)
+        self.assertTrue(q.is_pfull())
+        self.assertFalse(q.is_full())
+
+        while len(q) > 0:
+            q.pop()
+
+        # Fill
+        for i in range(0, full*4):
+            q.append(i)
+
+        self.assertTrue(q.is_full())
+        self.assertTrue(q.is_pfull())
+
+        # Is iterable?
+        for i in q:
+            assert True
+
+        # Check overflow
+        self.assertEqual(len(q), full)
+
+        # Remove everything we tried to insert
+        for i in range(0, full*4):
+            if i in q:
+                q.remove(i)
+            elif len(q) > 0:
+                q.popleft()
+
+        # Assert empty
+        self.assertEqual(len(q), 0)
+        self.assertTrue(q.is_empty())
+
+        for i in q:
+            q.remove(i)
+
+        self.assertEqual(len(q), 0)
