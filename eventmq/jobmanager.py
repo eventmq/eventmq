@@ -89,6 +89,12 @@ class JobManager(HeartbeatMixin, EMQPService):
         """
         # Acknowledgment has come
         # Send a READY for each available worker
+
+        # Clear any workers if we SIGHUP'd
+        for _ in self.workers:
+            self.request_queue.put(None)
+        self.workers = []
+
         for i in range(0, conf.WORKERS):
             self.send_ready()
             w = Worker(self.request_queue, self.finished_queue)
@@ -171,17 +177,21 @@ class JobManager(HeartbeatMixin, EMQPService):
 
     def sighup_handler(self, signum, frame):
         logger.info('Caught signal %s' % signum)
-        self.incoming.unbind(conf.FRONTEND_ADDR)
+        self.outgoing.rebuild()
         import_settings()
-        self.start()
+        self.start(addr=conf.WORKER_ADDR,
+                   queues=conf.DEFAULT_QUEUE_NAME)
 
-    def jobmanager_main(self):
+    def jobmanager_main(self,
+                        addr=conf.WORKER_ADDR,
+                        queues=conf.DEFAULT_QUEUE_NAME):
         """
         Kick off jobmanager with logging and settings import
         """
         setup_logger('')
         import_settings()
-        self.start(addr=conf.WORKER_ADDR)
+        self.start(addr=addr,
+                   queues=queues)
 
 
 def jobmanager_main():

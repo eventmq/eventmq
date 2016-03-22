@@ -23,6 +23,7 @@ setup(
                       'future==0.15.2',
                       'redis==2.10.3',
                       'mock==1.3.0',
+                      'tl.testing==0.5',
                       'python-dateutil>=2.1,<3.0.0'],
 
 
