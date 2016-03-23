@@ -302,4 +302,3 @@ def scheduler_main():
 def test_job():
     print "hello!"
     print "hello!"
-    time.sleep(4)
