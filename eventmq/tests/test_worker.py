@@ -19,6 +19,8 @@ import mock
 import json
 import time
 
+from .. import conf
+
 from .. import jobmanager
 from .. import router
 
@@ -76,5 +78,6 @@ def start_router(router):
 
 
 def start_jobmanager(jobmanager):
-    jobmanager.jobmanager_main(addr=BACKEND_ADDR)
+    conf.WORKER_ADDR = BACKEND_ADDR
+    jobmanager.jobmanager_main()
     time.sleep(2)

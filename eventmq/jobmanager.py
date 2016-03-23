@@ -179,19 +179,15 @@ class JobManager(HeartbeatMixin, EMQPService):
         logger.info('Caught signal %s' % signum)
         self.outgoing.rebuild()
         import_settings()
-        self.start(addr=conf.WORKER_ADDR,
-                   queues=conf.DEFAULT_QUEUE_NAME)
+        self.start(addr=conf.WORKER_ADDR)
 
-    def jobmanager_main(self,
-                        addr=conf.WORKER_ADDR,
-                        queues=conf.DEFAULT_QUEUE_NAME):
+    def jobmanager_main(self):
         """
         Kick off jobmanager with logging and settings import
         """
         setup_logger('')
         import_settings()
-        self.start(addr=addr,
-                   queues=queues)
+        self.start(addr=conf.WORKER_ADDR)
 
 
 def jobmanager_main():
