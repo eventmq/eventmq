@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Goals &mdash; EventMQ 0 documentation</title>
+  <title>EventMQ Protocol Specification &mdash; EventMQ 0 documentation</title>
   
 
   
@@ -84,18 +84,21 @@
                 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="contributing.html">Contributing to EventMQ</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="">Goals</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#license">License</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#language">Language</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#architecture">Architecture</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#topology">Topology</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#router-addressing">ROUTER Addressing</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#global-frames">Global Frames</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#emqp-client">eMQP / Client</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#emqp-scheduler">eMQP / Scheduler</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#emqp-worker">eMQP / Worker</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#heartbeating">Heartbeating</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#request-headers">REQUEST Headers</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="">EventMQ Protocol Specification</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#goals">Goals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#license">License</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#language">Language</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#architecture">Architecture</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#topology">Topology</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#router-addressing">ROUTER Addressing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#global-frames">Global Frames</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#emqp-client">eMQP / Client</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#emqp-scheduler">eMQP / Scheduler</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#emqp-worker">eMQP / Worker</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#heartbeating">Heartbeating</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#request-headers">REQUEST Headers</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference external" href="https://github.com/enderlabs/eventmq">Source Code</a></li>
@@ -134,7 +137,7 @@
       
           <li><a href="contributing.html">Contributing to EventMQ</a> &raquo;</li>
       
-    <li>Goals</li>
+    <li>EventMQ Protocol Specification</li>
       <li class="wy-breadcrumbs-aside">
         
           
@@ -148,12 +151,11 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <p>/<strong>**************************e
-EventMQ Protocol Specification
-****************************</strong>
-<em>The status of this document is alpha and subject to heavy change</em></p>
+  <div class="section" id="eventmq-protocol-specification">
+<h1>EventMQ Protocol Specification<a class="headerlink" href="#eventmq-protocol-specification" title="Permalink to this headline">¶</a></h1>
+<p><em>The status of this document is alpha and subject to heavy change</em></p>
 <div class="section" id="goals">
-<h1>Goals<a class="headerlink" href="#goals" title="Permalink to this headline">¶</a></h1>
+<h2>Goals<a class="headerlink" href="#goals" title="Permalink to this headline">¶</a></h2>
 <p>The EventMQ Protocol (eMQP) defines a reliable service-oriented request-reply and pub-sub dialog between a set of clients, a broker, and a set of workers. This goal is to</p>
 <p>The goals are to:</p>
 <blockquote>
@@ -166,32 +168,32 @@ EventMQ Protocol Specification
 </div></blockquote>
 </div>
 <div class="section" id="license">
-<h1>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h1>
+<h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
 <p>This Specification is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 2.1 of the License, or (at your option) any later version.</p>
 <p>This Specification is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.</p>
 </div>
 <div class="section" id="language">
-<h1>Language<a class="headerlink" href="#language" title="Permalink to this headline">¶</a></h1>
+<h2>Language<a class="headerlink" href="#language" title="Permalink to this headline">¶</a></h2>
 <p>The key words &#8220;MUST&#8221;, &#8220;MUST NOT&#8221;, &#8220;REQUIRED&#8221;, &#8220;SHALL&#8221;, &#8220;SHALL NOT&#8221;, &#8220;SHOULD&#8221;, &#8220;SHOULD NOT&#8221;, &#8220;RECOMMENDED&#8221;, &#8220;MAY&#8221;, and &#8220;OPTIONAL&#8221; in this document are to be interpreted as described in RFC 2119[[1](<a class="reference external" href="http://tools.ietf.org/html/rfc2119">http://tools.ietf.org/html/rfc2119</a>)].</p>
 </div>
 <div class="section" id="architecture">
-<h1>Architecture<a class="headerlink" href="#architecture" title="Permalink to this headline">¶</a></h1>
+<h2>Architecture<a class="headerlink" href="#architecture" title="Permalink to this headline">¶</a></h2>
 <p>insert pretty picture here</p>
 <div class="section" id="topology">
-<h2>Topology<a class="headerlink" href="#topology" title="Permalink to this headline">¶</a></h2>
+<h3>Topology<a class="headerlink" href="#topology" title="Permalink to this headline">¶</a></h3>
 <p>eMQP connects a set of client applications (e.g. web servers), a broker, and a pool of workers. Clients connect to the broker as well as the workers.</p>
 <p>&#8216;Clients&#8217; is defined as application issuing requests and &#8216;workers&#8217; as applications that process these requests. (Workers consist of a <cite>JobManager</cite> and a pool of <cite>Worker</cite> resources where the job executes.)</p>
 <p>The EventMQ broker handles a set of named queues. The broker SHOULD serve clients on a fair request and MAY deliver requests to workers on any basis, including 0MQ&#8217;s built-in round robin or least-recently used.</p>
 </div>
 <div class="section" id="router-addressing">
-<h2>ROUTER Addressing<a class="headerlink" href="#router-addressing" title="Permalink to this headline">¶</a></h2>
+<h3>ROUTER Addressing<a class="headerlink" href="#router-addressing" title="Permalink to this headline">¶</a></h3>
 <p>In the case of request-reply, the broker MUST use a ROUTER socket to accept requests from both clients and workers. The broker MAY use a seperate socket implementing a subset of eMQP, or MAY use a single socket implementing all of eMQP.</p>
 <p>From the 0MQ manual[[2](<a class="reference external" href="http://api.zeromq.org/master:zmq-socket">http://api.zeromq.org/master:zmq-socket</a>)]
 &gt; When receiving messages a ROUTER socket shall prepend a message part containing the identity of the originating peer to the message before passing it to the application. When sending messages a ROUTER socket shall remove the first part of the message and use it to determine the identity of the peer the message shall be routed to.</p>
 <p>This extra frame is not shown in the specifications below.</p>
 </div>
 <div class="section" id="global-frames">
-<h2>Global Frames<a class="headerlink" href="#global-frames" title="Permalink to this headline">¶</a></h2>
+<h3>Global Frames<a class="headerlink" href="#global-frames" title="Permalink to this headline">¶</a></h3>
 <p>An <strong>ACK</strong> command consists of a 4-frame multipart message, formatted as follows.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -230,7 +232,7 @@ EventMQ Protocol Specification
 </table>
 </div>
 <div class="section" id="emqp-client">
-<h2>eMQP / Client<a class="headerlink" href="#emqp-client" title="Permalink to this headline">¶</a></h2>
+<h3>eMQP / Client<a class="headerlink" href="#emqp-client" title="Permalink to this headline">¶</a></h3>
 <p>A <strong>REQUEST</strong> command consists of a 7-frame multipart message, formatted as follows.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -409,7 +411,7 @@ EventMQ Protocol Specification
 </table>
 </div>
 <div class="section" id="emqp-scheduler">
-<h2>eMQP / Scheduler<a class="headerlink" href="#emqp-scheduler" title="Permalink to this headline">¶</a></h2>
+<h3>eMQP / Scheduler<a class="headerlink" href="#emqp-scheduler" title="Permalink to this headline">¶</a></h3>
 <p>An <strong>INFORM</strong> command consists of a 6-frame multipart message, formatted as follows.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -452,7 +454,7 @@ EventMQ Protocol Specification
 </table>
 </div>
 <div class="section" id="emqp-worker">
-<h2>eMQP / Worker<a class="headerlink" href="#emqp-worker" title="Permalink to this headline">¶</a></h2>
+<h3>eMQP / Worker<a class="headerlink" href="#emqp-worker" title="Permalink to this headline">¶</a></h3>
 <p>An <strong>INFORM</strong> command consists of a 5-frame multipart message, formatted as follows.</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -631,7 +633,7 @@ EventMQ Protocol Specification
 </table>
 </div>
 <div class="section" id="heartbeating">
-<h2>Heartbeating<a class="headerlink" href="#heartbeating" title="Permalink to this headline">¶</a></h2>
+<h3>Heartbeating<a class="headerlink" href="#heartbeating" title="Permalink to this headline">¶</a></h3>
 <blockquote>
 <div><ul class="simple">
 <li>HEARTBEAT commands are valid at any time after an INFORM command</li>
@@ -646,7 +648,7 @@ EventMQ Protocol Specification
 </div></blockquote>
 </div>
 <div class="section" id="request-headers">
-<h2>REQUEST Headers<a class="headerlink" href="#request-headers" title="Permalink to this headline">¶</a></h2>
+<h3>REQUEST Headers<a class="headerlink" href="#request-headers" title="Permalink to this headline">¶</a></h3>
 <p>Headers MUST be 0 to many comma seperated values inserted into the header field. If there are no headers required, send an empty string MUST be sent where headers are required.</p>
 <p>Below is a table which defines and describes the headers.</p>
 <table border="1" class="docutils">
@@ -686,6 +688,7 @@ EventMQ Protocol Specification
 </tr>
 </tbody>
 </table>
+</div>
 </div>
 </div>
 

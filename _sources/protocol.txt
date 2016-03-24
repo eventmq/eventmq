@@ -1,4 +1,4 @@
-/****************************e
+******************************
 EventMQ Protocol Specification
 ******************************
 *The status of this document is alpha and subject to heavy change*
