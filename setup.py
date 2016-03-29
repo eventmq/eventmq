@@ -14,7 +14,6 @@ setup(
                       'six==1.10.0',
                       'monotonic==0.4',
                       'croniter==0.3.10',
-                      'watchtower',
                       'sphinxcontrib-napoleon==0.4.3',
                       'Sphinx==1.3.1',
                       'nose==1.3.6',
