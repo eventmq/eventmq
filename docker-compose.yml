@@ -1,0 +1,23 @@
+eventmq:
+  build: .
+  volumes:
+    - ./:/eventmq
+
+worker:
+  image: eventmq_eventmq
+  command: emq-jobmanager
+  links:
+    - broker:eventmq-broker
+
+scheduler:
+  image: eventmq_eventmq
+  command: emq-scheduler
+  links:
+    - broker:eventmq-broker
+
+broker:
+  image: eventmq_eventmq
+  command: emq-router
+  ports:
+    - "47290:47290"
+    - "47291:47291"
