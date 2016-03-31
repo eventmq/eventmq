@@ -19,7 +19,6 @@ Handles cron and other scheduled tasks
 """
 import json
 import logging
-import time
 import redis
 
 from croniter import croniter
@@ -52,12 +51,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
         import_settings()
         super(Scheduler, self).__init__(*args, **kwargs)
         self.outgoing = Sender()
-
-        # Open connection to redis server for persistance
-        self.redis_server = redis.StrictRedis(host=conf.RQ_HOST,
-                                              port=conf.RQ_PORT,
-                                              db=conf.RQ_DB,
-                                              password=conf.RQ_PASSWORD)
+        self._redis_server = None
 
         # contains 4-item lists representing cron jobs
         # IDX     Description
@@ -111,8 +105,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
                 c_next = next(c)
             self.cron_jobs.append([c_next, msg, c, None])
 
-        # Restore persisted data if redis connection is alive and has jobs
-        if (self.redis_server):
+        try:
             interval_job_list = self.redis_server.lrange('interval_jobs',
                                                          0,
                                                          -1)
@@ -125,8 +118,10 @@ class Scheduler(HeartbeatMixin, EMQPService):
                     else:
                         logger.warning('Expected scheduled job in redis,' +
                                        'but none was found with hash %s' % i)
-            else:
-                logger.warning('Unabled to talk to redis server')
+        except redis.ConnectionError:
+            logger.warning('Could not contact redis server')
+        except Exception as e:
+            logger.warning(str(e))
 
     def _start_event_loop(self):
         """
@@ -173,6 +168,22 @@ class Scheduler(HeartbeatMixin, EMQPService):
             if not self.maybe_send_heartbeat(events):
                 break
 
+    @property
+    def redis_server(self):
+        # Open connection to redis server for persistance
+        if self._redis_server is None:
+            try:
+                self._redis_server = \
+                    redis.StrictRedis(host=conf.RQ_HOST,
+                                      port=conf.RQ_PORT,
+                                      db=conf.RQ_DB,
+                                      password=conf.RQ_PASSWORD)
+            except Exception as e:
+                logger.warning('Unable to connect to redis server: {}'.format(
+                    e.message))
+        else:
+            return self._redis_server
+
     def send_request(self, jobmsg, queue=None):
         jobmsg = json.loads(jobmsg)
         send_request(self.outgoing, jobmsg, queue=queue)
@@ -194,14 +205,14 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
         # Double check the redis server even if we didn't find the hash
         # in memory
-        if (self.redis_server):
+        try:
             if (self.redis_server.get(schedule_hash)):
                 self.redis_server.lrem('interval_jobs', 0, schedule_hash)
-                try:
-                    self.redis_server.save()
-                except:
-                    logger.warning('Failed to save redis data, is persistance '
-                                   'enabled?')
+                self.redis_server.save()
+        except redis.ConnectionError:
+            logger.warning('Could not contact redis server')
+        except Exception as e:
+            logger.warning(str(e))
 
     def load_job_from_redis(self, message):
         """
@@ -246,17 +257,17 @@ class Scheduler(HeartbeatMixin, EMQPService):
         ]
 
         # Persist the scheduled job
-        if (self.redis_server):
+        try:
             if schedule_hash not in self.redis_server.lrange('interval_jobs',
                                                              0,
                                                              -1):
                 self.redis_server.lpush('interval_jobs', schedule_hash)
             self.redis_server.set(schedule_hash, serialize(message))
-            try:
-                self.redis_server.save()
-            except:
-                logger.warning('Failed to save redis data, is persistance '
-                               'enabled?')
+            self.redis_server.save()
+        except redis.ConnectionError:
+            logger.warning('Could not contact redis server')
+        except Exception as e:
+            logger.warning(str(e))
 
         self.send_request(message[3], queue=queue)
 
