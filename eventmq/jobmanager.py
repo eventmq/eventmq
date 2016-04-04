@@ -28,10 +28,33 @@ from .utils.classes import EMQPService, HeartbeatMixin
 from .utils.settings import import_settings
 from .utils.devices import generate_device_name
 from .utils.messages import send_emqp_message as sendmsg
-from .worker import MultiprocessWorker as Worker
+from . import worker
 from eventmq.log import setup_logger
 from multiprocessing import Queue as mp_queue
+from multiprocessing import Pool
 import Queue
+
+logger = logging.getLogger(__name__)
+# This file is part of eventmq.
+#
+# eventmq is free software: you can redistribute it and/or modify it under the
+# terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation, either version 2.1 of the License, or (at your option)
+# any later version.
+#
+# eventmq is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
+"""
+:mod:`worker` -- Worker Classes
+===============================
+Defines different short-lived workers that execute jobs
+"""
+import logging
 
 logger = logging.getLogger(__name__)
 
@@ -62,12 +85,8 @@ class JobManager(HeartbeatMixin, EMQPService):
         self.name = kwargs.pop('name', generate_device_name())
         logger.info('Initializing JobManager {}...'.format(self.name))
 
-        #: Setup worker queues
-        self.request_queue = mp_queue()
-        self.finished_queue = mp_queue()
-
         #: keep track of workers
-        self.workers = []
+        self.workers = Pool(processes=conf.WORKERS)
 
         if not kwargs.pop('skip_signal', False):
             # handle any sighups by reloading config
@@ -90,21 +109,12 @@ class JobManager(HeartbeatMixin, EMQPService):
         # Acknowledgment has come
         # Send a READY for each available worker
 
-        # Clear any workers if we SIGHUP'd
-        for _ in self.workers:
-            self.request_queue.put(None)
-        self.workers = []
-
         for i in range(0, conf.WORKERS):
             self.send_ready()
-            w = Worker(self.request_queue, self.finished_queue)
-            w.start()
-            self.workers.append(w)
 
         while True:
             if self.received_disconnect:
-                for w in self.workers:
-                    w.terminate()
+                self.workers.close()
                 break
 
             events = self.poller.poll()
@@ -112,15 +122,6 @@ class JobManager(HeartbeatMixin, EMQPService):
             if events.get(self.outgoing) == POLLIN:
                 msg = self.outgoing.recv_multipart()
                 self.process_message(msg)
-
-            # Send readys for each finished job
-            while True:
-                try:
-                    self.finished_queue.get_nowait()
-                except Queue.Empty:
-                    break
-                else:
-                    self.send_ready()
 
             if not self.maybe_send_heartbeat(events):
                 break
@@ -159,7 +160,12 @@ class JobManager(HeartbeatMixin, EMQPService):
         # subcmd = payload[0]
         params = payload[1]
 
-        self.request_queue.put(params)
+        self.workers.apply_async(func=worker.run,
+                                 args=(params,),
+                                 callback=self.worker_done)
+
+    def worker_done(self, result):
+        self.send_ready()
 
     def send_ready(self):
         """

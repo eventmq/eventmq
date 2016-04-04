@@ -19,71 +19,62 @@ Defines different short-lived workers that execute jobs
 """
 from importlib import import_module
 import logging
-from multiprocessing import Process
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('*')
 
 
-class MultiprocessWorker(Process):
+def run(payload):
     """
-    Defines a worker that spans the job in a multiprocessing task
+    process a run message and execute a job
+
+    This is designed to run in a seperate process.
     """
-    def __init__(self, input_queue, output_queue):
-        super(MultiprocessWorker, self).__init__()
-        self.input_queue = input_queue
-        self.output_queue = output_queue
+    # Pull the payload off the queue and run it
+    if ":" in payload["path"]:
+        _pkgsplit = payload["path"].split(':')
+        s_package = _pkgsplit[0]
+        s_cls = _pkgsplit[1]
+    else:
+        s_package = payload["path"]
+        s_cls = None
 
-    def run(self):
-        """
-        process a run message and execute a job
+    s_callable = payload["callable"]
 
-        This is designed to run in a seperate process.
-        """
-        # Pull the payload off the queue and run it
-        for payload in iter(self.input_queue.get, None):
-            if ":" in payload["path"]:
-                _pkgsplit = payload["path"].split(':')
-                s_package = _pkgsplit[0]
-                s_cls = _pkgsplit[1]
-            else:
-                s_package = payload["path"]
-                s_cls = None
+    package = import_module(s_package)
+    reload(package)
 
-            s_callable = payload["callable"]
+    if s_cls:
+        cls = getattr(package, s_cls)
 
-            package = import_module(s_package)
-            if s_cls:
-                cls = getattr(package, s_cls)
+        if "class_args" in payload:
+            class_args = payload["class_args"]
+        else:
+            class_args = ()
 
-                if "class_args" in payload:
-                    class_args = payload["class_args"]
-                else:
-                    class_args = ()
+        if "class_kwargs" in payload:
+            class_kwargs = payload["class_kwargs"]
+        else:
+            class_kwargs = {}
 
-                if "class_kwargs" in payload:
-                    class_kwargs = payload["class_kwargs"]
-                else:
-                    class_kwargs = {}
+        obj = cls(*class_args, **class_kwargs)
+        callable_ = getattr(obj, s_callable)
+    else:
+        callable_ = getattr(package, s_callable)
 
-                obj = cls(*class_args, **class_kwargs)
-                callable_ = getattr(obj, s_callable)
-            else:
-                callable_ = getattr(package, s_callable)
+    if "args" in payload:
+        args = payload["args"]
+    else:
+        args = ()
 
-            if "args" in payload:
-                args = payload["args"]
-            else:
-                args = ()
+    if "kwargs" in payload:
+        kwargs = payload["kwargs"]
+    else:
+        kwargs = {}
 
-            if "kwargs" in payload:
-                kwargs = payload["kwargs"]
-            else:
-                kwargs = {}
+    try:
+        callable_(*args, **kwargs)
+    except Exception as e:
+        logger.exception(e)
 
-            try:
-                callable_(*args, **kwargs)
-            except Exception as e:
-                logger.exception(e)
-
-            # Signal that we're done with this job
-            self.output_queue.put('DONE')
+    # Signal that we're done with this job
+    return 'DONE'
