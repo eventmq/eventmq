@@ -21,6 +21,7 @@ import json
 import logging
 import time
 import redis
+import time
 
 from croniter import croniter
 from six import next
@@ -96,7 +97,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
             # Create the croniter iterator
             c = croniter(job[0])
             path = '.'.join(job[1].split('.')[:-1])
-            callable_ = job.split('.')[-1]
+            callable_ = job[1].split('.')[-1]
 
             msg = ['run', {
                 'path': path,
@@ -109,7 +110,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
                 # If the next execution time has passed move the iterator to
                 # the following time
                 c_next = next(c)
-            self.cron_jobs.append([c_next, msg, c, None])
+            self.cron_jobs.append([c_next, json.dumps(msg), c, None])
 
         # Restore persisted data if redis connection is alive and has jobs
         if (self.redis_server):
@@ -152,7 +153,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
                     logger.debug("Time is: %s; Schedule is: %s - Running %s"
                                  % (ts_now, self.cron_jobs[i][0], msg))
 
-                    self.send_request(self.outgoing, msg, queue=queue)
+                    self.send_request(msg, queue=queue)
 
                     # Update the next time to run
                     self.cron_jobs[i][0] = next(self.cron_jobs[i][2])
@@ -300,5 +301,4 @@ def scheduler_main():
 
 
 def test_job():
-    print "hello!"
     print "hello!"

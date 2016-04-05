@@ -60,24 +60,22 @@ class TestCase(ThreadAwareTestCase):
             'class_args': None,
             'class_kwargs': {},
         }]
-        time.sleep(2)
 
         full_msg = ['REQUEST', 'default', json.dumps(msg)]
         self.jobmanager.on_request(msgid='1234',
                                    msg=full_msg)
 
     def cleanup(self):
-        self.jobmanager.on_disconnect(None, None)
         self.router.on_disconnect(None, None)
+        self.jobmanager.on_disconnect(None, None)
+
         return
 
 
 def start_router(router):
     router.start(FRONTEND_ADDR, BACKEND_ADDR)
-    time.sleep(2)
 
 
 def start_jobmanager(jobmanager):
     conf.WORKER_ADDR = BACKEND_ADDR
     jobmanager.jobmanager_main()
-    time.sleep(2)
