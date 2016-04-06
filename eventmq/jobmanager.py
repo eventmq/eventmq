@@ -85,9 +85,6 @@ class JobManager(HeartbeatMixin, EMQPService):
         self.name = kwargs.pop('name', generate_device_name())
         logger.info('Initializing JobManager {}...'.format(self.name))
 
-        #: keep track of workers
-        self.workers = Pool(processes=conf.WORKERS)
-
         if not kwargs.pop('skip_signal', False):
             # handle any sighups by reloading config
             signal.signal(signal.SIGHUP, self.sighup_handler)
@@ -111,6 +108,10 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         for i in range(0, conf.WORKERS):
             self.send_ready()
+
+        # Instantiate pool if it hasn't been done
+        if not hasattr(self, 'workers'):
+            self.workers = Pool(processes=conf.WORKERS)
 
         while True:
             if self.received_disconnect:
