@@ -26,9 +26,9 @@ from ..utils.messages import send_emqp_message
 logger = logging.getLogger(__name__)
 
 
-def schedule(socket, func, interval_secs, args=(), kwargs=None, class_args=(),
-             class_kwargs=None, headers=('guarantee',),
-             queue=conf.DEFAULT_QUEUE_NAME, unschedule=False):
+def schedule(socket, func, args=(), interval_secs=None, kwargs=None,
+             class_args=(), class_kwargs=None, headers=('guarantee',),
+             queue=conf.DEFAULT_QUEUE_NAME, unschedule=False, cron=None):
     """
     Execute a task on a defined interval.
 
@@ -37,6 +37,9 @@ def schedule(socket, func, interval_secs, args=(), kwargs=None, class_args=(),
         func (callable): the callable to be scheduled on a worker
         minutes (int): minutes to wait in between executions
         args (list): list of *args to pass to the callable
+        interval_secs (int): Run job every interval_secs or None if using cron
+        cron (string): cron formatted string used for job schedule if
+            interval_secs is None, i.e. '* * * * *' (every minute)
         kwargs (dict): dict of **kwargs to pass to the callable
         class_args (list): list of *args to pass to the class (if applicable)
         class_kwargs (dict): dict of **kwargs to pass to the class (if
@@ -50,6 +53,10 @@ def schedule(socket, func, interval_secs, args=(), kwargs=None, class_args=(),
         class_kwargs = {}
     if not kwargs:
         kwargs = {}
+
+    if (interval_secs and cron) or (not interval_secs and not cron):
+        logger.error('You must sepcify either interval_secs or cron,'
+                     'but not both')
 
     if callable(func):
         path, callable_name = build_module_path(func)
@@ -82,7 +89,7 @@ def schedule(socket, func, interval_secs, args=(), kwargs=None, class_args=(),
         'class_kwargs': class_kwargs,
     }]
 
-    send_schedule_request(socket, interval_secs=interval_secs,
+    send_schedule_request(socket, interval_secs=interval_secs, cron=cron,
                           message=msg, headers=headers, queue=queue,
                           unschedule=unschedule)
 
@@ -257,8 +264,8 @@ def send_request(socket, message, reply_requested=False, guarantee=False,
                       )
 
 
-def send_schedule_request(socket, interval_secs, message, headers=(),
-                          queue=None, unschedule=False):
+def send_schedule_request(socket, message, interval_secs=-1, headers=(),
+                          queue=None, unschedule=False, cron=""):
     """
     Send a SCHEDULE or UNSCHEDULE command.
 
@@ -267,7 +274,7 @@ def send_schedule_request(socket, interval_secs, message, headers=(),
 
     Args:
         socket (socket):
-        interval_secs (int):
+        job_schedule (str)
         message: Message to send socket.
         headers (list): List of headers for the message
         queue (str): name of queue the job should be executed in
@@ -282,7 +289,8 @@ def send_schedule_request(socket, interval_secs, message, headers=(),
                       (queue or conf.DEFAULT_QUEUE_NAME,
                        ','.join(headers),
                        str(interval_secs),
-                       serialize(message)))
+                       serialize(message),
+                       cron))
 
 
 def job(block=False):  # Move to decorators.py

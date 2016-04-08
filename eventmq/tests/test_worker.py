@@ -55,7 +55,7 @@ class TestCase(ThreadAwareTestCase):
         msg = ['run', {
             'callable': 'test_job',
             'path': 'eventmq.scheduler',
-            'args': None,
+            'args': '',
             'kwargs': {},
             'class_args': None,
             'class_kwargs': {},
