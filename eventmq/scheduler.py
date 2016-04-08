@@ -20,7 +20,6 @@ Handles cron and other scheduled tasks
 import json
 import logging
 import redis
-import time
 
 from croniter import croniter
 from six import next
@@ -34,7 +33,7 @@ from json import dumps as serialize
 from .utils.settings import import_settings
 from .utils.timeutils import IntervalIter
 from .utils.timeutils import seconds_until, timestamp, monotonic
-from .client.messages import send_request
+from .client.messages import send_request, send_emqp_message
 
 from eventmq.log import setup_logger
 
@@ -146,7 +145,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
                 self.process_message(msg)
 
             # TODO: distribute me!
-            for cron in self.cron_jobs:
+            for hash_, cron in self.cron_jobs.items():
                 # If the time is now, or passed
                 if cron[0] <= ts_now:
                     msg = cron[1]
@@ -187,6 +186,8 @@ class Scheduler(HeartbeatMixin, EMQPService):
                                       port=conf.RQ_PORT,
                                       db=conf.RQ_DB,
                                       password=conf.RQ_PASSWORD)
+                return self._redis_server
+
             except Exception as e:
                 logger.warning('Unable to connect to redis server: {}'.format(
                     e.message))
@@ -253,16 +254,6 @@ class Scheduler(HeartbeatMixin, EMQPService):
             # Create the croniter iterator
             c = croniter(cron)
 
-            msg = deserialize(message[3])[1]
-            path = msg['path']
-            callable_ = msg['callable']
-            caller_id = msg['class_args'][0],
-
-            msg = ['run', {
-                'path': path,
-                'callable': callable_
-            }]
-
             # Get the next time this job should be run
             c_next = next(c)
             if ts >= c_next:
@@ -270,11 +261,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
                 # the following time
                 c_next = next(c)
 
-            cron_hash = self.cron_hash(caller_id=caller_id,
-                                       path=path,
-                                       callable_=callable_)
-
-            self.cron_jobs[cron_hash] = [c_next, json.dumps(msg), c, None]
+            self.cron_jobs[schedule_hash] = [c_next, message[3], c, queue]
 
     def on_schedule(self, msgid, message):
         """
@@ -283,23 +270,48 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
         queue = message[0]
         interval = int(message[2])
-        inter_iter = IntervalIter(monotonic(), interval)
+        cron = str(message[4])
+
         schedule_hash = self.schedule_hash(message)
 
         # Notify if this is updating existing, or new
-        if (schedule_hash in self.interval_jobs):
+        if (schedule_hash in self.cron_jobs or
+                schedule_hash in self.interval_jobs):
             logger.debug('Update existing scheduled job with %s'
                          % schedule_hash)
         else:
             logger.debug('Creating a new scheduled job with %s'
                          % schedule_hash)
 
-        self.interval_jobs[schedule_hash] = [
-            next(inter_iter),
-            message[3],
-            inter_iter,
-            queue
-        ]
+        # If interval is negative, cron MUST be populated
+        if interval >= 0:
+            inter_iter = IntervalIter(monotonic(), interval)
+
+            self.interval_jobs[schedule_hash] = [
+                next(inter_iter),
+                message[3],
+                inter_iter,
+                queue
+            ]
+
+            if schedule_hash in self.cron_jobs:
+                self.cron_jobs.pop(schedule_hash)
+        else:
+            ts = int(timestamp())
+            c = croniter(cron)
+            c_next = next(c)
+            if ts >= c_next:
+                # If the next execution time has passed move the iterator to
+                # the following time
+                c_next = next(c)
+
+            self.cron_jobs[schedule_hash] = [c_next,
+                                             message[3],
+                                             c,
+                                             None]
+
+            if schedule_hash in self.interval_jobs:
+                self.interval_jobs.pop(schedule_hash)
 
         # Persist the scheduled job
         try:

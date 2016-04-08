@@ -23,6 +23,7 @@ from .. import conf
 
 from .. import jobmanager
 from .. import router
+from .. import scheduler
 
 from tl.testing.thread import ThreadAwareTestCase
 
@@ -37,6 +38,7 @@ class TestCase(ThreadAwareTestCase):
     def setUp(self):
         self.jobmanager = jobmanager.JobManager()
         self.router = router.Router()
+        self.scheduler = scheduler.Scheduler()
 
         self.thread = threading.Thread(target=start_router,
                                        args=(self.router,))
@@ -44,12 +46,16 @@ class TestCase(ThreadAwareTestCase):
         self.thread2 = threading.Thread(target=start_jobmanager,
                                         args=(self.jobmanager,))
 
+        self.thread3 = threading.Thread(target=start_scheduler,
+                                        args=(self.scheduler,))
+
         self.addCleanup(self.cleanup)
 
     @mock.patch('signal.signal')
     def test_start(self, mock_signal_signal):
         self.thread.start()
         self.thread2.start()
+        self.thread3.start()
         time.sleep(1)
 
         msg = ['run', {
@@ -57,25 +63,48 @@ class TestCase(ThreadAwareTestCase):
             'path': 'eventmq.scheduler',
             'args': '',
             'kwargs': {},
-            'class_args': None,
+            'class_args': (1,),
             'class_kwargs': {},
         }]
 
         full_msg = ['REQUEST', 'default', json.dumps(msg)]
         self.jobmanager.on_request(msgid='1234',
                                    msg=full_msg)
+        # self.scheduler.on_schedule('1234', ['default',
+        #                                     None,
+        #                                     3,
+        #                                     json.dumps(msg),
+        #                                     ''])
+
+        msg[1]['class_args'] = (-1,)
+        full_msg = ['REQUEST', 'default', json.dumps(msg)]
+        self.scheduler.on_schedule('12345', ['default',
+                                             None,
+                                             -1,
+                                             json.dumps(msg),
+                                             '* * * * *'])
+
+        time.sleep(10)
 
     def cleanup(self):
         self.router.on_disconnect(None, None)
         self.jobmanager.on_disconnect(None, None)
+        self.scheduler.on_disconnect(None, None)
 
         return
 
 
 def start_router(router):
+    conf.FRONTEND_ADDR = FRONTEND_ADDR
+    conf.BACKEND_ADDR = BACKEND_ADDR
     router.start(FRONTEND_ADDR, BACKEND_ADDR)
 
 
 def start_jobmanager(jobmanager):
     conf.WORKER_ADDR = BACKEND_ADDR
     jobmanager.jobmanager_main()
+
+
+def start_scheduler(scheduler):
+    conf.SCHEDULER_ADDR = FRONTEND_ADDR
+    scheduler.scheduler_main()

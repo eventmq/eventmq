@@ -26,7 +26,7 @@ from ..utils.messages import send_emqp_message
 logger = logging.getLogger(__name__)
 
 
-def schedule(socket, func, args=(), interval_secs=None, kwargs=None,
+def schedule(socket, func, interval_secs=None, args=(), kwargs=None,
              class_args=(), class_kwargs=None, headers=('guarantee',),
              queue=conf.DEFAULT_QUEUE_NAME, unschedule=False, cron=None):
     """
@@ -54,9 +54,15 @@ def schedule(socket, func, args=(), interval_secs=None, kwargs=None,
     if not kwargs:
         kwargs = {}
 
+    if not len(class_args) > 0 and not cron:
+        logger.error('First class argument must be caller_id for scheduling'
+                     ' interval jobs')
+        return False
+
     if (interval_secs and cron) or (not interval_secs and not cron):
         logger.error('You must sepcify either interval_secs or cron,'
                      'but not both')
+        return False
 
     if callable(func):
         path, callable_name = build_module_path(func)
@@ -78,8 +84,6 @@ def schedule(socket, func, args=(), interval_secs=None, kwargs=None,
 
     # TODO: convert all the times to seconds for the clock
 
-    # TODO: send the schedule request
-
     msg = ['run', {
         'callable': callable_name,
         'path': path,
@@ -89,9 +93,13 @@ def schedule(socket, func, args=(), interval_secs=None, kwargs=None,
         'class_kwargs': class_kwargs,
     }]
 
-    send_schedule_request(socket, interval_secs=interval_secs, cron=cron,
+    send_schedule_request(socket, interval_secs=interval_secs or -1,
+                          cron=cron or '',
                           message=msg, headers=headers, queue=queue,
                           unschedule=unschedule)
+
+    # TODO: Return true only if we got some sort of ACK
+    return True
 
 
 def defer_job(socket, func, args=(), kwargs=None, class_args=(),
