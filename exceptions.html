@@ -91,7 +91,7 @@
 <li class="toctree-l2"><a class="reference internal" href="receiver.html"><code class="docutils literal"><span class="pre">receiver</span></code> &#8211; Receiver</a></li>
 <li class="toctree-l2"><a class="reference internal" href="router.html"><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sender.html"><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></li>
-<li class="toctree-l2"><a class="reference internal" href="utils.html"><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils/index.html"><code class="docutils literal"><span class="pre">utils</span></code> - Utilities</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to EventMQ</a></li>
@@ -148,7 +148,7 @@ be subclasses of <a class="reference internal" href="#eventmq.exceptions.EventMQ
 <dl class="exception">
 <dt id="eventmq.exceptions.EventMQError">
 <em class="property">exception </em><code class="descclassname">eventmq.exceptions.</code><code class="descname">EventMQError</code><a class="headerlink" href="#eventmq.exceptions.EventMQError" title="Permalink to this definition">¶</a></dt>
-<dd><p>All exceptions raised by EventMQ inherit from this base exception</p>
+<dd><p>All exceptions raised by EventMQ inherit from this base exception.</p>
 </dd></dl>
 
 <dl class="exception">
@@ -160,7 +160,13 @@ be subclasses of <a class="reference internal" href="#eventmq.exceptions.EventMQ
 <dl class="exception">
 <dt id="eventmq.exceptions.MessageError">
 <em class="property">exception </em><code class="descclassname">eventmq.exceptions.</code><code class="descname">MessageError</code><a class="headerlink" href="#eventmq.exceptions.MessageError" title="Permalink to this definition">¶</a></dt>
-<dd><p>Raised when there is a problem with the structure of the message</p>
+<dd><p>Raised when there is a problem with the structure of the message.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eventmq.exceptions.NoAvailableWorkerSlotsError">
+<em class="property">exception </em><code class="descclassname">eventmq.exceptions.</code><code class="descname">NoAvailableWorkerSlotsError</code><a class="headerlink" href="#eventmq.exceptions.NoAvailableWorkerSlotsError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raised when there is no available workers for a job manager.</p>
 </dd></dl>
 
 <dl class="exception">
@@ -168,6 +174,12 @@ be subclasses of <a class="reference internal" href="#eventmq.exceptions.EventMQ
 <em class="property">exception </em><code class="descclassname">eventmq.exceptions.</code><code class="descname">PeerGoneAwayError</code><a class="headerlink" href="#eventmq.exceptions.PeerGoneAwayError" title="Permalink to this definition">¶</a></dt>
 <dd><p>Raised when attempting to contact a peer that no longer exists (i.e. when
 sending a message to it)</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="eventmq.exceptions.UnknownQueueError">
+<em class="property">exception </em><code class="descclassname">eventmq.exceptions.</code><code class="descname">UnknownQueueError</code><a class="headerlink" href="#eventmq.exceptions.UnknownQueueError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raised when a queue is not found in the internal list of queues.</p>
 </dd></dl>
 
 </div>

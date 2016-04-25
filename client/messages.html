@@ -226,6 +226,34 @@ that would otherwise overwhelm a box that has to do it all alone.
 </dd></dl>
 
 <dl class="function">
+<dt id="eventmq.client.messages.schedule">
+<code class="descclassname">eventmq.client.messages.</code><code class="descname">schedule</code><span class="sig-paren">(</span><em>socket</em>, <em>func</em>, <em>interval_secs</em>, <em>args=()</em>, <em>kwargs=None</em>, <em>class_args=()</em>, <em>class_kwargs=None</em>, <em>headers=('guarantee'</em>, <em>)</em>, <em>queue='default'</em>, <em>unschedule=False</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.client.messages.schedule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute a task on a defined interval.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; eventmq socket to use for sending the message</li>
+<li><strong>func</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#callable" title="(in Python v2.7)"><em>callable</em></a>) &#8211; the callable to be scheduled on a worker</li>
+<li><strong>minutes</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; minutes to wait in between executions</li>
+<li><strong>args</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; list of <a href="#id9"><span class="problematic" id="id10">*</span></a>args to pass to the callable</li>
+<li><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; dict of <a href="#id11"><span class="problematic" id="id12">**</span></a>kwargs to pass to the callable</li>
+<li><strong>class_args</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; list of <a href="#id13"><span class="problematic" id="id14">*</span></a>args to pass to the class (if applicable)</li>
+<li><strong>class_kwargs</strong> (<a class="reference external" href="https://docs.python.org/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; dict of <a href="#id15"><span class="problematic" id="id16">**</span></a>kwargs to pass to the class (if
+applicable)</li>
+<li><strong>headers</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; list of strings denoting enabled headers. Default:
+guarantee is enabled to ensure the scheduler schedules the job.</li>
+<li><strong>queue</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of the queue to use when executing the job. The
+default value is the default queue.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
 <dt id="eventmq.client.messages.send_request">
 <code class="descclassname">eventmq.client.messages.</code><code class="descname">send_request</code><span class="sig-paren">(</span><em>socket</em>, <em>message</em>, <em>reply_requested=False</em>, <em>guarantee=False</em>, <em>retry_count=0</em>, <em>queue=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.client.messages.send_request" title="Permalink to this definition">¶</a></dt>
 <dd><p>Send a REQUEST command.</p>
@@ -269,6 +297,29 @@ an Exception or some other failure before giving up. (default: 0
 or immediatly fail)</li>
 <li><strong>queue</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Name of queue to use when executing the job. Default: is
 configured default queue name</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="eventmq.client.messages.send_schedule_request">
+<code class="descclassname">eventmq.client.messages.</code><code class="descname">send_schedule_request</code><span class="sig-paren">(</span><em>socket</em>, <em>interval_secs</em>, <em>message</em>, <em>headers=()</em>, <em>queue=None</em>, <em>unschedule=False</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.client.messages.send_schedule_request" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a SCHEDULE or UNSCHEDULE command.</p>
+<p>Queues a message requesting that something happens on an
+interval for the scheduler.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; </li>
+<li><strong>interval_secs</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; </li>
+<li><strong>message</strong> &#8211; Message to send socket.</li>
+<li><strong>headers</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; List of headers for the message</li>
+<li><strong>queue</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of queue the job should be executed in</li>
 </ul>
 </td>
 </tr>
