@@ -394,22 +394,39 @@ class ZMQSendMixin(object):
 class EMQdeque(object):
     """
     EventMQ deque based on python's collections.deque with full and
-    programmable full
-    """
-    def __init__(self, full=None, pfull=None, on_full=None):
-        """
+    programmable full.
 
+    .. note::
+
+       Because of the programmable full, some of the methods that would
+       normally return None return a boolean value that should be captured and
+       checked to ensure proper error handling.
+
+    """
+    def __init__(self, full=None, pfull=None, on_full=None, initial=()):
+        """
         Args:
-            full (int): Hard limit on deque size
+            full (int): Hard limit on deque size. Rejects adding elements.
+                Default: 0 - no limit
             pfull (int): Programmable limit on deque size, defaults
-                 to full length
-            on_full (func): callback for on_full event
+                 to ``full`` length
+            on_full (func): callback to call when ``full`` limit is hit
+            initial (iter): The initial iteratable used to contruct the deque
         """
         self.full = full if not None else 0
         self.pfull = pfull if not None else full
 
-        self._queue = deque(maxlen=self.full)
+        self._queue = deque(initial, maxlen=self.full)
         self.on_full = on_full
+
+    def __str__(self):
+        return "{}".format(str(self._queue))
+
+    def __unicode__(self):
+        return "{}".format(unicode(self._queue))
+
+    def __repr__(self):
+        return "{}".format(repr(self._queue))
 
     def __iter__(self):
         return self._queue.__iter__()
@@ -418,7 +435,20 @@ class EMQdeque(object):
         return len(self._queue)
 
     def append(self, item):
-        if len(self._queue) == self.full:
+        """
+        Append item to the right this deque if the deque isn't full.
+
+        .. note::
+
+            You should check the return value of this call and handle the cases
+            where False is returned.
+
+        Returns:
+            bool: True if ``item`` was successfully added, False if the deque
+                is at the ``self.full`` limit. If it is, ``self.on_full`` is
+                called.
+        """
+        if self.is_full():
             if self.on_full:
                 self.on_full()
             return False
@@ -427,28 +457,99 @@ class EMQdeque(object):
             return True
 
     def remove(self, item):
+        """
+        Remove ``item`` from the deque.
+
+        Args:
+           item (object): The item to remove from the deque
+        """
         return self._queue.remove(item)
 
     def is_full(self):
-        if self.full is not 0:
+        """
+        Check to see if the deque contains ``self.full`` items.
+
+        Returns:
+            bool: True if the deque contains at least ``full`` items. False
+            otherwise
+        """
+        if self.full and self.full is not 0:
             return len(self._queue) >= self.full
         else:
             return False
 
     def is_empty(self):
+        """
+        Check to see if the deque contains no items.
+
+        Returns:
+            bool: True if the deque contains 0 items. False otherwise
+        """
         return len(self._queue) == 0
 
     def is_pfull(self):
-        if self.pfull is not 0:
+        """
+        Check to see if the deque contains ``self.pfull`` items.
+
+        Returns:
+            bool: True if the deque contains at least ``pfull`` items.
+            False otherwise
+        """
+        if self.pfull and self.pfull is not 0:
             return len(self._queue) >= self.pfull
         else:
             return False
 
     def pop(self):
+        """
+        Returns:
+            object: the last (right-most) element of the deque
+        """
         return self._queue.pop()
 
     def popleft(self):
+        """
+        Returns:
+            object: the first (left-most) element of the deque
+        """
         return self._queue.popleft()
 
-    def insert(self, pos, item):
-        self._queue.insert(pos, item)
+    def appendleft(self, item):
+        """
+        Append item to the left this deque if the deque isn't full.
+
+        .. note::
+
+            You should check the return value of this call and handle the cases
+            where False is returned.
+
+        Returns:
+            bool: True if ``item`` was successfully added, False if the deque
+                is at the ``self.full`` limit. If it is, ``self.on_full`` is
+                called.
+        """
+        if self.is_full():
+            if self.on_full:
+                self.on_full()
+            return False
+        else:
+            self._queue.appendleft(item)
+            return True
+
+    def extend(self, iterable):
+        """
+        append ``iterable`` to the right (end) of the deque
+
+        Returns:
+            bool: True if ``item`` was successfully added, False if the deque
+                is at the ``self.full`` limit. If it is, ``self.on_full`` is
+                called.
+        """
+        if self.full and self.full > 0 and \
+           len(self._queue) + len(iterable) >= self.full:
+
+            if len(self._queue) >= self.full and self.on_full:
+                self.on_full()
+            return False
+        else:
+            self._deque.extend(iterable)
