@@ -21,9 +21,11 @@ like creating message more simple.
 .. toctree ::
    :maxdepth: 2
 
-   utils/classes
-   utils/messages
-   utils/timeutils
+   classes
+   devices
+   messages
+   settings
+   timeutils
 """
 
 

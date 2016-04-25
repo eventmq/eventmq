@@ -13,7 +13,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
 """
-:mod:'settings' -- Settings Utilities """
+:mod:`settings` -- Settings Utilities
+=====================================
+"""
 import os
 import ConfigParser
 from .. import conf
