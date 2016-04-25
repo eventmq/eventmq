@@ -552,4 +552,4 @@ class EMQdeque(object):
                 self.on_full()
             return False
         else:
-            self._deque.extend(iterable)
+            self._queue.extend(iterable)
