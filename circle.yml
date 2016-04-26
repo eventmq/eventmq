@@ -1,4 +1,5 @@
 test:
   override:
+    - pip install --upgrade -r requirements_.txt
     - nosetests --with-coverage --cover-inclusive --cover-package=eventmq --cover-tests
     - coverage html -d "$CIRCLE_ARTIFACTS/coverage"

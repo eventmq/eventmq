@@ -32,29 +32,7 @@ from . import worker
 from eventmq.log import setup_logger
 from multiprocessing import Queue as mp_queue
 from multiprocessing import Pool
-import Queue
-
-logger = logging.getLogger(__name__)
-# This file is part of eventmq.
-#
-# eventmq is free software: you can redistribute it and/or modify it under the
-# terms of the GNU Lesser General Public License as published by the Free
-# Software Foundation, either version 2.1 of the License, or (at your option)
-# any later version.
-#
-# eventmq is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
-"""
-:mod:`worker` -- Worker Classes
-===============================
-Defines different short-lived workers that execute jobs
-"""
-import logging
+# import Queue
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +55,9 @@ class JobManager(HeartbeatMixin, EMQPService):
         Args:
             name (str): unique name of this instance. By default a uuid will be
                  generated.
+            queues (tuple): List of queue names to listen on.
+            skip_signal (bool): Don't register the signal handlers. Useful for
+                 testing.
         """
         super(JobManager, self).__init__(*args, **kwargs)
 
@@ -85,11 +66,21 @@ class JobManager(HeartbeatMixin, EMQPService):
         self.name = kwargs.pop('name', generate_device_name())
         logger.info('Initializing JobManager {}...'.format(self.name))
 
+        #: Setup worker queues
+        self.request_queue = mp_queue()
+        self.finished_queue = mp_queue()
+
+        #: keep track of workers
+        self.workers = Pool()
+
+        #: List of queues that this job manager is listening on
+        self.queues = kwargs.pop('queues', None)
+
         if not kwargs.pop('skip_signal', False):
             # handle any sighups by reloading config
             signal.signal(signal.SIGHUP, self.sighup_handler)
 
-        #: JobManager starts out by INFORMing the router of it's existance,
+        #: JobManager starts out by INFORMing the router of it's existence,
         #: then telling the router that it is READY. The reply will be the unit
         #: of work.
         # Despite the name, jobs are received on this socket
@@ -101,11 +92,10 @@ class JobManager(HeartbeatMixin, EMQPService):
 
     def _start_event_loop(self):
         """
-        Starts the actual eventloop. Usually called by :meth:`start`
+        Starts the actual event loop. Usually called by :meth:`start`
         """
         # Acknowledgment has come
         # Send a READY for each available worker
-
         for i in range(0, conf.WORKERS):
             self.send_ready()
 
@@ -114,6 +104,7 @@ class JobManager(HeartbeatMixin, EMQPService):
             self.workers = Pool(processes=conf.WORKERS)
 
         while True:
+            # Clear any workers if it's time to shut down
             if self.received_disconnect:
                 self.workers.close()
                 break
@@ -186,6 +177,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         logger.info('Caught signal %s' % signum)
         self.outgoing.rebuild()
         import_settings()
+        import_settings(section='jobmanager')
         self.start(addr=conf.WORKER_ADDR)
 
     def jobmanager_main(self):
@@ -194,7 +186,14 @@ class JobManager(HeartbeatMixin, EMQPService):
         """
         setup_logger('')
         import_settings()
-        self.start(addr=conf.WORKER_ADDR)
+        import_settings(section='jobmanager')
+
+        # If this manager was passed explicit queues, favor those.
+        if self.queues:
+            conf.QUEUES = self.queues
+
+            self.start(addr=conf.WORKER_ADDR, queues=self.queues or \
+                       conf.QUEUES)
 
 
 def jobmanager_main():

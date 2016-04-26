@@ -315,9 +315,8 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
         # Persist the scheduled job
         try:
-            if schedule_hash not in self.redis_server.lrange('interval_jobs',
-                                                             0,
-                                                             -1):
+            if schedule_hash not in self.redis_server.lrange(
+                    'interval_jobs', 0, -1):
                 self.redis_server.lpush('interval_jobs', schedule_hash)
             self.redis_server.set(schedule_hash, serialize(message))
             self.redis_server.save()

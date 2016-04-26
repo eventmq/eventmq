@@ -22,13 +22,13 @@ be subclasses of :class:`EventMQError`
 
 class EventMQError(Exception):
     """
-    All exceptions raised by EventMQ inherit from this base exception
+    All exceptions raised by EventMQ inherit from this base exception.
     """
 
 
 class MessageError(EventMQError):
     """
-    Raised when there is a problem with the structure of the message
+    Raised when there is a problem with the structure of the message.
     """
 
 
@@ -42,4 +42,16 @@ class PeerGoneAwayError(EventMQError):
     """
     Raised when attempting to contact a peer that no longer exists (i.e. when
     sending a message to it)
+    """
+
+
+class NoAvailableWorkerSlotsError(EventMQError):
+    """
+    Raised when there is no available workers for a job manager.
+    """
+
+
+class UnknownQueueError(EventMQError):
+    """
+    Raised when a queue is not found in the internal list of queues.
     """

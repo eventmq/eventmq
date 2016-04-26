@@ -144,7 +144,7 @@ FRAME   Value         Description
 1      eMQP/1.0       Protocol version
 2      INFORM         command
 3      _MSGID_        A unique id for the msg
-4      _QUEUE_NAME_   csv seperated names of queue the worker belongs to
+4      _QUEUE_NAME_   csv seperated names of queue the worker belongs to.
 5      worker         type of peer connecting
 ====== ============== ===========
 

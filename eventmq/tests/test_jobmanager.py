@@ -17,25 +17,11 @@ import threading
 import time
 import unittest
 
-import mock
-import zmq
-
+from .utils import FakeDevice
 from .. import conf, constants, jobmanager
-from ..utils.classes import ZMQSendMixin, ZMQReceiveMixin
 from ..utils.messages import send_emqp_router_message
 
 ADDR = 'inproc://pour_the_rice_in_the_thing'
-
-
-class FakeDevice(ZMQReceiveMixin, ZMQSendMixin):
-    """
-    A fake router device so we can test with some of the nice utilities, but
-    still allowing manual control
-    """
-    def __init__(self, addr=ADDR):
-        super(FakeDevice, self).__init__()
-
-        self.zsocket = zmq.Context.instance().socket(zmq.ROUTER)
 
 
 class TestCase(unittest.TestCase):
@@ -54,8 +40,7 @@ class TestCase(unittest.TestCase):
 
         self.addCleanup(self.cleanup)
 
-    @mock.patch('signal.signal')
-    def test__setup(self, mock_signal_signal):
+    def test__setup(self):
         jm = jobmanager.JobManager(name='RuckusBringer')
         self.assertEqual(jm.name, 'RuckusBringer')
 
@@ -63,15 +48,13 @@ class TestCase(unittest.TestCase):
         self.assertEqual(jm.status, constants.STATUS.ready)
 
 # EMQP Tests
-    @mock.patch('signal.signal')
-    def test_reset(self, mock_signal):
+    def test_reset(self):
         self.jm.reset()
 
         self.assertFalse(self.jm.awaiting_startup_ack)
         self.assertEqual(self.jm.status, constants.STATUS.ready)
 
-    @mock.patch('signal.signal')
-    def test_start(self, mock_signal_signal):
+    def test_start(self):
         sock = FakeDevice()
 
         self.jm_thread.start()
@@ -96,8 +79,7 @@ class TestCase(unittest.TestCase):
     def send_ack(self, sock, jm_addr, msgid):
         send_emqp_router_message(sock, jm_addr, "ACK", msgid)
 
-    @mock.patch('signal.signal')
-    def test__start_event_loop(self, mock_signal_signal):
+    def test__start_event_loop(self):
         # Tests the first part of the event loop
         sock = FakeDevice()
         sock.zsocket.bind(ADDR)
@@ -120,8 +102,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(ready_msg_count, conf.WORKERS)
 
     @unittest.skip('')
-    @mock.patch('signal.signal')
-    def test_on_request(self, mock_signal_signal):
+    def test_on_request(self):
         from ..client.messages import build_module_path
         sock = FakeDevice()
         sock.zsocket.bind(ADDR)

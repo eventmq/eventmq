@@ -17,19 +17,19 @@
 =======================
 Routes messages to workers (that are in named queues).
 """
-from .utils.classes import EMQdeque
 from copy import copy
 import logging
 import signal
 
-from . import conf, exceptions, poller, receiver
-from .constants import STATUS, CLIENT_TYPE
-from .utils.classes import HeartbeatMixin
+from . import conf, constants, exceptions, poller, receiver
+from .constants import STATUS, CLIENT_TYPE, PROTOCOL_VERSION
+from .utils.classes import EMQdeque, HeartbeatMixin
 from .utils.messages import (
     send_emqp_router_message as sendmsg,
     fwd_emqp_router_message as fwdmsg,
     parse_router_message
 )
+from .utils import zero_index_cmp
 from .utils.settings import import_settings
 from .utils.devices import generate_device_name
 from .utils.timeutils import monotonic, timestamp
@@ -76,8 +76,12 @@ class Router(HeartbeatMixin):
         #: here.
         #:
         #: **Keys**
-        #:  * queues: list() of queues the worker belongs to
-        #:  * hb: monotonic timestamp of the last received message from worker
+        #:  * ``queues``: list() of queues the worker belongs to. The highest
+        #     priority queue should come first.
+        #:  * ``hb``: monotonic timestamp of the last received message from
+        #:    worker
+        #:  * ``available_slots``: int count of jobs this manager can still
+        #:    process.
         self.workers = {}
 
         #: Message buffer. When messages can't be sent because there are no
@@ -141,14 +145,14 @@ class Router(HeartbeatMixin):
 
             if events.get(self.incoming) == poller.POLLIN:
                 msg = self.incoming.recv_multipart()
-                self.on_receive_request(msg)
+                self.process_client_message(msg)
 
             if events.get(self.outgoing) == poller.POLLIN:
                 msg = self.outgoing.recv_multipart()
                 self.process_worker_message(msg)
 
             # TODO: Optimization: the calls to functions could be done in
-            #     another thread so they don't block the loop. syncronize
+            #     another thread so they don't block the loop. synchronize
             if not conf.DISABLE_HEARTBEATS:
                 # Send a HEARTBEAT if necessary
                 if now - self._meta['last_sent_heartbeat'] >= \
@@ -229,14 +233,19 @@ class Router(HeartbeatMixin):
         Handles an INFORM message. This happens when new worker coming online
         and announces itself.
         """
-        queue_name = msg[0]
+        queue_names = msg[0]
         client_type = msg[1]
+
+        if not queue_names:
+            queues = ('default', )
+        else:
+            queues = queue_names.split(',')
 
         logger.info('Received INFORM request from {} (type: {})'.format(
             sender, client_type))
 
         if client_type == CLIENT_TYPE.worker:
-            self.add_worker(sender, queue_name)
+            self.add_worker(sender, queues)
             self.send_ack(self.outgoing, sender, msgid)
         elif client_type == CLIENT_TYPE.scheduler:
             self.add_scheduler(sender)
@@ -261,24 +270,90 @@ class Router(HeartbeatMixin):
         # Note: This is only taking into account the queue the worker is
         # returning from, and not other queue_names that might have had
         # messages waiting even longer.
+        queue_names = self.workers[sender]['queues']
 
-        queue_name, = self.workers[sender]['queues']
+        # Assumes the highest priority queue comes first
+        for queue_name in queue_names:
+            if queue_name in self.waiting_messages.keys():
+                logger.debug('Found waiting message in the %s waiting_messages'
+                             ' queue' % queue_name)
+                msg = self.waiting_messages[queue_name].popleft()
 
-        if queue_name in self.waiting_messages.keys():
-            logger.debug('Found waiting message in the %s waiting messages '
-                         'queue' % queue_name)
-            msg = self.waiting_messages[queue_name].popleft()
-            fwdmsg(self.outgoing, sender, msg[1:])  # strip off client id.
+                fwdmsg(self.outgoing, sender, msg)
 
-            # It is easier to check if a key exists rather than the len of a
-            # key if it exists elsewhere, so if that was the last message
-            # remove the queue
-            if len(self.waiting_messages[queue_name]) is 0:
-                logger.debug('No more messages in waiting_messages queue %s. '
-                             'Removing from list...' % queue_name)
-                del self.waiting_messages[queue_name]
-        else:
-            self.requeue_worker(sender)
+                # It is easier to check if a key exists rather than the len of
+                # a key if it exists elsewhere, so if that was the last message
+                # remove the queue
+                if len(self.waiting_messages[queue_name]) is 0:
+                    logger.debug('No more messages in waiting_messages queue '
+                                 '%s. Removing from list...' % queue_name)
+                    del self.waiting_messages[queue_name]
+                # the message has been forwarded so short circuit that way the
+                # manager isn't reslotted
+                return
+
+        self.requeue_worker(sender)
+
+    def on_request(self, sender, msgid, msg, depth=1):
+        """
+        Process a client REQUEST frame
+
+        Args:
+            sender
+            msgid
+            msgid
+            depth (int): The recusion depth in retrying when PeerGoneAwayError
+                is raised.
+        """
+        try:
+            queue_name = msg[0]
+        except IndexError:
+            logger.exception("Queue name undefined. Sender {}; MsgID: {}; "
+                             "Msg: {}".format(sender, msgid, msg))
+            return
+
+        # If we have no workers for the queue TODO something about it
+        if queue_name not in self.queues:
+            logger.warning("Received REQUEST with a queue I don't recognize: "
+                           "%s. Discarding message." % (queue_name,))
+            # TODO: Don't discard the message
+            return
+
+        try:
+            worker_addr = self.get_available_worker(queue_name=queue_name)
+        except exceptions.NoAvailableWorkerSlotsError:
+            logger.warning('No available workers for queue "%s". '
+                           'Buffering message to send later.' % queue_name)
+            if queue_name not in self.waiting_messages:
+                self.waiting_messages[queue_name] = \
+                    EMQdeque(full=conf.HWM,
+                             on_full=router_on_full)
+
+            if self.waiting_messages[queue_name].append(
+                    ['', constants.PROTOCOL_VERSION, 'REQUEST',
+                     msgid, ] + msg):
+                logger.debug('%d waiting messages in queue "%s"' %
+                             (len(self.waiting_messages[queue_name]),
+                              queue_name))
+            else:
+                logger.warning('High Watermark {} met for {}, notifying'.
+                               format(conf.HWM, queue_name))
+            return
+
+        try:
+            # Rebuild the message to be sent to the worker. fwdmsg will
+            # properly address the message.
+            fwdmsg(self.outgoing, worker_addr, ['', constants.PROTOCOL_VERSION,
+                                                'REQUEST', msgid, ] + msg)
+            self.workers[worker_addr]['available_slots'] -= 1
+        except exceptions.PeerGoneAwayError:
+            logger.debug("Worker {} has unexpectedly gone away. "
+                         "Trying another worker".format(worker_addr))
+
+            # Recursivley try again. TODO: are there better options?
+            self.process_client_message(
+                [sender, '', PROTOCOL_VERSION, 'REQUEST', msgid] + msg,
+                depth=depth+1)
 
     def clean_up_dead_workers(self):
         """
@@ -288,22 +363,41 @@ class Router(HeartbeatMixin):
         now = monotonic()
         self._meta['last_worker_cleanup'] = now
 
-        # Because workers are removed from inside the loop, a copy is needed to
-        # prevent the dict we are iterating over from changing.
+        # Because workers and queues are removed from inside a loop, a copy is
+        # needed to prevent the dict we are iterating over from changing.
         workers = copy(self.workers)
+        queues = copy(self.queues)
 
         for worker_id in workers:
             last_hb_seconds = now - self.workers[worker_id]['hb']
             if last_hb_seconds >= conf.HEARTBEAT_TIMEOUT:
                 logger.info("No messages from worker {} in {}. Removing from "
-                            "the queue".format(worker_id, last_hb_seconds))
+                            "the queue. TIMEOUT: {}".format(
+                                worker_id, last_hb_seconds,
+                                conf.HEARTBEAT_TIMEOUT))
 
                 # Remove the worker from the actual queues
-                for queue in self.workers[worker_id]['queues']:
-                    while worker_id in self.queues[queue]:
-                        self.queues[queue].remove(worker_id)
+                for i in range(0, len(self.workers[worker_id]['queues'])):
+                    if i == 0:
+                        priority = 10
+                    else:
+                        priority = 0
+
+                    queue = self.workers[worker_id]['queues'][i]
+
+                    try:
+                        self.queues[queue].remove((priority, worker_id))
+                        break
+                    except KeyError:
+                        # This queue disappeared for some reason
+                        continue
 
                 del self.workers[worker_id]
+
+        # Remove the empty queue
+        for queue_name in queues:
+            if len(self.queues[queue_name]) == 0:
+                del self.queues[queue_name]
 
     def add_worker(self, worker_id, queues=None):
         """
@@ -313,13 +407,101 @@ class Router(HeartbeatMixin):
             worker_id (str): unique id of the worker to add
             queues: queue or queues this worker should be a member of
         """
+        if queues and not isinstance(queues, (list, tuple)):
+            raise TypeError('type of `queue` parameter not one of (list, '
+                            'tuple). got {}'.format(type(queues)))
+
         # Add the worker to our worker dict
         self.workers[worker_id] = {}
-        self.workers[worker_id]['queues'] = (queues,)
+        self.workers[worker_id]['queues'] = tuple(queues)
         self.workers[worker_id]['hb'] = monotonic()
+        self.workers[worker_id]['available_slots'] = 0
 
-        logger.debug('Adding {} to the self.workers for queues:{}'.format(
-                     worker_id, str(queues)))
+        # Define priorities. First element is the highest priority
+        for i in range(len(queues)):
+            if i == 0:
+                priority = 10
+            else:
+                priority = 0
+
+            if queues[i] not in self.queues:
+                self.queues[queues[i]] = EMQdeque()
+
+            self.queues[queues[i]].append((priority, worker_id))
+
+            self.queues[queues[i]] = \
+                self.prioritize_queue_list(self.queues[queues[i]])
+        logger.debug('Added worker {} to the queues {}'.format(
+                     worker_id, queues))
+
+    def get_available_worker(self, queue_name=conf.DEFAULT_QUEUE_NAME):
+        """
+        Gets the job manager with the next available worker for the provided
+        queue.
+
+        Args:
+            queue_name (str): Name of the queue
+
+        Raises:
+            NoAvailableWorkerSlotsError: Raised when there are no available
+            slots in any the job managers.
+            UnknownQueueError: Raised when ``queue_name`` is not found in
+                self.queues
+
+        Returns:
+            (str): uuid of the job manager with an available worker slot
+        """
+        if queue_name not in self.queues:
+            logger.warning("unknown queue name: {} - Discarding message.".
+                           format(queue_name))
+            raise exceptions.UnknownQueueError('Unknown queue name {}'.format(
+                queue_name
+            ))
+
+        popped_workers = []
+        worker_addr = None
+        while not worker_addr and len(self.queues[queue_name]) > 0:
+            try:
+                # pop the next job manager id & check if it has a worker slot
+                # if it doesn't add it to popped_workers to be added back to
+                # self.queues after the loop
+                worker = self.queues[queue_name].popleft()
+                # LRU when sorted later by appending
+                popped_workers.append(worker)
+                if self.workers[worker[1]]['available_slots'] > 0:
+                    worker_addr = worker[1]
+                    self.workers[worker_addr]['available_slots'] -= 1
+                    break
+            except KeyError:
+                # This should only happen if worker[1] is missing:
+                #  - available slots is pre set to 0 self.add_worker
+                #  - we already checked that self.queues[queue_name] exists
+                logger.error("Worker {} not found for queue {}".format(
+                    worker, queue_name))
+                logger.debug("Tried worker {} in self.workers for queue {} "
+                             "but it wasn't found in self.workers".format(
+                                 worker, queue_name
+                             ))
+                continue
+            except IndexError:
+                # worker[1] should exist if it follows the (priority, id) fmt
+                logger.error("Invalid worker format in self.queues {}".format(
+                    worker
+                ))
+                continue
+
+        # Should always evaluate to true
+        if popped_workers:
+            self.queues[queue_name].extend(popped_workers)
+            self.queues[queue_name] = self.prioritize_queue_list(
+                self.queues[queue_name])
+
+        if worker_addr:
+            return worker_addr
+        else:
+            raise exceptions.NoAvailableWorkerSlotsError(
+                "There are no availabe workers for queue {}. Try again "
+                "later".format(queue_name))
 
     def clean_up_dead_schedulers(self):
         """
@@ -333,9 +515,9 @@ class Router(HeartbeatMixin):
         for scheduler_id in schedulers:
             last_hb_seconds = now - self.schedulers[scheduler_id]['hb']
             if last_hb_seconds >= conf.HEARTBEAT_TIMEOUT:
-                logger.info("No HEARTBEAT from scheduler {} in {} Removing "
-                            "from the queue".format(scheduler_id,
-                                                    last_hb_seconds))
+                logger.critical("No HEARTBEAT from scheduler {} in {} Removing"
+                                " from the queue".format(scheduler_id,
+                                                         last_hb_seconds))
                 del self.schedulers[scheduler_id]
                 self.scheduler_queue.remove(scheduler_id)
 
@@ -354,26 +536,8 @@ class Router(HeartbeatMixin):
     def requeue_worker(self, worker_id):
         """
         Add a worker back to the pools for which it is a member of.
-
-        .. note::
-           This will (correctly) add duplicate items into the queues.
         """
-        if worker_id in self.workers:
-            queues = self.workers[worker_id].get('queues', None)
-        else:
-            queues = None
-
-        logger.debug('Readding worker {} to queues {}'.
-                     format(worker_id, queues))
-
-        for queue in queues:
-            if queue not in self.queues:
-                self.queues[queue] = EMQdeque()
-            self.queues[queue].append(worker_id)
-
-            if conf.SUPER_DEBUG:
-                logger.debug('Worker queue update:')
-                logger.debug('{}'.format(self.queues))
+        self.workers[worker_id]['available_slots'] += 1
 
     def queue_message(self, msg):
         """
@@ -381,22 +545,33 @@ class Router(HeartbeatMixin):
         """
         raise NotImplementedError()
 
-    def on_receive_request(self, msg, depth=0):
+    def process_client_message(self, original_msg, depth=0):
         """
         Args:
             msg: The untouched message from zmq
+            depth: The number of times this method has been recursively
+                called. This is used to short circuit message retry attempts.
+
+        Raises:
+            InvalidMessageError: Unable to parse the message
         """
         # Limit recusive depth (timeout on PeerGoneAwayError)
         if (depth > 100):
+            logger.error('Recursion Error: process_client_message called too '
+                         'many times with message: {}'.format(original_msg))
             return
 
         try:
-            message = parse_router_message(msg)
+            message = parse_router_message(original_msg)
         except exceptions.InvalidMessageError:
-            logger.exception('Invalid message from clients: %s' % str(msg))
+            logger.exception('Invalid message from clients: {}'.format(
+                str(original_msg)))
+            return
 
         sender = message[0]
         command = message[1]
+        msgid = message[2]
+        msg = message[3]
 
         # Count this message as a heart beat if it came from a scheduler that
         # the router is aware of.
@@ -409,57 +584,20 @@ class Router(HeartbeatMixin):
 
         # REQUEST is the most common message so it goes at the top
         if command == "REQUEST":
-            queue_name = message[3][0]
-            # If we have no workers for the queue TODO something about it
-            if queue_name not in self.queues:
-                logger.warning("Received %s with a queue I don't recognize: "
-                               "%s" % (msg[3], queue_name))
-                logger.critical("Discarding message")
-                # TODO: Don't discard the message
-                return
-
-            try:
-                worker_addr = self.queues[queue_name].popleft()
-            except KeyError:
-                logger.critical("REQUEST for an unknown queue caught in "
-                                "exception")
-                logger.critical("Discarding message")
-                return
-            except IndexError:
-                logger.warning('No available workers for queue "%s". '
-                               'Buffering message to send later.' % queue_name)
-                if queue_name not in self.waiting_messages:
-                    self.waiting_messages[queue_name] = \
-                        EMQdeque(full=conf.HWM,
-                                 on_full=router_on_full)
-                if self.waiting_messages[queue_name].append(msg):
-                    logger.debug('%d waiting messages in queue "%s"' %
-                                 (len(self.waiting_messages[queue_name]),
-                                  queue_name))
-                else:
-                    logger.warning('High Watermark hit, notifying')
-                return
-
-            try:
-                # strip off the client id before forwarding because the
-                # worker isn't expecting it, and the zmq socket is going
-                # to put this router's id on it.
-                fwdmsg(self.outgoing, worker_addr, msg[1:])
-            except exceptions.PeerGoneAwayError:
-                logger.debug("Worker {} has unexpectedly gone away. "
-                             "Trying another worker".format(worker_addr))
-
-                self.on_receive_request(msg, depth+1)
-        # elif command == "HEARTBEAT":
-        #     # The scheduler is heartbeating
+            self.on_request(sender, msgid, msg, depth=depth)
 
         elif command == "INFORM":
             # This is a scheduler trying join
-            self.on_inform(message[0], message[2], message[3])
+            self.on_inform(sender, msgid, msg)
 
         elif command == "SCHEDULE":
             # Forward the schedule message to the schedulers
-            scheduler_addr = self.scheduler_queue.pop()
+            try:
+                scheduler_addr = self.scheduler_queue.pop()
+            except IndexError:
+                logger.error("Received a SCHEDULE command with no schedulers. "
+                             "Discarding.")
+                return
             self.scheduler_queue.append(scheduler_addr)
             self.schedulers[scheduler_addr] = {
                 'hb': monotonic(),
@@ -468,11 +606,12 @@ class Router(HeartbeatMixin):
             try:
                 # Strips off the client id before forwarding because the
                 # scheduler isn't expecting it.
-                fwdmsg(self.incoming, scheduler_addr, msg[1:])
+                fwdmsg(self.incoming, scheduler_addr, original_msg[1:])
+
             except exceptions.PeerGoneAwayError:
                 logger.debug("Scheduler {} has unexpectedly gone away. Trying "
                              "another scheduler.".format(scheduler_addr))
-                self.on_receive_request(msg, depth+1)
+                self.process_client_message(original_msg[1:], depth+1)
 
         elif command == "UNSCHEDULE":
             # Forward the unschedule message to all schedulers
@@ -484,11 +623,13 @@ class Router(HeartbeatMixin):
                 try:
                     # Strips off the client id before forwarding because the
                     # scheduler isn't expecting it.
-                    fwdmsg(self.incoming, scheduler_addr, msg[1:])
+                    fwdmsg(self.incoming, scheduler_addr, original_msg[1:])
+
                 except exceptions.PeerGoneAwayError:
                     logger.debug("Scheduler {} has unexpectedly gone away."
                                  " Schedule may still exist.".
                                  format(scheduler_addr))
+                    self.process_client_message(original_msg[1:], depth+1)
 
     def process_worker_message(self, msg):
         """
@@ -522,7 +663,33 @@ class Router(HeartbeatMixin):
             func = getattr(self, "on_%s" % command.lower())
             func(sender, msgid, message)
 
+    @classmethod
+    def prioritize_queue_list(cls, unprioritized_iterable):
+        """
+        Prioritize a given iterable in the format: ((PRIORITY, OBJ),..)
+
+        Args:
+            unprioritized_iterable (iter): Any list, tuple, etc where the
+                0-index key is an integer to use as priority. Largest numbers
+                come first.
+
+        Raises:
+            IndexError - There was no 0-index element.
+
+        Returns:
+            sorted :class:`EMQdeque` with largest priorites being indexed
+            smaller. E.g. ((20,'a' ), (14, 'b'), ('12', c))
+        """
+        return EMQdeque(
+            initial=sorted(unprioritized_iterable,
+                           cmp=zero_index_cmp,
+                           reverse=True))
+
     def sighup_handler(self, signum, frame):
+        """
+        Reloads the configuration and rebinds the ports. Exectued when the
+        process receives a SIGHUP from the system.
+        """
         logger.info('Caught signame %s' % signum)
         self.incoming.unbind(conf.FRONTEND_ADDR)
         self.outgoing.unbind(conf.BACKEND_ADDR)

@@ -18,12 +18,11 @@
 The receiver is responsible for receiveing messages
 """
 import logging
-import uuid
-
 import zmq
 
 from . import constants
 from .utils.classes import ZMQReceiveMixin, ZMQSendMixin
+from .utils.devices import generate_device_name
 
 
 logger = logging.getLogger(__name__)
@@ -54,7 +53,7 @@ class Receiver(ZMQReceiveMixin, ZMQSendMixin):
             :class:`TypeError`: when `callable` is not callable
         """
         self.zcontext = kwargs.get('context', zmq.Context.instance())
-        self.name = kwargs.get('name', str(uuid.uuid4()))
+        self.name = kwargs.get('name', generate_device_name())
 
         self.zsocket = kwargs.get('socket', self.zcontext.socket(zmq.ROUTER))
         self.zsocket.setsockopt(zmq.IDENTITY, self.name)

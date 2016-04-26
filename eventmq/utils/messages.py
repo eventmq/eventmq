@@ -68,7 +68,6 @@ def parse_message(message):
     except IndexError:
         raise exceptions.InvalidMessageError('Invalid Message Encountered: %s'
                                              % str(message))
-
     if len(message) > 4:
         msg = message[4:]
     else:
@@ -157,5 +156,5 @@ def fwd_emqp_router_message(socket, recipient_id, payload):
             e.message = e.message + " {}".format(recipient_id)
             raise exceptions.PeerGoneAwayError(e)
         else:
-            raise exceptions.EventMQError("errno{}: {}".format(e.errno,
-                                                               str(e)))
+            raise exceptions.EventMQError("errno {}: {}".format(e.errno,
+                                                                str(e)))

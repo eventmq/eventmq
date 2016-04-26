@@ -19,6 +19,7 @@ setup(
                       'nose==1.3.6',
                       'coverage==4.0.3',
                       'testfixtures==4.7.0',
+                      'freezegun==0.3.7',
                       'future==0.15.2',
                       'redis==2.10.3',
                       'mock==1.3.0',

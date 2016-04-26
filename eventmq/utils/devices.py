@@ -30,4 +30,7 @@ def generate_device_name(prefix=None):
         ZMQ socket.
     """
     import uuid
-    return str(uuid.uuid4()).encode('ascii')
+    ret = str(uuid.uuid4()).encode('ascii')
+    if prefix:
+        ret = prefix + ret
+    return ret
