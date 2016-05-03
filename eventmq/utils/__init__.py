@@ -38,3 +38,11 @@ def random_characters():
 
     # TODO: Pull out the random_chars function from eb.io code
     return str(uuid.uuid4())
+
+
+def zero_index_cmp(a, b):
+    """
+    same as ``cmp`` but using the 0-index in a list as the compare value. Used
+    when sorting the values in :attr:`router.Router.queues`.
+    """
+    return cmp(a[0], b[0])

@@ -24,7 +24,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def import_settings():
+def import_settings(section='settings'):
     """
     Import settings and apply to configuration globals
     """
@@ -33,7 +33,7 @@ def import_settings():
 
     if os.path.exists(conf.CONFIG_FILE):
         config.read(conf.CONFIG_FILE)
-        for name, value in config.items('settings'):
+        for name, value in config.items(section):
             if hasattr(conf, name.upper()):
                 t = type(getattr(conf, name.upper()))
                 setattr(conf, name.upper(), t(value))

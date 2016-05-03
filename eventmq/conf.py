@@ -37,4 +37,6 @@ RQ_DB = 0
 RQ_PASSWORD = ''
 WORKERS = 4
 HWM = 10000
+
+QUEUES = '{}'.format(DEFAULT_QUEUE_NAME)
 # }}}

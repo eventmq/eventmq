@@ -19,6 +19,7 @@ setup(
                       'nose==1.3.6',
                       'coverage==4.0.3',
                       'testfixtures==4.7.0',
+                      'freezegun==0.3.7',
                       'future==0.15.2',
                       'redis==2.10.3',
                       'mock==1.3.0',
@@ -46,12 +47,9 @@ setup(
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
     ],
-
-    entry_points={
-        'console_scripts': [
-            'emq-router = eventmq.router:router_main',
-            'emq-jobmanager = eventmq.jobmanager:jobmanager_main',
-            'emq-scheduler = eventmq.scheduler:scheduler_main'
-        ]
-    }
+    scripts=[
+        'bin/emq-router',
+        'bin/emq-jobmanager',
+        'bin/emq-scheduler',
+    ],
 )
