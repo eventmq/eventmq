@@ -284,7 +284,7 @@ class Router(HeartbeatMixin):
                 # It is easier to check if a key exists rather than the len of
                 # a key if it exists elsewhere, so if that was the last message
                 # remove the queue
-                if len(self.waiting_messages[queue_name]) is 0:
+                if len(self.waiting_messages[queue_name]) == 0:
                     logger.debug('No more messages in waiting_messages queue '
                                  '%s. Removing from list...' % queue_name)
                     del self.waiting_messages[queue_name]
