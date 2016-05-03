@@ -192,8 +192,8 @@ class JobManager(HeartbeatMixin, EMQPService):
         if self.queues:
             conf.QUEUES = self.queues
 
-            self.start(addr=conf.WORKER_ADDR, queues=self.queues or \
-                       conf.QUEUES)
+        self.start(addr=conf.WORKER_ADDR, queues=self.queues or \
+                   conf.QUEUES)
 
 
 def jobmanager_main():
