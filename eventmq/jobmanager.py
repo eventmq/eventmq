@@ -30,7 +30,6 @@ from .utils.devices import generate_device_name
 from .utils.messages import send_emqp_message as sendmsg
 from . import worker
 from eventmq.log import setup_logger
-from multiprocessing import Queue as mp_queue
 from multiprocessing import Pool
 # import Queue
 
@@ -66,12 +65,8 @@ class JobManager(HeartbeatMixin, EMQPService):
         self.name = kwargs.pop('name', generate_device_name())
         logger.info('Initializing JobManager {}...'.format(self.name))
 
-        #: Setup worker queues
-        self.request_queue = mp_queue()
-        self.finished_queue = mp_queue()
-
         #: keep track of workers
-        self.workers = Pool()
+        self.workers = Pool(processes=conf.WORKERS)
 
         #: List of queues that this job manager is listening on
         self.queues = kwargs.pop('queues', None)
