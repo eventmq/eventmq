@@ -125,15 +125,20 @@ def defer_job(socket, func, args=(), kwargs=None, class_args=(),
             executed. Exceptions and things will be logged.
         retry_count (int): How many times should be retried when encountering
             an Exception or some other failure before giving up. (default: 0
-            or immediatly fail)
-        queue (str): Name of queue to use when executing the job. Default: is
-            configured default queue name
+            or immediately fail)
+        queue (str): Name of queue to use when executing the job. If this value
+            evaluates to False, the default is used. Default: is configured
+            default queue name
     Returns:
         bool: True if the message was successfully queued, False if something
         went wrong. If something did go wrong check the logs for details.
     """
     callable_name = None
     path = None
+
+    # Just incase this was passed None
+    if not queue:
+        queue = conf.DEFAULT_QUEUE_NAME
 
     if not class_kwargs:
         class_kwargs = {}
