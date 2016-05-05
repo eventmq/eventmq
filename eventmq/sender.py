@@ -60,6 +60,8 @@ class Sender(ZMQSendMixin, ZMQReceiveMixin):
         # rebuilding it later.
         self.zsocket = None
 
+        self.name = kwargs.pop('name', str(uuid.uuid4()))
+
         self.rebuild(*args, **kwargs)
 
     def listen(self, addr=None):

@@ -188,9 +188,14 @@ class Router(HeartbeatMixin):
             socket (socket): The socket to use for this ack
             recipient (str): The recipient id for the ack
             msgid: The unique id that we are acknowledging
+
+        Returns:
+            msgid: The ID of the ACK message
         """
         logger.info('Sending ACK to %s' % recipient)
-        sendmsg(socket, recipient, 'ACK', msgid)
+        msgid = sendmsg(socket, recipient, 'ACK', msgid)
+
+        return msgid
 
     def send_heartbeat(self, socket, recipient):
         """
@@ -200,8 +205,13 @@ class Router(HeartbeatMixin):
         Args:
             socket (socket): the socket to send the heartbeat with
             recipient (str): Worker I
+
+        Returns:
+            msgid: The ID of the HEARTBEAT message
         """
-        sendmsg(socket, recipient, 'HEARTBEAT', str(timestamp()))
+        msgid = sendmsg(socket, recipient, 'HEARTBEAT', str(timestamp()))
+
+        return msgid
 
     def send_workers_heartbeats(self):
         """

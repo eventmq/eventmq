@@ -48,6 +48,9 @@ def schedule(socket, func, interval_secs=None, args=(), kwargs=None,
             guarantee is enabled to ensure the scheduler schedules the job.
         queue (str): name of the queue to use when executing the job. The
             default value is the default queue.
+    Returns:
+       str: ID of the schedule message that was sent. None if there was an
+           error
     """
     if not class_kwargs:
         class_kwargs = {}
@@ -55,32 +58,32 @@ def schedule(socket, func, interval_secs=None, args=(), kwargs=None,
         kwargs = {}
 
     if not len(class_args) > 0 and not cron:
-        logger.error('First class argument must be caller_id for scheduling'
-                     ' interval jobs')
-        return False
+        logger.error('First `class_args` argument must be caller_id for '
+                     'scheduling interval jobs')
+        return
 
     if (interval_secs and cron) or (not interval_secs and not cron):
-        logger.error('You must sepcify either interval_secs or cron,'
-                     'but not both')
-        return False
+        logger.error('You must sepcify either `interval_secs` or `cron`, '
+                     'but not both (or neither)')
+        return
 
     if callable(func):
         path, callable_name = build_module_path(func)
     else:
         logger.error('Encountered non-callable func: {}'.format(func))
-        return False
+        return
 
     if not callable_name:
         logger.error('Encountered callable with no name in {}'.format(
             func.__module__
         ))
-        return False
+        return
 
     if not path:
         logger.error('Encountered callable with no __module__ path {}'.format(
             func.__name__
         ))
-        return False
+        return
 
     # TODO: convert all the times to seconds for the clock
 
@@ -93,13 +96,13 @@ def schedule(socket, func, interval_secs=None, args=(), kwargs=None,
         'class_kwargs': class_kwargs,
     }]
 
-    send_schedule_request(socket, interval_secs=interval_secs or -1,
-                          cron=cron or '',
-                          message=msg, headers=headers, queue=queue,
-                          unschedule=unschedule)
+    msgid = send_schedule_request(socket, interval_secs=interval_secs or -1,
+                                  cron=cron or '',
+                                  message=msg, headers=headers, queue=queue,
+                                  unschedule=unschedule)
 
-    # TODO: Return true only if we got some sort of ACK
-    return True
+    # TODO: Return msgid only if we got some sort of ACK
+    return msgid
 
 
 def defer_job(socket, func, args=(), kwargs=None, class_args=(),
@@ -130,8 +133,8 @@ def defer_job(socket, func, args=(), kwargs=None, class_args=(),
             evaluates to False, the default is used. Default: is configured
             default queue name
     Returns:
-        bool: True if the message was successfully queued, False if something
-        went wrong. If something did go wrong check the logs for details.
+        str: ID for the message/deferred job. This value will be None if there
+            was an error.
     """
     callable_name = None
     path = None
@@ -142,26 +145,26 @@ def defer_job(socket, func, args=(), kwargs=None, class_args=(),
 
     if not class_kwargs:
         class_kwargs = {}
+
     if not kwargs:
         kwargs = {}
 
     if callable(func):
         path, callable_name = build_module_path(func)
-
     else:
         logger.error('Encountered non-callable func: {}'.format(func))
-        return False
+        return
 
     # Check for and log errors
     if not callable_name:
         logger.error('Encountered callable with no name in {}'.
                      format(func.__module__))
-        return False
+        return
 
     if not path:
         logger.error('Encountered callable with no __module__ path {}'.
                      format(func.__name__))
-        return False
+        return
 
     msg = ['run', {
         'callable': callable_name,
@@ -172,10 +175,13 @@ def defer_job(socket, func, args=(), kwargs=None, class_args=(),
         'class_kwargs': class_kwargs,
     }]
 
-    send_request(socket, msg, reply_requested=reply_requested,
-                 guarantee=guarantee, retry_count=retry_count, queue=queue)
+    msgid = send_request(socket, msg,
+                         reply_requested=reply_requested,
+                         guarantee=guarantee,
+                         retry_count=retry_count,
+                         queue=queue)
 
-    return True  # The message has successfully been queued for delivery
+    return msgid
 
 
 def build_module_path(func):
@@ -189,6 +195,7 @@ def build_module_path(func):
 
     Args:
         func (callable): The function or method to build the path for
+
     Returns:
         list: (import path (w/ class seperated by a ':'), callable name) or
         (None, None) on error
@@ -258,6 +265,9 @@ def send_request(socket, message, reply_requested=False, guarantee=False,
             or immediatly fail)
         queue (str): Name of queue to use when executing the job. Default: is
             configured default queue name
+
+    Returns:
+        str: ID of the message
     """
     headers = []
 
@@ -270,15 +280,16 @@ def send_request(socket, message, reply_requested=False, guarantee=False,
     if retry_count > 0:
         headers.append('retry-count:%d' % retry_count)
 
-    send_emqp_message(socket, 'REQUEST',
-                      (queue or conf.DEFAULT_QUEUE_NAME,
-                       ",".join(headers),
-                       serialize(message))
-                      )
+    msgid = send_emqp_message(socket, 'REQUEST',
+                              (queue or conf.DEFAULT_QUEUE_NAME,
+                               ",".join(headers),
+                               serialize(message)))
+
+    return msgid
 
 
 def send_schedule_request(socket, message, interval_secs=-1, headers=(),
-                          queue=None, unschedule=False, cron=""):
+                          queue=None, unschedule=False, cron=''):
     """
     Send a SCHEDULE or UNSCHEDULE command.
 
@@ -291,6 +302,8 @@ def send_schedule_request(socket, message, interval_secs=-1, headers=(),
         message: Message to send socket.
         headers (list): List of headers for the message
         queue (str): name of queue the job should be executed in
+    Returns:
+        str: ID of the message
     """
 
     if unschedule:
@@ -298,22 +311,11 @@ def send_schedule_request(socket, message, interval_secs=-1, headers=(),
     else:
         command = 'SCHEDULE'
 
-    send_emqp_message(socket, command,
-                      (queue or conf.DEFAULT_QUEUE_NAME,
-                       ','.join(headers),
-                       str(interval_secs),
-                       serialize(message),
-                       cron))
+    msgid = send_emqp_message(socket, command,
+                              (queue or conf.DEFAULT_QUEUE_NAME,
+                               ','.join(headers),
+                               str(interval_secs),
+                               serialize(message),
+                               cron))
 
-
-def job(block=False):  # Move to decorators.py
-    """
-    run the decorated function on a worker
-
-    Args:
-        block (bool): Set to True if you wish to block and wait for the
-            response. This may be useful for running quick but cpu intesive
-            that would otherwise overwhelm a box that has to do it all alone.
-            (decryption?)
-    """
-    raise NotImplementedError('eventmq.client.messages.job')
+    return msgid

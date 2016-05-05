@@ -94,10 +94,6 @@ class JobManager(HeartbeatMixin, EMQPService):
         for i in range(0, conf.WORKERS):
             self.send_ready()
 
-        # Instantiate pool if it hasn't been done
-        if not hasattr(self, 'workers'):
-            self.workers = Pool(processes=conf.WORKERS)
-
         while True:
             # Clear any workers if it's time to shut down
             if self.received_disconnect:
@@ -110,6 +106,8 @@ class JobManager(HeartbeatMixin, EMQPService):
                 msg = self.outgoing.recv_multipart()
                 self.process_message(msg)
 
+            # Note: `maybe_send_heartbeat` is mocked by the tests to return
+            #       False, so it should stay at the bottom of the loop.
             if not self.maybe_send_heartbeat(events):
                 break
 

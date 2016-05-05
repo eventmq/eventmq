@@ -97,14 +97,20 @@ def send_emqp_message(socket, command, message=None):
         command
         message
     Raises:
+
+    Returns:
+        str: Message id for this message
     """
-    msg = (str(command).upper(), generate_msgid())
+    msgid = generate_msgid()
+    msg = (str(command).upper(), msgid)
     if message and isinstance(message, (tuple, list)):
         msg += tuple(message)
     elif message:
         msg += (message,)
 
     socket.send_multipart(msg, constants.PROTOCOL_VERSION)
+
+    return msgid
 
 
 def send_emqp_router_message(socket, recipient_id, command, message=None):
@@ -118,11 +124,11 @@ def send_emqp_router_message(socket, recipient_id, command, message=None):
         command (str): the eMQP command to send
         message: a msg tuple to send
 
-    Raises:
-
     Returns
+        str: Message id for this message
     """
-    msg = (str(command).upper(), generate_msgid())
+    msgid = generate_msgid()
+    msg = (str(command).upper(), msgid)
     if message and isinstance(message, (tuple, list)):
         msg += message
     elif message:
@@ -130,6 +136,8 @@ def send_emqp_router_message(socket, recipient_id, command, message=None):
 
     socket.send_multipart(msg, constants.PROTOCOL_VERSION,
                           _recipient_id=recipient_id)
+
+    return msgid
 
 
 def fwd_emqp_router_message(socket, recipient_id, payload):
@@ -141,6 +149,12 @@ def fwd_emqp_router_message(socket, recipient_id, payload):
        :prop:`zmq.ROUTER`, it may be a good idea to first strip off the
        leading sender id before forwarding it. If you dont you will need to
        account for that on the recipient side.
+
+    Args:
+        socket: socket to send the message with
+        recipient_id (str): the id of the connected device to reply to
+        payload (tuple): The message to send. The first frame should be an
+            empty string
     """
     import zmq
 
