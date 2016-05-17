@@ -357,10 +357,15 @@ class Router(HeartbeatMixin):
                                                 'REQUEST', msgid, ] + msg)
             self.workers[worker_addr]['available_slots'] -= 1
         except exceptions.PeerGoneAwayError:
-            logger.debug("Worker {} has unexpectedly gone away. "
-                         "Trying another worker".format(worker_addr))
+            logger.debug(
+                "Worker {} has unexpectedly gone away. Removing this worker "
+                "before trying another worker".format(worker_addr))
 
-            # Recursivley try again. TODO: are there better options?
+            # Remove this worker to prevent infinite loop
+            self.workers[worker_addr]['hb'] = 0
+            self.clean_up_dead_workers()
+
+            # Recursively try again. TODO: are there better options?
             self.process_client_message(
                 [sender, '', PROTOCOL_VERSION, 'REQUEST', msgid] + msg,
                 depth=depth+1)
@@ -480,7 +485,6 @@ class Router(HeartbeatMixin):
                 popped_workers.append(worker)
                 if self.workers[worker[1]]['available_slots'] > 0:
                     worker_addr = worker[1]
-                    self.workers[worker_addr]['available_slots'] -= 1
                     break
             except KeyError:
                 # This should only happen if worker[1] is missing:
