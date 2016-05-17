@@ -12,33 +12,18 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
-import json
-import threading
 import time
 import unittest
 
-from .utils import FakeDevice
+import mock
+
 from .. import conf, constants, jobmanager
-from ..utils.messages import send_emqp_router_message
 
 ADDR = 'inproc://pour_the_rice_in_the_thing'
 
 
 class TestCase(unittest.TestCase):
     jm = None
-
-    def setUp(self):
-        if self.jm:
-            self.jm.on_disconnect(None, None)
-
-        self.jm = jobmanager.JobManager(skip_signal=True)
-
-        # Since JobManager runs as a process a thread is used to allow the loop
-        # to run
-        self.jm_thread = threading.Thread(target=start_jm,
-                                          args=(self.jm, ADDR))
-
-        self.addCleanup(self.cleanup)
 
     def test__setup(self):
         jm = jobmanager.JobManager(name='RuckusBringer')
@@ -49,81 +34,102 @@ class TestCase(unittest.TestCase):
 
 # EMQP Tests
     def test_reset(self):
-        self.jm.reset()
+        jm = jobmanager.JobManager()
 
-        self.assertFalse(self.jm.awaiting_startup_ack)
-        self.assertEqual(self.jm.status, constants.STATUS.ready)
+        self.assertFalse(jm.awaiting_startup_ack)
+        self.assertEqual(jm.status, constants.STATUS.ready)
 
-    def test_start(self):
-        sock = FakeDevice()
+    @mock.patch('eventmq.jobmanager.sendmsg')
+    def test_send_ready(self, sndmsg_mock):
+        jm = jobmanager.JobManager()
+        jm.send_ready()
 
-        self.jm_thread.start()
-        time.sleep(.1)  # wait for the manager to warm up
+        sndmsg_mock.assert_called_with(jm.outgoing, 'READY')
 
-        self.assertTrue(self.jm.awaiting_startup_ack)
-        self.assertEqual(self.jm.status, constants.STATUS.connecting)
+    @mock.patch('multiprocessing.pool.Pool.close')
+    @mock.patch('eventmq.jobmanager.JobManager.process_message')
+    @mock.patch('eventmq.jobmanager.Sender.recv_multipart')
+    @mock.patch('eventmq.jobmanager.Poller.poll')
+    @mock.patch('eventmq.jobmanager.JobManager.maybe_send_heartbeat')
+    @mock.patch('eventmq.jobmanager.JobManager.send_ready')
+    def test__start_event_loop(self, send_ready_mock, maybe_send_hb_mock,
+                               poll_mock, sender_mock, process_msg_mock,
+                               pool_close_mock):
+        jm = jobmanager.JobManager()
+        maybe_send_hb_mock.return_value = False
+        poll_mock.return_value = {jm.outgoing: jobmanager.POLLIN}
+        sender_mock.return_value = [1, 2, 3]
 
-        # Give JM something to connect to.
-        sock.zsocket.bind(ADDR)
+        jm._start_event_loop()
 
-        jm_addr, _, _, cmd, msgid, queues, type_ = sock.recv_multipart()
-        self.assertEqual(self.jm.name, jm_addr)
-        self.assertEqual(cmd, "INFORM")
-        self.assertEqual(type_, constants.CLIENT_TYPE.worker)
+        # send conf.WORKERS ready messages
+        self.assertEqual(conf.WORKERS, send_ready_mock.call_count)
 
-        self.send_ack(sock, jm_addr, msgid)
+        process_msg_mock.assert_called_with(
+            sender_mock.return_value)
 
-        time.sleep(.1)
-        self.assertEqual(self.jm.status, constants.STATUS.connected)
+        jm.received_disconnect = True
+        jm._start_event_loop()
+        self.assertTrue(pool_close_mock.called)
 
-    def send_ack(self, sock, jm_addr, msgid):
-        send_emqp_router_message(sock, jm_addr, "ACK", msgid)
+    @mock.patch('eventmq.jobmanager.worker.run')
+    @mock.patch('multiprocessing.pool.Pool.apply_async')
+    def test_on_request(self, apply_async_mock, run_mock):
+        _msgid = 'aaa0j8-ac40jf0-04tjv'
+        _msg = ['a', 'b', '["run", {"a": 1}]']
 
-    def test__start_event_loop(self):
-        # Tests the first part of the event loop
-        sock = FakeDevice()
-        sock.zsocket.bind(ADDR)
+        jm = jobmanager.JobManager()
 
-        self.jm_thread.start()
+        jm.on_request(_msgid, _msg)
+        apply_async_mock.assert_called_with(
+            args=({'a': 1},),
+            callback=jm.worker_done,
+            func=run_mock)
 
-        # Consume the INFORM command
-        jm_addr, _, _, cmd, msgid, queues, type_ = sock.recv_multipart()
-        self.send_ack(sock, jm_addr, msgid)
+    @mock.patch('eventmq.jobmanager.JobManager.start')
+    @mock.patch('eventmq.jobmanager.import_settings')
+    @mock.patch('eventmq.jobmanager.Sender.rebuild')
+    def test_sighup_handler(self, rebuild_mock, import_settings_mock,
+                            start_mock):
+        jm = jobmanager.JobManager()
 
-        # Test the correct number of READY messages is sent for the broker
-        # to know how many jobs the JM can handle
-        ready_msg_count = 0
-        for i in range(0, conf.WORKERS):
-            msg = sock.recv_multipart()
-            if len(msg) > 4 and msg[3] == "READY":
-                ready_msg_count += 1
-        # If this fails, less READY messages were sent than were supposed
-        # to be sent.
-        self.assertEqual(ready_msg_count, conf.WORKERS)
+        jm.sighup_handler(982374, "FRAMEY the frame")
 
-    @unittest.skip('')
-    def test_on_request(self):
-        from ..client.messages import build_module_path
-        sock = FakeDevice()
-        sock.zsocket.bind(ADDR)
-        self.jm_thread.start()
+        self.assertTrue(rebuild_mock.called)
 
-        jm_addr, _, _, _, msgid, _, _ = sock.recv_multipart()
-        self.send_ack(sock, jm_addr, msgid)
-        time.sleep(.1)  # give time for the JM to process
+        # called once for the default settings, once for the jobmanager
+        # settings
+        self.assertEqual(2, import_settings_mock.call_count)
+        # check to see if the last call was called with the jobmanager section
+        import_settings_mock.assert_called_with(section='jobmanager')
 
-        path, callable_name = build_module_path(pretend_job)
+        start_mock.assert_called_with(
+            addr=conf.WORKER_ADDR,
+        )
 
-        run_msg = ['run', {
-            'path': path,
-            'callable': callable_name,
-        }]
+    @mock.patch('eventmq.jobmanager.JobManager.start')
+    @mock.patch('eventmq.jobmanager.import_settings')
+    @mock.patch('eventmq.jobmanager.setup_logger')
+    def test_jobmanager_main(self, setup_logger_mock, import_settings_mock,
+                        start_mock):
+        jm = jobmanager.JobManager()
 
-        msg = (conf.DEFAULT_QUEUE_NAME, '', json.dumps(run_msg))
+        jm.jobmanager_main()
 
-        send_emqp_router_message(sock, jm_addr, 'REQUEST', msg)
+        setup_logger_mock.assert_called_with('')
+        self.assertEqual(2, import_settings_mock.call_count)
+        # Assert that the last call to import settings was for the jobmanager
+        # section
+        import_settings_mock.assert_called_with(section='jobmanager')
 
-        self.assertFalse(self.jm.request_queue.empty())
+        start_mock.assert_called_with(addr=conf.WORKER_ADDR,
+                                      queues=conf.QUEUES)
+
+        jm.queues = ('derp', 'blurp')
+        jm.jobmanager_main()
+
+        start_mock.assert_called_with(addr=conf.WORKER_ADDR,
+                                      queues=jm.queues)
 
     def cleanup(self):
         self.jm.on_disconnect(None, None)

@@ -65,6 +65,9 @@ class EMQPService(object):
 
         Raises:
             ValueError: When `type_` does not match a specified type
+
+        Returns:
+            str: ID of the message
         """
         valid_types = (constants.CLIENT_TYPE.worker,
                        constants.CLIENT_TYPE.scheduler)
@@ -72,8 +75,7 @@ class EMQPService(object):
         if self.SERVICE_TYPE not in valid_types:
             raise ValueError('{} not one of {}'.format(self.SERVICE_TYPE,
                                                        valid_types))
-
-        sendmsg(self.outgoing, 'INFORM', [
+        msgid = sendmsg(self.outgoing, 'INFORM', [
             queue or conf.DEFAULT_QUEUE_NAME,
             self.SERVICE_TYPE
         ])
@@ -81,6 +83,8 @@ class EMQPService(object):
         # If heartbeating is active, update the last heartbeat time
         if hasattr(self, '_meta') and 'last_sent_heartbeat' in self._meta:
             self._meta['last_sent_heartbeat'] = monotonic()
+
+        return msgid
 
     def _setup(self):
         """
@@ -244,11 +248,16 @@ class HeartbeatMixin(object):
 
         Args:
             socket (socket): The eMQP socket to send the message to
+
+        Return:
+            str: ID of the message
         """
         # Note: When updating this function, also make sure the custom versions
         # acts as expected in router.py
-        sendmsg(socket, 'HEARTBEAT', str(timestamp()))
+        msgid = sendmsg(socket, 'HEARTBEAT', str(timestamp()))
         self._meta['last_sent_heartbeat'] = monotonic()
+
+        return msgid
 
     def is_dead(self, now=None):
         """

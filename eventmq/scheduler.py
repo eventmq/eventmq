@@ -33,7 +33,7 @@ from json import dumps as serialize
 from .utils.settings import import_settings
 from .utils.timeutils import IntervalIter
 from .utils.timeutils import seconds_until, timestamp, monotonic
-from .client.messages import send_request, send_emqp_message
+from .client.messages import send_request
 
 from eventmq.log import setup_logger
 
@@ -195,8 +195,20 @@ class Scheduler(HeartbeatMixin, EMQPService):
             return self._redis_server
 
     def send_request(self, jobmsg, queue=None):
+        """
+        Send a request message to the broker
+
+        Args:
+            jobmsg: The message to send to the broker
+            queue: The name of the queue to use_impersonation
+
+        Returns:
+            str: ID of the message
+        """
         jobmsg = json.loads(jobmsg)
-        send_request(self.outgoing, jobmsg, queue=queue)
+        msgid = send_request(self.outgoing, jobmsg, queue=queue)
+
+        return msgid
 
     def on_unschedule(self, msgid, message):
         """
