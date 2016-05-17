@@ -356,7 +356,6 @@ class TestCase(unittest.TestCase):
         self.assertIn((0, worker1_id), list(self.router.queues['shop']))
 
     def test_get_available_worker(self):
-        worker1_id = 'w1'
         worker2_id = 'w2'
         worker3_id = 'w3'
 
@@ -364,42 +363,35 @@ class TestCase(unittest.TestCase):
         queue2_id = 'jimjam'
 
         self.router.queues = {
-            queue1_id: EMQdeque(initial=[(10, worker1_id), (0, worker2_id)]),
-            queue2_id: EMQdeque(initial=[(10, worker2_id), (10, worker3_id)]),
+            queue1_id: EMQdeque(initial=[(10, worker3_id), (0, worker2_id)]),
+            queue2_id: EMQdeque(initial=[(10, worker2_id)]),
         }
 
         self.router.workers = {
-            worker1_id: {
-                'queues': (queue1_id,),
-                'available_slots': 0,
-            },
             worker2_id: {
                 'queues': (queue2_id, queue1_id),
                 'available_slots': 1,
             },
             worker3_id: {
-                'queues': (queue2_id,),
+                'queues': (queue1_id,),
                 'available_slots': 1,
             },
         }
 
         # worker1 has no available slots.
-        check1 = self.router.get_available_worker(queue_name=queue1_id)
+        check1 = self.router.get_available_worker(queue_name=queue2_id)
         self.assertEqual(worker2_id, check1)
-        self.assertEqual(self.router.workers[worker2_id]['available_slots'], 0)
+        self.assertEqual(self.router.workers[worker2_id]['available_slots'], 1)
 
-        # worker2 is busy processing the last job
-        check2 = self.router.get_available_worker(queue_name=queue2_id)
+        check2 = self.router.get_available_worker(queue_name=queue1_id)
         self.assertEqual(worker3_id, check2)
-        self.assertEqual(self.router.workers[worker3_id]['available_slots'], 0)
+        self.assertEqual(self.router.workers[worker3_id]['available_slots'], 1)
 
-        # worker1 and worker2 return
-        self.router.workers[worker2_id]['available_slots'] = 1
-        self.router.workers[worker1_id]['available_slots'] = 1
+        self.router.workers[worker3_id]['available_slots'] = 0
 
         check3 = self.router.get_available_worker(queue_name=queue1_id)
-        self.assertEqual(worker1_id, check3)
-        self.assertEqual(self.router.workers[worker1_id]['available_slots'], 0)
+        self.assertEqual(worker2_id, check3)
+        self.assertEqual(self.router.workers[worker2_id]['available_slots'], 1)
 
     def test_requeue_worker(self):
         worker_id = 'w1'
