@@ -480,7 +480,6 @@ class Router(HeartbeatMixin):
                 popped_workers.append(worker)
                 if self.workers[worker[1]]['available_slots'] > 0:
                     worker_addr = worker[1]
-                    self.workers[worker_addr]['available_slots'] -= 1
                     break
             except KeyError:
                 # This should only happen if worker[1] is missing:

@@ -39,9 +39,12 @@ def run(payload):
         s_cls = None
 
     s_callable = payload["callable"]
-
-    package = import_module(s_package)
-    reload(package)
+    try:
+        package = import_module(s_package)
+        reload(package)
+    except Exception as e:
+        logger.exception('Error importing module: {}'.format(str(e)))
+        return 'DONE'
 
     if s_cls:
         cls = getattr(package, s_cls)
@@ -57,9 +60,14 @@ def run(payload):
             class_kwargs = {}
 
         obj = cls(*class_args, **class_kwargs)
-        callable_ = getattr(obj, s_callable)
     else:
-        callable_ = getattr(package, s_callable)
+        obj = package
+
+    try:
+        callable_ = getattr(obj, s_callable)
+    except AttributeError as e:
+        logger.exception('Error getting callable: {}'.format(str(e)))
+        return 'DONE'
 
     if "args" in payload:
         args = payload["args"]
@@ -75,6 +83,7 @@ def run(payload):
         callable_(*args, **kwargs)
     except Exception as e:
         logger.exception(e)
+        return 'DONE'
 
     # Signal that we're done with this job
     return 'DONE'
