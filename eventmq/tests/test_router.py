@@ -456,6 +456,7 @@ class TestCase(unittest.TestCase):
                 'available_slots': 0,
             },
             # below the timeout
+
             worker2_id: {
                 'queues': [(10, queue2_id), (0, queue1_id)],
                 'hb': 0,
