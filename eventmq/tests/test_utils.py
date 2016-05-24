@@ -152,7 +152,7 @@ class EMQPServiceTestCase(unittest.TestCase):
                                 [3, 'default']))
         sendmsg_mock.asert_called_with(
             'some-outgoing-socket', 'INFORM',
-            ["[10, 'push'],[7, 'email'],[3, 'default]",
+            ['[10, "push"],[7, "email"],[3, "default"]',
              constants.CLIENT_TYPE.worker]
         )
 

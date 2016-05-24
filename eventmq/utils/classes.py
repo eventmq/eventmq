@@ -17,6 +17,7 @@
 =================================
 Defines some classes to use when implementing ZMQ devices
 """
+import json
 import logging
 
 import zmq.error
@@ -88,10 +89,7 @@ class EMQPService(object):
                                                        valid_types))
 
         if isinstance(queues, (list, tuple)):
-            stringified_queues = ''
-            for pair in queues:
-                stringified_queues += '{},'.format(str(pair))
-            queues = stringified_queues[:-1]  # strip off the last comma
+            queues = json.dumps(queues)
 
         msgid = sendmsg(self.outgoing, 'INFORM', [
             queues,
