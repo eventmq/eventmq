@@ -16,27 +16,59 @@
 :mod:`settings` -- Settings Utilities
 =====================================
 """
-import os
 import ConfigParser
-from .. import conf
+import json
 import logging
+import os
+
+from . import tuplify
+from .. import conf
+
 
 logger = logging.getLogger(__name__)
 
 
-def import_settings(section='settings'):
+def import_settings(section='global'):
     """
     Import settings and apply to configuration globals
-    """
 
+    Args:
+       section (str): Name of the INI section to import
+    """
     config = ConfigParser.ConfigParser()
 
     if os.path.exists(conf.CONFIG_FILE):
         config.read(conf.CONFIG_FILE)
+
+        if not config.has_section(section):
+            logger.warning(
+                'Tried to read nonexistent section {}'.format(section))
+            return
+
         for name, value in config.items(section):
             if hasattr(conf, name.upper()):
-                t = type(getattr(conf, name.upper()))
-                setattr(conf, name.upper(), t(value))
-                logger.debug("Setting conf.%s to %s" % (name, value))
+                default_value = getattr(conf, name.upper())
+                t = type(default_value)
+                if isinstance(default_value, (list, tuple)):
+                    value = t(json.loads(value))
+                    # json.loads coverts all arrays to lists, but if the first
+                    # element in the default is a tuple (like in QUEUES) then
+                    # convert those elements, otherwise whatever it's type is
+                    # correct
+                    if isinstance(default_value[0], tuple):
+                        setattr(conf, name.upper(),
+                                t(map(tuplify, value)))
+                    else:
+                        setattr(conf, name.upper(), t(value))
+                elif isinstance(default_value, bool):
+                    setattr(conf, name.upper(),
+                            True if 't' in value.lower() else False)
+                else:
+                    setattr(conf, name.upper(), t(value))
+                logger.debug("Setting conf.{} to {}".format(
+                    name.upper(), getattr(conf, name.upper())))
             else:
                 logger.warning('Tried to set invalid setting: %s' % name)
+    else:
+        logger.warning('Config file at {} not found. Continuing with '
+                       'defaults.'.format(conf.CONFIG_FILE))

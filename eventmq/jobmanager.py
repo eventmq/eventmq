@@ -66,10 +66,11 @@ class JobManager(HeartbeatMixin, EMQPService):
         logger.info('Initializing JobManager {}...'.format(self.name))
 
         #: keep track of workers
-        self.workers = Pool(processes=conf.WORKERS)
+        concurrent_jobs = kwargs.pop('concurrent_jobs', conf.CONCURRENT_JOBS)
+        self.workers = Pool(processes=concurrent_jobs)
 
         #: List of queues that this job manager is listening on
-        self.queues = kwargs.pop('queues', None)
+        self.queues = kwargs.pop('queues', conf.QUEUES)
 
         if not kwargs.pop('skip_signal', False):
             # handle any sighups by reloading config
@@ -91,7 +92,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         """
         # Acknowledgment has come
         # Send a READY for each available worker
-        for i in range(0, conf.WORKERS):
+        for i in range(0, conf.CONCURRENT_JOBS):
             self.send_ready()
 
         while True:
@@ -173,19 +174,26 @@ class JobManager(HeartbeatMixin, EMQPService):
         import_settings(section='jobmanager')
         self.start(addr=conf.WORKER_ADDR)
 
-    def jobmanager_main(self):
+    def jobmanager_main(self, broker_addr=None):
         """
         Kick off jobmanager with logging and settings import
+
+        Args:
+            broker_addr (str): The address of the broker to connect to.
         """
         setup_logger('')
         import_settings()
         import_settings(section='jobmanager')
 
-        # If this manager was passed explicit queues, favor those.
+        # If this manager was passed explicit options, favor those
         if self.queues:
             conf.QUEUES = self.queues
 
-        self.start(addr=conf.WORKER_ADDR, queues=self.queues or conf.QUEUES)
+        if broker_addr:
+            conf.WORKER_ADDR = broker_addr
+
+        self.start(addr=conf.WORKER_ADDR,
+                   queues=conf.QUEUES)
 
 
 def jobmanager_main():

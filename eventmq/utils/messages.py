@@ -164,9 +164,7 @@ def fwd_emqp_router_message(socket, recipient_id, payload):
     try:
         socket.zsocket.send_multipart(payload)
     except zmq.error.ZMQError as e:
-        logger.critical(dir(e))
-        logger.critical(e.errno)
-        if e.errno == 113:
+        if e.errno == 113 or e.errno == 65:
             e.message = e.message + " {}".format(recipient_id)
             raise exceptions.PeerGoneAwayError(e)
         else:

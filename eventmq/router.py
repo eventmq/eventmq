@@ -18,6 +18,7 @@
 Routes messages to workers (that are in named queues).
 """
 from copy import copy
+import json  # deserialize queues in on_inform. should be refactored
 import logging
 import signal
 
@@ -29,7 +30,7 @@ from .utils.messages import (
     fwd_emqp_router_message as fwdmsg,
     parse_router_message
 )
-from .utils import zero_index_cmp
+from .utils import tuplify, zero_index_cmp
 from .utils.settings import import_settings
 from .utils.devices import generate_device_name
 from .utils.timeutils import monotonic, timestamp
@@ -76,8 +77,8 @@ class Router(HeartbeatMixin):
         #: here.
         #:
         #: **Keys**
-        #:  * ``queues``: list() of queues the worker belongs to. The highest
-        #     priority queue should come first.
+        #:  * ``queues``: list() of queue names and prioritiess the worker
+        #:    belongs to. e.g. (10, 'default')
         #:  * ``hb``: monotonic timestamp of the last received message from
         #:    worker
         #:  * ``available_slots``: int count of jobs this manager can still
@@ -246,10 +247,10 @@ class Router(HeartbeatMixin):
         queue_names = msg[0]
         client_type = msg[1]
 
-        if not queue_names:
-            queues = ('default', )
+        if not queue_names:  # Ideally, this matches some workers
+            queues = [(conf.DEFAULT_QUEUE_WEIGHT, conf.DEFAULT_QUEUE_NAME), ]
         else:
-            queues = queue_names.split(',')
+            queues = list(map(tuplify, json.loads(queue_names)))
 
         logger.info('Received INFORM request from {} (type: {})'.format(
             sender, client_type))
@@ -274,16 +275,17 @@ class Router(HeartbeatMixin):
             msgid (str): Unique identifier for this message
             msg: The actual message that was sent
         """
+        queue_names = self.workers[sender]['queues']
+
         # if there are waiting messages for the queues this worker is a member
         # of, then reply back with the oldest waiting message, otherwise just
         # add the worker to the list of available workers.
         # Note: This is only taking into account the queue the worker is
         # returning from, and not other queue_names that might have had
         # messages waiting even longer.
-        queue_names = self.workers[sender]['queues']
-
         # Assumes the highest priority queue comes first
-        for queue_name in queue_names:
+        for queue in queue_names:
+            queue_name = queue[1]
             if queue_name in self.waiting_messages.keys():
                 logger.debug('Found waiting message in the %s waiting_messages'
                              ' queue' % queue_name)
@@ -292,12 +294,13 @@ class Router(HeartbeatMixin):
                 fwdmsg(self.outgoing, sender, msg)
 
                 # It is easier to check if a key exists rather than the len of
-                # a key if it exists elsewhere, so if that was the last message
-                # remove the queue
+                # a key's value if it exists elsewhere, so if that was the last
+                # message remove the queue
                 if len(self.waiting_messages[queue_name]) == 0:
                     logger.debug('No more messages in waiting_messages queue '
                                  '%s. Removing from list...' % queue_name)
                     del self.waiting_messages[queue_name]
+
                 # the message has been forwarded so short circuit that way the
                 # manager isn't reslotted
                 return
@@ -357,10 +360,15 @@ class Router(HeartbeatMixin):
                                                 'REQUEST', msgid, ] + msg)
             self.workers[worker_addr]['available_slots'] -= 1
         except exceptions.PeerGoneAwayError:
-            logger.debug("Worker {} has unexpectedly gone away. "
-                         "Trying another worker".format(worker_addr))
+            logger.debug(
+                "Worker {} has unexpectedly gone away. Removing this worker "
+                "before trying another worker".format(worker_addr))
 
-            # Recursivley try again. TODO: are there better options?
+            # Remove this worker to prevent infinite loop
+            self.workers[worker_addr]['hb'] = 0
+            self.clean_up_dead_workers()
+
+            # Recursively try again. TODO: are there better options?
             self.process_client_message(
                 [sender, '', PROTOCOL_VERSION, 'REQUEST', msgid] + msg,
                 depth=depth+1)
@@ -387,17 +395,9 @@ class Router(HeartbeatMixin):
                                 conf.HEARTBEAT_TIMEOUT))
 
                 # Remove the worker from the actual queues
-                for i in range(0, len(self.workers[worker_id]['queues'])):
-                    if i == 0:
-                        priority = 10
-                    else:
-                        priority = 0
-
-                    queue = self.workers[worker_id]['queues'][i]
-
+                for queue in self.workers[worker_id]['queues']:
                     try:
-                        self.queues[queue].remove((priority, worker_id))
-                        break
+                        self.queues[queue[1]].remove((queue[0], worker_id))
                     except KeyError:
                         # This queue disappeared for some reason
                         continue
@@ -421,6 +421,10 @@ class Router(HeartbeatMixin):
             raise TypeError('type of `queue` parameter not one of (list, '
                             'tuple). got {}'.format(type(queues)))
 
+        if worker_id in self.workers:
+            logger.warning('Worker id already found in `workers`. Overwriting '
+                           'data')
+
         # Add the worker to our worker dict
         self.workers[worker_id] = {}
         self.workers[worker_id]['queues'] = tuple(queues)
@@ -428,21 +432,15 @@ class Router(HeartbeatMixin):
         self.workers[worker_id]['available_slots'] = 0
 
         # Define priorities. First element is the highest priority
-        for i in range(len(queues)):
-            if i == 0:
-                priority = 10
-            else:
-                priority = 0
+        for q in queues:
+            if q[1] not in self.queues:
+                self.queues[q[1]] = list()
 
-            if queues[i] not in self.queues:
-                self.queues[queues[i]] = EMQdeque()
+            self.queues[q[1]].append((q[0], worker_id))
+            self.queues[q[1]] = self.prioritize_queue_list(self.queues[q[1]])
 
-            self.queues[queues[i]].append((priority, worker_id))
-
-            self.queues[queues[i]] = \
-                self.prioritize_queue_list(self.queues[queues[i]])
         logger.debug('Added worker {} to the queues {}'.format(
-                     worker_id, queues))
+                 worker_id, queues))
 
     def get_available_worker(self, queue_name=conf.DEFAULT_QUEUE_NAME):
         """
@@ -475,15 +473,19 @@ class Router(HeartbeatMixin):
                 # pop the next job manager id & check if it has a worker slot
                 # if it doesn't add it to popped_workers to be added back to
                 # self.queues after the loop
-                worker = self.queues[queue_name].popleft()
+                worker = self.queues[queue_name].pop(0)
+
                 # LRU when sorted later by appending
                 popped_workers.append(worker)
+
                 if self.workers[worker[1]]['available_slots'] > 0:
                     worker_addr = worker[1]
                     break
+
             except KeyError:
-                # This should only happen if worker[1] is missing:
-                #  - available slots is pre set to 0 self.add_worker
+                # This should only happen if worker[1] is missing 1 from
+                # self.workers because:
+                #  - available slots initialized to 0 self.add_worker()
                 #  - we already checked that self.queues[queue_name] exists
                 logger.error("Worker {} not found for queue {}".format(
                     worker, queue_name))
@@ -492,14 +494,16 @@ class Router(HeartbeatMixin):
                                  worker, queue_name
                              ))
                 continue
+
             except IndexError:
                 # worker[1] should exist if it follows the (priority, id) fmt
-                logger.error("Invalid worker format in self.queues {}".format(
-                    worker
-                ))
+                logger.error("Invalid priority/worker format in self.queues "
+                             "{}".format(worker))
                 continue
+        else:
+            # No more queues to try
+            pass
 
-        # Should always evaluate to true
         if popped_workers:
             self.queues[queue_name].extend(popped_workers)
             self.queues[queue_name] = self.prioritize_queue_list(
@@ -547,12 +551,6 @@ class Router(HeartbeatMixin):
         Add a worker back to the pools for which it is a member of.
         """
         self.workers[worker_id]['available_slots'] += 1
-
-    def queue_message(self, msg):
-        """
-        Add a message to the queue for processing later
-        """
-        raise NotImplementedError()
 
     def process_client_message(self, original_msg, depth=0):
         """
@@ -686,13 +684,9 @@ class Router(HeartbeatMixin):
             IndexError - There was no 0-index element.
 
         Returns:
-            sorted :class:`EMQdeque` with largest priorites being indexed
-            smaller. E.g. ((20,'a' ), (14, 'b'), ('12', c))
+            decsending order list. E.g. ((20, 'a'), (14, 'b'), (12, 'c'))
         """
-        return EMQdeque(
-            initial=sorted(unprioritized_iterable,
-                           cmp=zero_index_cmp,
-                           reverse=True))
+        return sorted(unprioritized_iterable, cmp=zero_index_cmp, reverse=True)
 
     def sighup_handler(self, signum, frame):
         """
