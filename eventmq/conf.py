@@ -1,13 +1,40 @@
-# SUPER_DEBUG basically enables more debugging logs. specifically of messages
-# at different levels in the application
-SUPER_DEBUG = True
-# Don't show HEARTBEAT message when debug logging is enabled
+# This file is part of eventmq.
+#
+# eventmq is free software: you can redistribute it and/or modify it under the
+# terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation, either version 2.1 of the License, or (at your option)
+# any later version.
+#
+# eventmq is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
+"""
+:mod:`conf` -- Settings Definitions
+===================================
+"""
+
+#: SUPER_DEBUG basically enables more debugging logs. Specifically the messages
+#: at different levels in the application.
+#: Default: False
+SUPER_DEBUG = False
+
+#: Don't show HEARTBEAT message when debug logging is enabled
+#: Default: True
 HIDE_HEARTBEAT_LOGS = True
 
 # When a queue name isn't specified use this queue name for the default. It
 # would be a good idea to have a handful of workers listening on this queue
 # unless you're positive that everything specifies a queue with workers.
 DEFAULT_QUEUE_NAME = 'default'
+DEFAULT_QUEUE_WEIGHT = 10
+
+# Default queues for the Job Manager to listen on. The values here should match
+# the values defined on the router.
+QUEUES = [(DEFAULT_QUEUE_WEIGHT, DEFAULT_QUEUE_NAME), ]
 
 # {{{Job Manager
 # How long should we wait before retrying to connect to a broker?
@@ -30,13 +57,14 @@ BACKEND_ADDR = 'tcp://127.0.0.1:47290'
 SCHEDULER_ADDR = 'tcp://127.0.0.1:47291'
 WORKER_ADDR = 'tcp://127.0.0.1:47290'
 
+# How many jobs should the job manager concurrently handle?
+CONCURRENT_JOBS = 4
+HWM = 10000
+
 # Redis settings
 RQ_HOST = 'localhost'
 RQ_PORT = 6379
 RQ_DB = 0
 RQ_PASSWORD = ''
-WORKERS = 4
-HWM = 10000
 
-QUEUES = '{}'.format(DEFAULT_QUEUE_NAME)
 # }}}

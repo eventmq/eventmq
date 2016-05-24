@@ -21,6 +21,7 @@ import json
 import logging
 import os
 
+from . import tuplify
 from .. import conf
 
 
@@ -71,15 +72,3 @@ def import_settings(section='global'):
     else:
         logger.warning('Config file at {} not found. Continuing with '
                        'defaults.'.format(conf.CONFIG_FILE))
-
-
-def tuplify(v):
-    """
-    Recursively convert lists to tuples.
-
-    Args:
-        v (object): any value of interest
-    """
-    if isinstance(v, list):
-        return tuple(map(tuplify, v))
-    return v

@@ -20,7 +20,7 @@ Defines different short-lived workers that execute jobs
 from importlib import import_module
 import logging
 
-logger = logging.getLogger('*')
+logger = logging.getLogger(__name__)
 
 
 def run(payload):

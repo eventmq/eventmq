@@ -44,33 +44,77 @@ class TestCase(unittest.TestCase):
 
     @mock.patch('eventmq.router.Router.send_ack')
     @mock.patch('eventmq.router.Router.add_worker')
-    def test_on_inform_worker_defaut_queue(self, add_worker_mock,
-                                           send_ack_mock):
+    def test_on_inform_worker(self, add_worker_mock, send_ack_mock):
+        sender_id = 'omgsenderid19'
+        queues = '[[32, "top"], [23, "drop"], [12, "shop"]]'
+        inform_msgid = 'msg31'
+
+        self.router.on_inform(
+            sender_id, inform_msgid, [queues, 'worker'])
+
+        self.router.send_ack.assert_called_with(
+            self.router.outgoing, sender_id, inform_msgid)
+
+        self.router.add_worker.assert_called_with(
+            sender_id, [(32, 'top'), (23, 'drop'), (12, 'shop')])
+
+    @mock.patch('eventmq.router.Router.send_ack')
+    @mock.patch('eventmq.router.Router.add_worker')
+    def test_on_inform_worker_default_queue(self, add_worker_mock,
+                                            send_ack_mock):
+        # Test on_inform when no queue is specified
         sender_id = 'omgsender18'
         queues = ''
         inform_msgid = 'msg29'
 
-        self.router.on_inform(sender_id, inform_msgid,
-                              [queues, 'worker'])
+        self.router.on_inform(
+            sender_id, inform_msgid, [queues, constants.CLIENT_TYPE.worker])
 
-        self.router.send_ack.assert_called_with(self.router.outgoing,
-                                                sender_id, inform_msgid)
-        self.router.add_worker.assert_called_with(sender_id, ('default',))
+        self.router.send_ack.assert_called_with(
+            self.router.outgoing, sender_id, inform_msgid)
+        self.router.add_worker.assert_called_with(
+            sender_id, [(10, 'default'), ])
 
-    @mock.patch('eventmq.router.Router.send_ack')
-    @mock.patch('eventmq.router.Router.add_worker')
-    def test_on_inform_worker(self, add_worker_mock, send_ack_mock):
-        sender_id = 'omgsenderid19'
-        queues = 'top,drop,shop'
-        inform_msgid = 'msg31'
+    # @mock.patch('eventmq.router.Router.prioritize_queue_list')
+    def test_add_worker(self):
+        worker1_id = 'w1'
+        worker2_id = 'w2'
 
-        self.router.on_inform(sender_id, inform_msgid,
-                              [queues, 'worker'])
+        queues1 = [(10, 'top'), (9, 'drop'), (8, 'shop')]
+        queues2 = [(10, 'default'), (9, 'shop'), (8, 'top')]
 
-        self.router.send_ack.assert_called_with(self.router.outgoing,
-                                                sender_id, inform_msgid)
-        self.router.add_worker.assert_called_with(sender_id,
-                                                  queues.split(','))
+        self.router.add_worker(worker1_id, queues=queues1)
+        self.router.add_worker(worker2_id, queues=queues2)
+        # added to the list of workers
+        self.assertIn(worker1_id, self.router.workers)
+        self.assertIn(worker2_id, self.router.workers)
+        self.assertGreater(self.router.workers[worker1_id]['hb'], 0)
+        # no slots yet
+        self.assertEqual(self.router.workers[worker1_id]['available_slots'], 0)
+
+        # aware of the queues
+        self.assertEqual(3, len(self.router.workers[worker1_id]['queues']))
+        self.assertIn((10, 'top'), self.router.workers[worker1_id]['queues'])
+        self.assertIn((9, 'drop'), self.router.workers[worker1_id]['queues'])
+        self.assertIn((8, 'shop'), self.router.workers[worker1_id]['queues'])
+
+        # Worker2
+        self.assertIn((10, 'default'),
+                      self.router.workers[worker2_id]['queues'])
+        self.assertIn((9, 'shop'), self.router.workers[worker2_id]['queues'])
+        self.assertIn((8, 'top'), self.router.workers[worker2_id]['queues'])
+
+        self.assertIn((10, worker1_id), self.router.queues['top'])
+        self.assertIn((9, worker1_id), self.router.queues['drop'])
+        self.assertIn((8, worker1_id), self.router.queues['shop'])
+
+        self.assertIn((10, worker2_id), self.router.queues['default'])
+        self.assertIn((9, worker2_id), self.router.queues['shop'])
+        self.assertIn((8, worker2_id), self.router.queues['top'])
+
+    def test_add_worker_invalid_queues(self):
+        with self.assertRaises(TypeError):
+            self.router.add_worker('83902', 8902)
 
     @mock.patch('eventmq.utils.messages.generate_msgid')
     def test_send_ack(self, generate_msgid_mock):
@@ -115,12 +159,12 @@ class TestCase(unittest.TestCase):
         self.assertEqual(self.router._meta['last_sent_heartbeat'], 0)
         self.router.workers = {
             'w1': {
-                'queues': ['default', ],
+                'queues': [(10, 'default'), ],
                 'hb': 123.2,
                 'available_slots': 3,
             },
             'w2': {
-                'queues': ['default', ],
+                'queues': [(10, 'not-default'), ],
                 'hb': 123.2,
                 'available_slots': 2,
             }
@@ -131,9 +175,26 @@ class TestCase(unittest.TestCase):
         # is very hard to mock)
         self.assertGreater(self.router._meta['last_sent_heartbeat'], 0)
 
-        self.router.send_heartbeat.assert_has_calls(
+        send_heartbeat_mock.assert_has_calls(
             [mock.call(self.router.outgoing, 'w1'),
              mock.call(self.router.outgoing, 'w2')], any_order=True)
+
+    @mock.patch('eventmq.router.Router.send_heartbeat')
+    def test_send_schedulers_heartbeats(self, send_hb_mock):
+        scheduler_id = 's39'
+        self.assertEqual(self.router._meta['last_sent_scheduler_heartbeat'], 0)
+
+        self.router.schedulers = {
+            scheduler_id: {
+                'hb': 0,
+            }
+        }
+
+        self.router.send_schedulers_heartbeats()
+
+        self.assertGreater(
+            self.router._meta['last_sent_scheduler_heartbeat'], 0)
+        send_hb_mock.assert_called_with(self.router.incoming, scheduler_id)
 
     def test_on_disconnect(self):
         self.assertFalse(self.router.received_disconnect)
@@ -152,14 +213,14 @@ class TestCase(unittest.TestCase):
 
         self.router.workers = {
             worker_id: {
-                'queues': ['default', ],
+                'queues': [(10, 'default'), ],
                 'hb': 123.2,
                 'available_slots': 3,
             },
         }
 
         self.router.waiting_messages['default'] = EMQdeque(
-            initial=[waiting_msg])
+            initial=[waiting_msg, ])
 
         self.router.on_ready(worker_id, msgid, msg)
 
@@ -171,8 +232,10 @@ class TestCase(unittest.TestCase):
 
     @mock.patch('eventmq.router.fwdmsg')
     @mock.patch('eventmq.router.Router.requeue_worker')
-    def test_on_ready_prioritized_queue(self, requeue_worker_mock,
-                                        fwdmsg_mock):
+    def test_on_ready_multpile_queues(self, requeue_worker_mock,
+                                      fwdmsg_mock):
+        # Test that if messages are waiting on multiple queues, they are
+        # dispatched immediatly after a READY message.
         worker1_id = 'w1'
         worker2_id = 'w2'
 
@@ -188,53 +251,61 @@ class TestCase(unittest.TestCase):
 
         self.router.workers = {
             worker1_id: {
-                'queues': ['kun', 'blu'],
+                'queues': [(10, 'kun'), (0, 'blu')],
                 'hb': 123.2,
                 'available_slots': 0,
             },
             worker2_id: {
-                'queues': ['blu', 'kun'],
+                'queues': [(10, 'blu'), (0, 'kun')],
                 'hb': 123.2,
                 'available_slots': 0
             }
         }
 
         self.router.queues = {
-            'kun': EMQdeque(initial=[(10, worker1_id), (0, worker2_id)]),
-            'blu': EMQdeque(initial=[(10, worker2_id), (0, worker1_id)])
-
+            'kun': [(10, worker1_id), (0, worker2_id)],
+            'blu': [(10, worker2_id), (0, worker1_id)],
         }
 
         self.router.waiting_messages = {
             'kun': EMQdeque(initial=[waiting_msg1, waiting_msg2]),
-            'blu': EMQdeque(initial=[waiting_msg3])
+            'blu': EMQdeque(initial=[waiting_msg3, ]),
         }
 
+        # Forward waiting_msg1
         ready_msgid1 = 'ready23'
         self.router.on_ready(worker1_id, ready_msgid1, ['READY', ready_msgid1])
         fwdmsg_mock.assert_called_with(self.router.outgoing, worker1_id,
                                        waiting_msg1)
 
-        ready_msgid2 = 'ready19'
-        self.router.on_ready(worker2_id, ready_msgid2, ['READY', ready_msgid2])
+        # Forward waiting_msg3 -- blu is a higher priority for worker2
+        ready_msgid3 = 'ready19'
+        self.router.on_ready(worker2_id, ready_msgid3, ['READY', ready_msgid3])
         fwdmsg_mock.assert_called_with(self.router.outgoing, worker2_id,
                                        waiting_msg3)
 
-        ready_msgid3 = 'ready5'
-        self.router.on_ready(worker2_id, ready_msgid3, ['READY', ready_msgid3])
+        # Forward waiting_msg2
+        ready_msgid2 = 'ready5'
+        self.router.on_ready(worker2_id, ready_msgid2, ['READY', ready_msgid2])
         fwdmsg_mock.assert_called_with(self.router.outgoing, worker2_id,
                                        waiting_msg2)
 
+        # There should be no keys because the code checks for their existence
+        # to know if there is a waiting message
+        self.assertEqual(0, len(self.router.waiting_messages.keys()))
+
+        # No waiting messages
         self.router.on_ready(worker1_id, ready_msgid1, ['READY', ready_msgid1])
         requeue_worker_mock.assert_called_with(worker1_id)
         self.router.on_ready(worker2_id, ready_msgid2, ['READY', ready_msgid2])
         requeue_worker_mock.assert_called_with(worker2_id)
 
+    @mock.patch('eventmq.router.Router.clean_up_dead_workers')
     @mock.patch('eventmq.router.Router.process_client_message')
     @mock.patch('eventmq.router.Router.get_available_worker')
     @mock.patch('eventmq.router.fwdmsg')
     def test_on_request(self, fwdmsg_mock, get_worker_mock,
-                        process_client_msg_mock):
+                        process_client_msg_mock, cleanupworkers_mock):
         client_id = 'c1'
         msgid = 'msg18'
         queue = 'default'
@@ -245,13 +316,13 @@ class TestCase(unittest.TestCase):
 
         self.router.workers = {
             worker_id: {
-                'queues': EMQdeque(initial=(queue,)),
+                'queues': [(10, queue)],
                 'hb': 2903.34,
                 'available_slots': 1,
             }
         }
         self.router.queues = {
-            'default': EMQdeque(initial=((10, worker_id)))
+            queue: [(10, worker_id),]
         }
 
         # Router accepts job for 1 available slot
@@ -268,7 +339,7 @@ class TestCase(unittest.TestCase):
         get_worker_mock.side_effect = raise_no_workers
         self.router.on_request(client_id, msgid, msg)
 
-        self.assertIn(msg[0], self.router.waiting_messages)
+        self.assertIn(queue, self.router.waiting_messages)
         self.assertEqual(list(self.router.waiting_messages[queue])[0],
                          ['', constants.PROTOCOL_VERSION, 'REQUEST',
                           msgid] + msg)
@@ -286,14 +357,85 @@ class TestCase(unittest.TestCase):
             [client_id, '', constants.PROTOCOL_VERSION, 'REQUEST', msgid]+msg,
             depth=2)
 
-    def test_cleanup_dead_workers(self):
+    def test_get_available_worker(self):
+        worker2_id = 'w2'
+        worker3_id = 'w3'
+
+        queue1_id = 'default'
+        queue2_id = 'jimjam'
+
+        self.router.queues = {
+            queue1_id: [(10, worker3_id), (0, worker2_id)],
+            queue2_id: [(10, worker2_id)],
+        }
+
+        self.router.workers = {
+            worker2_id: {
+                'queues': [(10, queue2_id), (0, queue1_id)],
+                'available_slots': 1,
+            },
+            worker3_id: {
+                'queues': [(10, queue1_id), ],
+                'available_slots': 1,
+            },
+        }
+
+        # Get the next available worker for queue2
+        check1 = self.router.get_available_worker(queue_name=queue2_id)
+        self.assertEqual(worker2_id, check1)
+
+        # Get the next available worker for queue1
+        check2 = self.router.get_available_worker(queue_name=queue1_id)
+        self.assertEqual(worker3_id, check2)
+
+        # Pretend worker 3 is doing something
+        self.router.workers[worker3_id]['available_slots'] = 0
+
+        # Get the next available worker for queue1
+        check3 = self.router.get_available_worker(queue_name=queue1_id)
+        self.assertEqual(worker2_id, check3)
+
+    def test_get_available_worker_dont_decrement_slots(self):
+        # Once upon a time get_available_worker() decremented the available
+        # slots counter and the townsfolk greived
+        queue1_id = 'q1'
+        worker1_id = 'w1'
+
+        self.router.queues = {
+            queue1_id: [(10, worker1_id, ), ]
+        }
+
+        self.router.workers = {
+            worker1_id: {
+                'queues': [(10, queue1_id), ],
+                'available_slots': 1,
+            }
+        }
+
+        self.router.get_available_worker(queue_name=queue1_id)
+
+        self.assertEqual(self.router.workers[worker1_id]['available_slots'], 1)
+
+    def test_requeue_worker(self):
+        worker_id = 'w1'
+
+        self.router.workers = {
+            worker_id: {
+                'available_slots': 1
+            }
+        }
+
+        self.router.requeue_worker(worker_id)
+        self.assertEqual(self.router.workers[worker_id]['available_slots'], 2)
+
+    def test_clean_up_dead_workers(self):
         worker1_id = 'w1'
         worker2_id = 'w2'
         worker3_id = 'w3'
 
         queue1_id = 'default'
         queue2_id = 'jimjam'
-        nonexistent_queue1 = 'pig'
+        nonexistent_queue1 = 'nonexistent'
 
         # To ensure the value was changed later because monotonic() is hard to
         # mock
@@ -307,21 +449,21 @@ class TestCase(unittest.TestCase):
         }
 
         self.router.workers = {
-            # 1 second away from timeout
+            # 3 in the future
             worker1_id: {
-                'queues': (queue1_id,),
-                'hb': monotonic() - conf.HEARTBEAT_TIMEOUT + 1,
+                'queues': [(10, queue1_id), ],
+                'hb': monotonic() + 3,
                 'available_slots': 0,
             },
             # below the timeout
             worker2_id: {
-                'queues': (queue2_id, queue1_id),
+                'queues': [(10, queue2_id), (0, queue1_id)],
                 'hb': 0,
                 'available_slots': 2,
             },
             # below the timeout and a queue missing from self.router.queues
             worker3_id: {
-                'queues': (queue2_id, nonexistent_queue1),
+                'queues': [(10, queue2_id), (3, nonexistent_queue1)],
                 'hb': 0,
                 'available_slots': 0,
             },
@@ -336,74 +478,6 @@ class TestCase(unittest.TestCase):
         self.assertIn(queue1_id, self.router.queues)
         self.assertNotIn(queue2_id, self.router.queues)
         self.assertNotIn(nonexistent_queue1, self.router.queues)
-
-    # @mock.patch('eventmq.router.Router.prioritize_queue_list')
-    def test_add_worker(self):
-        worker1_id = 'w1'
-        queues = ('top', 'drop', 'shop')
-
-        self.router.add_worker(worker1_id, queues=queues)
-        # added to the list of workers
-        self.assertIn(worker1_id, self.router.workers)
-        # got an inital heartbeat
-        self.assertGreater(self.router.workers[worker1_id]['hb'], 0)
-        # no slots yet
-        self.assertEqual(self.router.workers[worker1_id]['available_slots'], 0)
-        # aware of the queues
-        self.assertEqual(3, len(self.router.workers[worker1_id]['queues']))
-        self.assertIn((10, worker1_id), list(self.router.queues['top']))
-        self.assertIn((0, worker1_id), list(self.router.queues['drop']))
-        self.assertIn((0, worker1_id), list(self.router.queues['shop']))
-
-    def test_get_available_worker(self):
-        worker2_id = 'w2'
-        worker3_id = 'w3'
-
-        queue1_id = 'default'
-        queue2_id = 'jimjam'
-
-        self.router.queues = {
-            queue1_id: EMQdeque(initial=[(10, worker3_id), (0, worker2_id)]),
-            queue2_id: EMQdeque(initial=[(10, worker2_id)]),
-        }
-
-        self.router.workers = {
-            worker2_id: {
-                'queues': (queue2_id, queue1_id),
-                'available_slots': 1,
-            },
-            worker3_id: {
-                'queues': (queue1_id,),
-                'available_slots': 1,
-            },
-        }
-
-        # worker1 has no available slots.
-        check1 = self.router.get_available_worker(queue_name=queue2_id)
-        self.assertEqual(worker2_id, check1)
-        self.assertEqual(self.router.workers[worker2_id]['available_slots'], 1)
-
-        check2 = self.router.get_available_worker(queue_name=queue1_id)
-        self.assertEqual(worker3_id, check2)
-        self.assertEqual(self.router.workers[worker3_id]['available_slots'], 1)
-
-        self.router.workers[worker3_id]['available_slots'] = 0
-
-        check3 = self.router.get_available_worker(queue_name=queue1_id)
-        self.assertEqual(worker2_id, check3)
-        self.assertEqual(self.router.workers[worker2_id]['available_slots'], 1)
-
-    def test_requeue_worker(self):
-        worker_id = 'w1'
-
-        self.router.workers = {
-            worker_id: {
-                'available_slots': 1
-            }
-        }
-
-        self.router.requeue_worker(worker_id)
-        self.assertEqual(self.router.workers[worker_id]['available_slots'], 2)
 
     @mock.patch('eventmq.router.Router.on_inform')
     @mock.patch('eventmq.router.Router.on_request')
@@ -457,37 +531,35 @@ class TestCase(unittest.TestCase):
         on_inform_mock.assert_called_with(sender_id, msgid, msg)
 
     def test_prioritize_queue_list(self):
-        queue = EMQdeque(initial=[(0, 'd'), (10, 'b'), (0, 'e'), (10, 'a'),
-                                  (0, 'c')])
+        queue = [(0, 'd'), (10, 'b'), (0, 'e'), (10, 'a'), (0, 'c')]
 
         sorted1 = self.router.prioritize_queue_list(queue)
         self.assertEqual([(10, 'b'), (10, 'a'), (0, 'd'), (0, 'e'),
-                          (0, 'c')], list(sorted1))
+                          (0, 'c')], sorted1)
 
-        pop1 = sorted1.popleft()
+        pop1 = sorted1.pop(0)
         self.assertEqual(pop1, (10, 'b'))
         sorted1.append(pop1)
         # a, b, d, e, c
         sorted2 = self.router.prioritize_queue_list(sorted1)
         self.assertEqual([(10, 'a'), (10, 'b'), (0, 'd'), (0, 'e'), (0, 'c')],
-                         list(sorted2))
-        pop2 = sorted2.popleft()  # a
-        pop3 = sorted2.popleft()  # b
-        pop4 = sorted2.popleft()  # d
+                         sorted2)
+        pop2 = sorted2.pop(0)  # a
+        pop3 = sorted2.pop(0)  # b
+        pop4 = sorted2.pop(0)  # d
         self.assertEqual(pop4, (0, 'd'))
         self.assertEqual(pop2, (10, 'a'))
         self.assertEqual(pop3, (10, 'b'))
         self.assertEqual([(0, 'e'), (0, 'c')], list(sorted2))
 
-        sorted2.appendleft(pop2)
-        sorted2.appendleft(pop4)
-        sorted2.appendleft(pop3)
+        sorted2.append(pop2)
+        sorted2.append(pop4)
+        sorted2.append(pop3)
 
-        # a, b, d, e, c
         sorted3 = self.router.prioritize_queue_list(sorted2)
 
-        self.assertEqual(sorted3.popleft(), (10, 'b'))
-        self.assertEqual(sorted3.popleft(), (10, 'a'))
-        self.assertEqual(sorted3.popleft(), (0, 'd'))
-        self.assertEqual(sorted3.popleft(), (0, 'e'))
-        self.assertEqual(sorted3.popleft(), (0, 'c'))
+        self.assertEqual(sorted3.pop(0), (10, 'a'))
+        self.assertEqual(sorted3.pop(0), (10, 'b'))
+        self.assertEqual(sorted3.pop(0), (0, 'e'))
+        self.assertEqual(sorted3.pop(0), (0, 'c'))
+        self.assertEqual(sorted3.pop(0), (0, 'd'))

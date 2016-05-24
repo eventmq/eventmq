@@ -16,6 +16,7 @@ import sys
 import os
 import shlex
 
+import eventmq   # for __version__
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -52,15 +53,15 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'EventMQ'
-copyright = u'2015, eventboard.io'
-author = u'eventboard.io'
+copyright = u'2016, eventboard.io'
+author = u'EventMQ Contributors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = '0'
+version = eventmq.__version__
 # The full version, including alpha/beta/rc tags.
 release = '0'
 

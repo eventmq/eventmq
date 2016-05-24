@@ -18,6 +18,7 @@ import unittest
 
 import mock
 
+from .. import constants
 from .. import exceptions
 from ..utils import messages
 from ..utils import classes
@@ -93,6 +94,75 @@ class SettingsTestCase(unittest.TestCase):
         self.assertEqual(conf.QUEUES,
                          [(50, 'google'), (40, 'pushes'), (10, 'default')])
         self.assertEqual(conf.WORKER_ADDR, 'tcp://160.254.23.88:47290')
+
+
+class EMQPServiceTestCase(unittest.TestCase):
+
+    # pretend to be an emq socket
+    outgoing = 'some-outgoing-socket'
+
+    def get_worker(self):
+        """return an EMQPService mimicking a worker"""
+        obj = classes.EMQPService()
+        obj.SERVICE_TYPE = constants.CLIENT_TYPE.worker
+        obj.outgoing = self.outgoing
+        obj._meta = {
+            'last_sent_heartbeat': 0
+        }
+
+        return obj
+
+    @mock.patch('eventmq.utils.classes.sendmsg')
+    def test_send_inform_return_msgid(self, sendmsg_mock):
+        obj = self.get_worker()
+        sendmsg_mock.return_value = 'some-msgid'
+
+        retval = obj.send_inform(queues=[(10, 'default'), ])
+
+        self.assertEqual(retval, sendmsg_mock.return_value)
+
+    @mock.patch('eventmq.utils.classes.sendmsg')
+    def test_send_inform_single_weightless_queue(self, sendmsg_mock):
+        # Test that the inform message is backward compatible with a change
+        # in v0.2.0
+        obj = self.get_worker()
+
+        obj.send_inform(queues='derpfault')
+
+        sendmsg_mock.assert_called_with(
+            'some-outgoing-socket', 'INFORM',
+            ['derpfault', constants.CLIENT_TYPE.worker]
+        )
+
+    @mock.patch('eventmq.utils.classes.sendmsg')
+    def test_send_inform_empty_queue_name(self, sendmsg_mock):
+        obj = self.get_worker()
+
+        obj.send_inform()
+
+        sendmsg_mock.assert_called_with(
+            'some-outgoing-socket', 'INFORM',
+            ['', constants.CLIENT_TYPE.worker])
+
+    @mock.patch('eventmq.utils.classes.sendmsg')
+    def test_send_inform_specified_valid_queues(self, sendmsg_mock):
+        obj = self.get_worker()
+
+        obj.send_inform(queues=([10, 'push'], [7, 'email'],
+                                [3, 'default']))
+        sendmsg_mock.asert_called_with(
+            'some-outgoing-socket', 'INFORM',
+            ["[10, 'push'],[7, 'email'],[3, 'default]",
+             constants.CLIENT_TYPE.worker]
+        )
+
+    @mock.patch('eventmq.utils.classes.sendmsg')
+    def test_send_inform_update_last_sent_heartbeat(self, sendmsg_mock):
+        obj = self.get_worker()
+
+        obj.send_inform(queues=(['', constants.CLIENT_TYPE.worker]))
+
+        self.assertGreater(obj._meta['last_sent_heartbeat'], 0)
 
 
 class TestCase(unittest.TestCase):

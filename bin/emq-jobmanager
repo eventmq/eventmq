@@ -21,12 +21,19 @@ from eventmq.jobmanager import JobManager
 from eventmq import conf
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Listen for requests')
-    parser.add_argument('--config', '-c', type=str, nargs='?',
+    parser = argparse.ArgumentParser(description='Listen for job requests and '
+                                     'manage their execution')
+    parser.add_argument('--broker-addr', '-B', type=str, nargs='?',
+                        help='manually specify the broker address to connect '
+                        'to in order to receive jobs')
+    parser.add_argument('--config', '-C', type=str, nargs='?',
                         help='manually specify the location of eventmq.conf')
     parser.add_argument('--queues', '-Q', type=str, nargs='+',
                         help='space separated list of queue names to listen '
                              'on')
+    parser.add_argument('--jobs', '-J', type=int, nargs='?',
+                        help='the max number of concurrent jobs to manage at '
+                        'a time')
 
     args = parser.parse_args()
 
@@ -39,5 +46,8 @@ if __name__ == "__main__":
     if queues:
         queues = ','.join(queues)
 
-    j = JobManager(queues=queues)
-    j.jobmanager_main()
+    broker_addr = args.broker_addr
+    concurrent_jobs = args.jobs
+
+    j = JobManager(queues=queues, concurrent_jobs=concurrent_jobs)
+    j.jobmanager_main(broker_addr=broker_addr)

@@ -46,3 +46,15 @@ def zero_index_cmp(a, b):
     when sorting the values in :attr:`router.Router.queues`.
     """
     return cmp(a[0], b[0])
+
+
+def tuplify(v):
+    """
+    Recursively convert lists to tuples.
+
+    Args:
+        v (object): any value of interest
+    """
+    if isinstance(v, list):
+        return tuple(map(tuplify, v))
+    return v

@@ -23,8 +23,6 @@ ADDR = 'inproc://pour_the_rice_in_the_thing'
 
 
 class TestCase(unittest.TestCase):
-    jm = None
-
     def test__setup(self):
         jm = jobmanager.JobManager(name='RuckusBringer')
         self.assertEqual(jm.name, 'RuckusBringer')
@@ -62,8 +60,8 @@ class TestCase(unittest.TestCase):
 
         jm._start_event_loop()
 
-        # send conf.WORKERS ready messages
-        self.assertEqual(conf.WORKERS, send_ready_mock.call_count)
+        # send int(conf.CONCURRENT_JOBS) ready messages
+        self.assertEqual(conf.CONCURRENT_JOBS, send_ready_mock.call_count)
 
         process_msg_mock.assert_called_with(
             sender_mock.return_value)
@@ -86,6 +84,7 @@ class TestCase(unittest.TestCase):
             callback=jm.worker_done,
             func=run_mock)
 
+# Other Tests
     @mock.patch('eventmq.jobmanager.JobManager.start')
     @mock.patch('eventmq.jobmanager.import_settings')
     @mock.patch('eventmq.jobmanager.Sender.rebuild')
@@ -111,7 +110,7 @@ class TestCase(unittest.TestCase):
     @mock.patch('eventmq.jobmanager.import_settings')
     @mock.patch('eventmq.jobmanager.setup_logger')
     def test_jobmanager_main(self, setup_logger_mock, import_settings_mock,
-                        start_mock):
+                             start_mock):
         jm = jobmanager.JobManager()
 
         jm.jobmanager_main()
@@ -125,7 +124,7 @@ class TestCase(unittest.TestCase):
         start_mock.assert_called_with(addr=conf.WORKER_ADDR,
                                       queues=conf.QUEUES)
 
-        jm.queues = ('derp', 'blurp')
+        jm.queues = ((10, 'derp'), (0, 'blurp'))
         jm.jobmanager_main()
 
         start_mock.assert_called_with(addr=conf.WORKER_ADDR,

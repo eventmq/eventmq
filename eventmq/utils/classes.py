@@ -53,14 +53,20 @@ class EMQPService(object):
 
     See the code for :class:`Scheduler` and :class:`JobManager` for examples.
     """
-    def send_inform(self, queue=None):
+    def send_inform(self, queues=()):
         """
-        Queues an INFORM command to `self.outgoing`.
+        Notify the router that this job manager is online and and ready for
+        work. This includes a list of queues the router should forward messages
+        for.
 
         Args:
             type_ (str): Either 'worker' or 'scheduler'
-            queue (list):
-                - For 'worker' type, the queues the worker is listening on
+            queues (list):
+                - For 'worker' type, the queues the worker is listening on and
+                  their weights.
+
+                  Example:
+                    ([10, 'default'], [15, 'push_notifications'])
                 - Ignored for 'scheduler' type
 
         Raises:
@@ -68,6 +74,11 @@ class EMQPService(object):
 
         Returns:
             str: ID of the message
+
+        .. note::
+
+           Passing a single string for queues is supported for backward
+           compatibility and not recommended for new apps.
         """
         valid_types = (constants.CLIENT_TYPE.worker,
                        constants.CLIENT_TYPE.scheduler)
@@ -75,8 +86,15 @@ class EMQPService(object):
         if self.SERVICE_TYPE not in valid_types:
             raise ValueError('{} not one of {}'.format(self.SERVICE_TYPE,
                                                        valid_types))
+
+        if isinstance(queues, (list, tuple)):
+            stringified_queues = ''
+            for pair in queues:
+                stringified_queues += '{},'.format(str(pair))
+            queues = stringified_queues[:-1]  # strip off the last comma
+
         msgid = sendmsg(self.outgoing, 'INFORM', [
-            queue or conf.DEFAULT_QUEUE_NAME,
+            queues,
             self.SERVICE_TYPE
         ])
 
