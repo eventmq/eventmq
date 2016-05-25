@@ -50,7 +50,11 @@ def import_settings(section='global'):
                 default_value = getattr(conf, name.upper())
                 t = type(default_value)
                 if isinstance(default_value, (list, tuple)):
-                    value = t(json.loads(value))
+                    try:
+                        value = t(json.loads(value))
+                    except ValueError:
+                        raise ValueError(
+                            "Invalid JSON syntax for {} setting".format(name))
                     # json.loads coverts all arrays to lists, but if the first
                     # element in the default is a tuple (like in QUEUES) then
                     # convert those elements, otherwise whatever it's type is
