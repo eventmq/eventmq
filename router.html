@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0
+                0.2.1
               </div>
             
           
@@ -83,6 +83,7 @@
             
             
                 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="using.html">Using EventMQ</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">API Documentation</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="client.html"><code class="docutils literal"><span class="pre">client</span></code> &#8211; Client Utilities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="exceptions.html"><code class="docutils literal"><span class="pre">exceptions</span></code> &#8211; Exceptions</a></li>
@@ -91,7 +92,7 @@
 <li class="toctree-l2"><a class="reference internal" href="receiver.html"><code class="docutils literal"><span class="pre">receiver</span></code> &#8211; Receiver</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href=""><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sender.html"><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></li>
-<li class="toctree-l2"><a class="reference internal" href="utils/index.html"><code class="docutils literal"><span class="pre">utils</span></code> - Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils/index.html"><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to EventMQ</a></li>
@@ -259,22 +260,24 @@ and announces itself.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="eventmq.router.Router.on_receive_request">
-<code class="descname">on_receive_request</code><span class="sig-paren">(</span><em>msg</em>, <em>depth=0</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.on_receive_request" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
+<dt id="eventmq.router.Router.on_request">
+<code class="descname">on_request</code><span class="sig-paren">(</span><em>sender</em>, <em>msgid</em>, <em>msg</em>, <em>depth=1</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.on_request" title="Permalink to this definition">¶</a></dt>
+<dd><p>Process a client REQUEST frame</p>
+<table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>msg</strong> &#8211; The untouched message from zmq</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>sender</strong> &#8211; </li>
+<li><strong>msgid</strong> &#8211; </li>
+<li><strong>msgid</strong> &#8211; </li>
+<li><strong>depth</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; The recusion depth in retrying when PeerGoneAwayError
+is raised.</li>
+</ul>
+</td>
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
-<dl class="method">
-<dt id="eventmq.router.Router.on_request">
-<code class="descname">on_request</code><span class="sig-paren">(</span><em>sender</em>, <em>msgid</em>, <em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.on_request" title="Permalink to this definition">¶</a></dt>
-<dd><p>Process a client REQUEST frame</p>
 </dd></dl>
 
 <dl class="classmethod">
@@ -291,8 +294,28 @@ come first.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">IndexError - There was no 0-index element.</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">sorted <code class="xref py py-class docutils literal"><span class="pre">EMQdeque</span></code> with largest priorites being indexed
-smaller. E.g. ((20,&#8217;a&#8217; ), (14, &#8216;b&#8217;), (&#8216;12&#8217;, c))</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">decsending order list. E.g. ((20, &#8216;a&#8217;), (14, &#8216;b&#8217;), (12, &#8216;c&#8217;))</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.router.Router.process_client_message">
+<code class="descname">process_client_message</code><span class="sig-paren">(</span><em>original_msg</em>, <em>depth=0</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.process_client_message" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>msg</strong> &#8211; The untouched message from zmq</li>
+<li><strong>depth</strong> &#8211; The number of times this method has been recursively
+called. This is used to short circuit message retry attempts.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">InvalidMessageError</span></code> &#8211; Unable to parse the message</p>
+</td>
 </tr>
 </tbody>
 </table>
@@ -312,12 +335,6 @@ a warning is created.</p>
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
-<dl class="method">
-<dt id="eventmq.router.Router.queue_message">
-<code class="descname">queue_message</code><span class="sig-paren">(</span><em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.queue_message" title="Permalink to this definition">¶</a></dt>
-<dd><p>Add a message to the queue for processing later</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -385,11 +402,17 @@ Contains dictionaries:</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; The socket to use for this ack</li>
 <li><strong>recipient</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; The recipient id for the ack</li>
 <li><strong>msgid</strong> &#8211; The unique id that we are acknowledging</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The ID of the ACK message</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">msgid</p>
 </td>
 </tr>
 </tbody>
@@ -405,10 +428,16 @@ needed when building messages</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; the socket to send the heartbeat with</li>
 <li><strong>recipient</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Worker I</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">The ID of the HEARTBEAT message</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">msgid</p>
 </td>
 </tr>
 </tbody>
@@ -468,7 +497,8 @@ here.</p>
 <dl class="docutils">
 <dt><strong>Keys</strong></dt>
 <dd><ul class="first last simple">
-<li><code class="docutils literal"><span class="pre">queues</span></code>: list() of queues the worker belongs to</li>
+<li><code class="docutils literal"><span class="pre">queues</span></code>: list() of queue names and prioritiess the worker
+belongs to. e.g. (10, &#8216;default&#8217;)</li>
 <li><code class="docutils literal"><span class="pre">hb</span></code>: monotonic timestamp of the last received message from
 worker</li>
 <li><code class="docutils literal"><span class="pre">available_slots</span></code>: int count of jobs this manager can still
@@ -501,7 +531,7 @@ process.</li>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015, eventboard.io.
+        &copy; Copyright 2016, eventboard.io.
 
     </p>
   </div>

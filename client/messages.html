@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0
+                0.2.1
               </div>
             
           
@@ -83,6 +83,7 @@
             
             
                 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../using.html">Using EventMQ</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Documentation</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="../client.html"><code class="docutils literal"><span class="pre">client</span></code> &#8211; Client Utilities</a><ul class="current">
 <li class="toctree-l3 current"><a class="current reference internal" href=""><code class="docutils literal"><span class="pre">messages</span></code> &#8211; Client Messaging</a></li>
@@ -94,7 +95,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../receiver.html"><code class="docutils literal"><span class="pre">receiver</span></code> &#8211; Receiver</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../router.html"><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../sender.html"><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../utils.html"><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../utils/index.html"><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../contributing.html">Contributing to EventMQ</a></li>
@@ -191,35 +192,19 @@ initializing (if applicable).</li>
 executed. Exceptions and things will be logged.</li>
 <li><strong>retry_count</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; How many times should be retried when encountering
 an Exception or some other failure before giving up. (default: 0
-or immediatly fail)</li>
-<li><strong>queue</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Name of queue to use when executing the job. Default: is
-configured default queue name</li>
+or immediately fail)</li>
+<li><strong>queue</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Name of queue to use when executing the job. If this value
+evaluates to False, the default is used. Default: is configured
+default queue name</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">True if the message was successfully queued, False if something
-went wrong. If something did go wrong check the logs for details.</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">ID for the message/deferred job. This value will be None if there
+was an error.</p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/library/functions.html#bool" title="(in Python v2.7)">bool</a></p>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)">str</a></p>
 </td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="eventmq.client.messages.job">
-<code class="descclassname">eventmq.client.messages.</code><code class="descname">job</code><span class="sig-paren">(</span><em>block=False</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.client.messages.job" title="Permalink to this definition">¶</a></dt>
-<dd><p>run the decorated function on a worker</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>block</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; Set to True if you wish to block and wait for the
-response. This may be useful for running quick but cpu intesive
-that would otherwise overwhelm a box that has to do it all alone.
-(decryption?)</td>
 </tr>
 </tbody>
 </table>
@@ -227,26 +212,36 @@ that would otherwise overwhelm a box that has to do it all alone.
 
 <dl class="function">
 <dt id="eventmq.client.messages.schedule">
-<code class="descclassname">eventmq.client.messages.</code><code class="descname">schedule</code><span class="sig-paren">(</span><em>socket</em>, <em>func</em>, <em>interval_secs</em>, <em>args=()</em>, <em>kwargs=None</em>, <em>class_args=()</em>, <em>class_kwargs=None</em>, <em>headers=('guarantee'</em>, <em>)</em>, <em>queue='default'</em>, <em>unschedule=False</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.client.messages.schedule" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">eventmq.client.messages.</code><code class="descname">schedule</code><span class="sig-paren">(</span><em>socket</em>, <em>func</em>, <em>interval_secs=None</em>, <em>args=()</em>, <em>kwargs=None</em>, <em>class_args=()</em>, <em>class_kwargs=None</em>, <em>headers=('guarantee'</em>, <em>)</em>, <em>queue='default'</em>, <em>unschedule=False</em>, <em>cron=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.client.messages.schedule" title="Permalink to this definition">¶</a></dt>
 <dd><p>Execute a task on a defined interval.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; eventmq socket to use for sending the message</li>
 <li><strong>func</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#callable" title="(in Python v2.7)"><em>callable</em></a>) &#8211; the callable to be scheduled on a worker</li>
 <li><strong>minutes</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; minutes to wait in between executions</li>
 <li><strong>args</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; list of <a href="#id9"><span class="problematic" id="id10">*</span></a>args to pass to the callable</li>
-<li><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; dict of <a href="#id11"><span class="problematic" id="id12">**</span></a>kwargs to pass to the callable</li>
-<li><strong>class_args</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; list of <a href="#id13"><span class="problematic" id="id14">*</span></a>args to pass to the class (if applicable)</li>
-<li><strong>class_kwargs</strong> (<a class="reference external" href="https://docs.python.org/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; dict of <a href="#id15"><span class="problematic" id="id16">**</span></a>kwargs to pass to the class (if
+<li><strong>interval_secs</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; Run job every interval_secs or None if using cron</li>
+<li><strong>cron</strong> (<a class="reference external" href="https://docs.python.org/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; cron formatted string used for job schedule if
+interval_secs is None, i.e. &#8216;* * * * <a href="#id11"><span class="problematic" id="id12">*</span></a>&#8216; (every minute)</li>
+<li><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; dict of <a href="#id13"><span class="problematic" id="id14">**</span></a>kwargs to pass to the callable</li>
+<li><strong>class_args</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; list of <a href="#id15"><span class="problematic" id="id16">*</span></a>args to pass to the class (if applicable)</li>
+<li><strong>class_kwargs</strong> (<a class="reference external" href="https://docs.python.org/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; dict of <a href="#id17"><span class="problematic" id="id18">**</span></a>kwargs to pass to the class (if
 applicable)</li>
 <li><strong>headers</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; list of strings denoting enabled headers. Default:
 guarantee is enabled to ensure the scheduler schedules the job.</li>
 <li><strong>queue</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of the queue to use when executing the job. The
 default value is the default queue.</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">ID of the schedule message that was sent. None if there was an
+error</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)">str</a></p>
 </td>
 </tr>
 </tbody>
@@ -291,7 +286,7 @@ the headers then they have been enabled.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>retry_count</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; How many times should be retried when encountering
 an Exception or some other failure before giving up. (default: 0
 or immediatly fail)</li>
@@ -300,13 +295,19 @@ configured default queue name</li>
 </ul>
 </td>
 </tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">ID of the message</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)">str</a></p>
+</td>
+</tr>
 </tbody>
 </table>
 </dd></dl>
 
 <dl class="function">
 <dt id="eventmq.client.messages.send_schedule_request">
-<code class="descclassname">eventmq.client.messages.</code><code class="descname">send_schedule_request</code><span class="sig-paren">(</span><em>socket</em>, <em>interval_secs</em>, <em>message</em>, <em>headers=()</em>, <em>queue=None</em>, <em>unschedule=False</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.client.messages.send_schedule_request" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">eventmq.client.messages.</code><code class="descname">send_schedule_request</code><span class="sig-paren">(</span><em>socket</em>, <em>message</em>, <em>interval_secs=-1</em>, <em>headers=()</em>, <em>queue=None</em>, <em>unschedule=False</em>, <em>cron=''</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.client.messages.send_schedule_request" title="Permalink to this definition">¶</a></dt>
 <dd><p>Send a SCHEDULE or UNSCHEDULE command.</p>
 <p>Queues a message requesting that something happens on an
 interval for the scheduler.</p>
@@ -314,13 +315,19 @@ interval for the scheduler.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; </li>
-<li><strong>interval_secs</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; </li>
+<li><strong>job_schedule</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; </li>
 <li><strong>message</strong> &#8211; Message to send socket.</li>
 <li><strong>headers</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; List of headers for the message</li>
 <li><strong>queue</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of queue the job should be executed in</li>
 </ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">ID of the message</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)">str</a></p>
 </td>
 </tr>
 </tbody>
@@ -348,7 +355,7 @@ interval for the scheduler.</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015, eventboard.io.
+        &copy; Copyright 2016, eventboard.io.
 
     </p>
   </div>

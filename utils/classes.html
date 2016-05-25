@@ -31,9 +31,9 @@
 
   
     <link rel="top" title="EventMQ 0 documentation" href="../index.html"/>
-        <link rel="up" title="utils - Utilities" href="index.html"/>
-        <link rel="next" title="messages – Message Utilities" href="messages.html"/>
-        <link rel="prev" title="utils - Utilities" href="index.html"/> 
+        <link rel="up" title="utils – Utilities" href="index.html"/>
+        <link rel="next" title="devices – Device Utilities" href="devices.html"/>
+        <link rel="prev" title="utils – Utilities" href="index.html"/> 
 
   
   <script src="../_static/js/modernizr.min.js"></script>
@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0
+                0.2.1
               </div>
             
           
@@ -83,6 +83,7 @@
             
             
                 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../using.html">Using EventMQ</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Documentation</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="../client.html"><code class="docutils literal"><span class="pre">client</span></code> &#8211; Client Utilities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../exceptions.html"><code class="docutils literal"><span class="pre">exceptions</span></code> &#8211; Exceptions</a></li>
@@ -91,11 +92,12 @@
 <li class="toctree-l2"><a class="reference internal" href="../receiver.html"><code class="docutils literal"><span class="pre">receiver</span></code> &#8211; Receiver</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../router.html"><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../sender.html"><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></li>
-<li class="toctree-l2 current"><a class="reference internal" href="index.html"><code class="docutils literal"><span class="pre">utils</span></code> - Utilities</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html"><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</a><ul class="current">
 <li class="toctree-l3 current"><a class="current reference internal" href=""><code class="docutils literal"><span class="pre">classes</span></code> &#8211; Utility Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="devices.html"><code class="docutils literal"><span class="pre">devices</span></code> &#8211; Device Utilities</a></li>
 <li class="toctree-l3"><a class="reference internal" href="messages.html"><code class="docutils literal"><span class="pre">messages</span></code> &#8211; Message Utilities</a></li>
+<li class="toctree-l3"><a class="reference internal" href="settings.html"><code class="docutils literal"><span class="pre">settings</span></code> &#8211; Settings Utilities</a></li>
 <li class="toctree-l3"><a class="reference internal" href="timeutils.html"><code class="docutils literal"><span class="pre">timeutils</span></code> &#8211; Time Utilites</a></li>
-<li class="toctree-l3"><a class="reference internal" href="index.html#id1"><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</a></li>
 </ul>
 </li>
 </ul>
@@ -133,7 +135,7 @@
       
           <li><a href="../api.html">API Documentation</a> &raquo;</li>
       
-          <li><a href="index.html"><code class="docutils literal"><span class="pre">utils</span></code> - Utilities</a> &raquo;</li>
+          <li><a href="index.html"><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</a> &raquo;</li>
       
     <li><code class="docutils literal"><span class="pre">classes</span></code> &#8211; Utility Classes</li>
       <li class="wy-breadcrumbs-aside">
@@ -224,27 +226,45 @@ as the first arguments.</p>
 
 <dl class="method">
 <dt id="eventmq.utils.classes.EMQPService.send_inform">
-<code class="descname">send_inform</code><span class="sig-paren">(</span><em>queue=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.classes.EMQPService.send_inform" title="Permalink to this definition">¶</a></dt>
-<dd><p>Queues an INFORM command to <cite>self.outgoing</cite>.</p>
+<code class="descname">send_inform</code><span class="sig-paren">(</span><em>queues=()</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.classes.EMQPService.send_inform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Notify the router that this job manager is online and and ready for
+work. This includes a list of queues the router should forward messages
+for.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>type</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Either &#8216;worker&#8217; or &#8216;scheduler&#8217;</li>
-<li><strong>queue</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; <ul>
-<li>For &#8216;worker&#8217; type, the queues the worker is listening on</li>
+<li><strong>queues</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; <ul>
+<li>For &#8216;worker&#8217; type, the queues the worker is listening on and
+their weights.<dl class="docutils">
+<dt>Example:</dt>
+<dd>([10, &#8216;default&#8217;], [15, &#8216;push_notifications&#8217;])</dd>
+</dl>
+</li>
 <li>Ignored for &#8216;scheduler&#8217; type</li>
 </ul>
 </li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">ValueError</span></code> &#8211; When <cite>type_</cite> does not match a specified type</p>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><code class="xref py py-exc docutils literal"><span class="pre">ValueError</span></code> &#8211; When <cite>type_</cite> does not match a specified type</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">ID of the message</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)">str</a></p>
 </td>
 </tr>
 </tbody>
 </table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Passing a single string for queues is supported for backward
+compatibility and not recommended for new apps.</p>
+</div>
 </dd></dl>
 
 <dl class="method">
@@ -515,6 +535,10 @@ False</td>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; The eMQP socket to send the message to</td>
 </tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">ID of the message</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)">str</a></td>
+</tr>
 </tbody>
 </table>
 </dd></dl>
@@ -612,10 +636,10 @@ specify the the recipient id of the remote socket</li>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="messages.html" class="btn btn-neutral float-right" title="messages – Message Utilities" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="devices.html" class="btn btn-neutral float-right" title="devices – Device Utilities" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="index.html" class="btn btn-neutral" title="utils - Utilities" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="index.html" class="btn btn-neutral" title="utils – Utilities" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -624,7 +648,7 @@ specify the the recipient id of the remote socket</li>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015, eventboard.io.
+        &copy; Copyright 2016, eventboard.io.
 
     </p>
   </div>

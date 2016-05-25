@@ -1,0 +1,261 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Settings &mdash; EventMQ 0 documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="EventMQ 0 documentation" href="index.html"/>
+        <link rel="up" title="Using EventMQ" href="using.html"/>
+        <link rel="next" title="API Documentation" href="api.html"/>
+        <link rel="prev" title="Using EventMQ" href="using.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> EventMQ
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.2.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="using.html">Using EventMQ</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="">Settings</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#router">Router</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scheduler">Scheduler</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#job-manager">Job Manager</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#concurrent-jobs">concurrent_jobs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#queues">queues</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to EventMQ</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="index.html">EventMQ</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="using.html">Using EventMQ</a> &raquo;</li>
+      
+    <li>Settings</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/settings_file.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="settings">
+<h1>Settings<a class="headerlink" href="#settings" title="Permalink to this headline">¶</a></h1>
+<p>EventMQ uses a standard INI style config file found at <code class="docutils literal"><span class="pre">/etc/eventmq.conf</span></code>.</p>
+<div class="section" id="router">
+<h2>Router<a class="headerlink" href="#router" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="scheduler">
+<h2>Scheduler<a class="headerlink" href="#scheduler" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="job-manager">
+<h2>Job Manager<a class="headerlink" href="#job-manager" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="concurrent-jobs">
+<h3>concurrent_jobs<a class="headerlink" href="#concurrent-jobs" title="Permalink to this headline">¶</a></h3>
+<p>Default: 4</p>
+<p>This is the number of concurrent jobs the indiviudal job manager should execute
+at a time. If you are using the multiprocess or threading model this number
+becomes important as you will want to control the load on your server. If the
+load equals the number of cores on the server, processes will begin waiting for
+cpu cycles and things will begin to slow down.</p>
+<p>A safe number to choose if your jobs block a lot would be (2 * cores). If your
+jobs are cpu intensive you will want to set this number to the number of cores
+you have or (cores - 1) to leave cycles for the os and other processes. This is
+something that will have to be tuned based on the jobs that are
+running. Grouping similar jobs in named queues will help you tune this number.</p>
+</div>
+<div class="section" id="queues">
+<h3>queues<a class="headerlink" href="#queues" title="Permalink to this headline">¶</a></h3>
+<p>Default: (10, default)</p>
+<p>Semi-colon seperated list of queues to process jobs for with thier
+weights. Example: <code class="docutils literal"><span class="pre">queues=(10,</span> <span class="pre">data_process);</span> <span class="pre">(15,</span> <span class="pre">email)</span></code>.  With these
+weights and the <code class="docutils literal"><span class="pre">CONCURRENT_JOBS</span></code> setting, you should be able to tune managers
+running jobs locally pretty efficiently. If you have a larger box with a weight
+of 50 on q1 and 8 concurrent jobs and a smaller box with a weight 30 and 4
+concurrent jobs, the q1 jobs will be sent to the large box until it is no longer
+accepting jobs. At this point jobs will start to be sent to the next highest
+number until the large box is ready to accept another q1 job.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">It is recommended that you have some workers listening for jobs on your
+default queue so that anything that is not explicitly assigned will still be
+run.</p>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="api.html" class="btn btn-neutral float-right" title="API Documentation" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="using.html" class="btn btn-neutral" title="Using EventMQ" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, eventboard.io.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

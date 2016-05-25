@@ -71,7 +71,7 @@ FRAME  Value          Description
 1      eMQP/1.0       Protocol version
 2      REQUEST        command
 3      _MSGID_        A unique id for the msg
-4      _QUEUE_NAME_   the name of the queue the worker belongs to
+4      _QUEUE_NAME_   the name of the queue the request should be sent to
 5      _HEADERS_      dictionary of headers. can be an empty set
 6      _MSG_          The message to send
 ====== ============== ===========
@@ -85,7 +85,7 @@ FRAME  Value          Description
 1      eMQP/1.0       Protocol version
 2      PUBLISH        command
 3      _MSGID_        A unique id for the msg
-4      _TOPIC_NAME_   the name of the queue the worker belongs to
+4      _TOPIC_NAME_   the name of the topic this message should be published across
 5      _HEADERS_      csv list of headers
 6      _MSG_          The message to send
 ====== ============== ===========
@@ -99,7 +99,7 @@ FRAME   Value         Description
 1      eMQP/1.0       Protocol version
 2      SCHEDULE       command
 3      _MSGID_        A unique id for the msg
-4      _TOPIC_NAME_   name of queue that the job should run in
+4      _QUEUE_NAME_   name of queue that the job should run in
 5      _HEADERS_      csv list of headers for this message
 6      _MSG_          The message to send
 ====== ============== ===========
@@ -113,7 +113,7 @@ FRAME   Value         Description
 1      eMQP/1.0       Protocol version
 2      UNSCHEDULE     command
 3      _MSGID_        A unique id for the msg
-4      _TOPIC_NAME_   ignored for this command, broadcasted to all queues
+4      _QUEUE_NAME_   ignored for this command, broadcasted to all queues
 5      _HEADERS_      csv list of headers for this message
 6      _MSG_          The message to send
 ====== ============== ===========
@@ -129,7 +129,7 @@ FRAME   Value         Description
 1      eMQP/1.0       Protocol version
 2      INFORM         command
 3      _MSGID_        A unique id for the msg
-4      _QUEUE_NAME_   csv seperated names of queue the worker belongs to
+4                     Queues. Unused for scheduler
 5      scheduler      type of peer connecting
 ====== ============== ===========
 
@@ -144,7 +144,7 @@ FRAME   Value         Description
 1      eMQP/1.0       Protocol version
 2      INFORM         command
 3      _MSGID_        A unique id for the msg
-4      _QUEUE_NAME_   csv seperated names of queue the worker belongs to.
+4      _QUEUES_       csv seperated arrays containing an int and a string for weight and name. e.g. [40, 'email']
 5      worker         type of peer connecting
 ====== ============== ===========
 
@@ -203,7 +203,6 @@ Heartbeating
  * If the worker detects that the broker disconnected it SHOULD restart the conversation.
  * If the broker detects that a worker has disconnected it should stop sending it a message of any type.
  * If the scheduler detects that the broker disconnects it SHOULD restart the conversation.
- * If the broker detects that a scheduler has disconnected it should ??????????.
 
 REQUEST Headers
 ---------------

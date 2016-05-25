@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0
+                0.2.1
               </div>
             
           
@@ -83,6 +83,7 @@
             
             
                 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="using.html">Using EventMQ</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">API Documentation</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="client.html"><code class="docutils literal"><span class="pre">client</span></code> &#8211; Client Utilities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="exceptions.html"><code class="docutils literal"><span class="pre">exceptions</span></code> &#8211; Exceptions</a></li>
@@ -91,7 +92,7 @@
 <li class="toctree-l2"><a class="reference internal" href="receiver.html"><code class="docutils literal"><span class="pre">receiver</span></code> &#8211; Receiver</a></li>
 <li class="toctree-l2"><a class="reference internal" href="router.html"><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sender.html"><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></li>
-<li class="toctree-l2"><a class="reference internal" href="utils.html"><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils/index.html"><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to EventMQ</a></li>
@@ -161,17 +162,37 @@ to manage the resources on the server it&#8217;s running.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; unique name of this instance. By default a uuid will be
-generated.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; unique name of this instance. By default a uuid will be
+generated.</li>
+<li><strong>queues</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) &#8211; List of queue names to listen on.</li>
+<li><strong>skip_signal</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; Don&#8217;t register the signal handlers. Useful for
+testing.</li>
+</ul>
+</td>
 </tr>
 </tbody>
 </table>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="eventmq.jobmanager.JobManager.concurrent_jobs">
+<code class="descname">concurrent_jobs</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.jobmanager.JobManager.concurrent_jobs" title="Permalink to this definition">¶</a></dt>
+<dd><p>keep track of workers</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="eventmq.jobmanager.JobManager.jobmanager_main">
-<code class="descname">jobmanager_main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.jobmanager_main" title="Permalink to this definition">¶</a></dt>
+<code class="descname">jobmanager_main</code><span class="sig-paren">(</span><em>broker_addr=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.jobmanager_main" title="Permalink to this definition">¶</a></dt>
 <dd><p>Kick off jobmanager with logging and settings import</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>broker_addr</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; The address of the broker to connect to.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
@@ -230,9 +251,9 @@ of work.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="eventmq.jobmanager.JobManager.request_queue">
-<code class="descname">request_queue</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.jobmanager.JobManager.request_queue" title="Permalink to this definition">¶</a></dt>
-<dd><p>Setup worker queues</p>
+<dt id="eventmq.jobmanager.JobManager.queues">
+<code class="descname">queues</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.jobmanager.JobManager.queues" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of queues that this job manager is listening on</p>
 </dd></dl>
 
 <dl class="method">
@@ -240,12 +261,6 @@ of work.</p>
 <code class="descname">send_ready</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.send_ready" title="Permalink to this definition">¶</a></dt>
 <dd><p>send the READY command upstream to indicate that JobManager is ready
 for another REQUEST message.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="eventmq.jobmanager.JobManager.workers">
-<code class="descname">workers</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.jobmanager.JobManager.workers" title="Permalink to this definition">¶</a></dt>
-<dd><p>keep track of workers</p>
 </dd></dl>
 
 </dd></dl>
@@ -271,7 +286,7 @@ for another REQUEST message.</p>
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015, eventboard.io.
+        &copy; Copyright 2016, eventboard.io.
 
     </p>
   </div>

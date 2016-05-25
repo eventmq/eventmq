@@ -60,7 +60,7 @@
             
             
               <div class="version">
-                0
+                0.2.1
               </div>
             
           
@@ -82,6 +82,7 @@
             
             
                 <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="using.html">Using EventMQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="contributing.html">Contributing to EventMQ</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="">EventMQ Protocol Specification</a><ul>
@@ -236,9 +237,9 @@
 <p>A <strong>REQUEST</strong> command consists of a 7-frame multipart message, formatted as follows.</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="10%" />
-<col width="22%" />
-<col width="68%" />
+<col width="8%" />
+<col width="20%" />
+<col width="72%" />
 </colgroup>
 <thead valign="bottom">
 <tr class="row-odd"><th class="head">FRAME</th>
@@ -265,7 +266,7 @@
 </tr>
 <tr class="row-even"><td>4</td>
 <td>_QUEUE_NAME_</td>
-<td>the name of the queue the worker belongs to</td>
+<td>the name of the queue the request should be sent to</td>
 </tr>
 <tr class="row-odd"><td>5</td>
 <td>_HEADERS_</td>
@@ -280,9 +281,9 @@
 <p>A <strong>PUBLISH</strong> command consists of a 7-frame multipart messag, formatted as follows.</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="10%" />
-<col width="22%" />
-<col width="68%" />
+<col width="7%" />
+<col width="17%" />
+<col width="75%" />
 </colgroup>
 <thead valign="bottom">
 <tr class="row-odd"><th class="head">FRAME</th>
@@ -309,7 +310,7 @@
 </tr>
 <tr class="row-even"><td>4</td>
 <td>_TOPIC_NAME_</td>
-<td>the name of the queue the worker belongs to</td>
+<td>the name of the topic this message should be published across</td>
 </tr>
 <tr class="row-odd"><td>5</td>
 <td>_HEADERS_</td>
@@ -352,7 +353,7 @@
 <td>A unique id for the msg</td>
 </tr>
 <tr class="row-even"><td>4</td>
-<td>_TOPIC_NAME_</td>
+<td>_QUEUE_NAME_</td>
 <td>name of queue that the job should run in</td>
 </tr>
 <tr class="row-odd"><td>5</td>
@@ -396,7 +397,7 @@
 <td>A unique id for the msg</td>
 </tr>
 <tr class="row-even"><td>4</td>
-<td>_TOPIC_NAME_</td>
+<td>_QUEUE_NAME_</td>
 <td>ignored for this command, broadcasted to all queues</td>
 </tr>
 <tr class="row-odd"><td>5</td>
@@ -415,9 +416,9 @@
 <p>An <strong>INFORM</strong> command consists of a 6-frame multipart message, formatted as follows.</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="9%" />
-<col width="20%" />
-<col width="71%" />
+<col width="13%" />
+<col width="29%" />
+<col width="58%" />
 </colgroup>
 <thead valign="bottom">
 <tr class="row-odd"><th class="head">FRAME</th>
@@ -443,8 +444,8 @@
 <td>A unique id for the msg</td>
 </tr>
 <tr class="row-even"><td>4</td>
-<td>_QUEUE_NAME_</td>
-<td>csv seperated names of queue the worker belongs to</td>
+<td>&nbsp;</td>
+<td>Queues. Unused for scheduler</td>
 </tr>
 <tr class="row-odd"><td>5</td>
 <td>scheduler</td>
@@ -458,9 +459,9 @@
 <p>An <strong>INFORM</strong> command consists of a 5-frame multipart message, formatted as follows.</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="8%" />
-<col width="20%" />
-<col width="72%" />
+<col width="5%" />
+<col width="13%" />
+<col width="82%" />
 </colgroup>
 <thead valign="bottom">
 <tr class="row-odd"><th class="head">FRAME</th>
@@ -486,8 +487,8 @@
 <td>A unique id for the msg</td>
 </tr>
 <tr class="row-even"><td>4</td>
-<td>_QUEUE_NAME_</td>
-<td>csv seperated names of queue the worker belongs to.</td>
+<td>_QUEUES_</td>
+<td>csv seperated arrays containing an int and a string for weight and name. e.g. [40, &#8216;email&#8217;]</td>
 </tr>
 <tr class="row-odd"><td>5</td>
 <td>worker</td>
@@ -643,7 +644,6 @@
 <li>If the worker detects that the broker disconnected it SHOULD restart the conversation.</li>
 <li>If the broker detects that a worker has disconnected it should stop sending it a message of any type.</li>
 <li>If the scheduler detects that the broker disconnects it SHOULD restart the conversation.</li>
-<li>If the broker detects that a scheduler has disconnected it should ??????????.</li>
 </ul>
 </div></blockquote>
 </div>
@@ -709,7 +709,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2015, eventboard.io.
+        &copy; Copyright 2016, eventboard.io.
 
     </p>
   </div>
