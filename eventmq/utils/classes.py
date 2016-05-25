@@ -88,8 +88,15 @@ class EMQPService(object):
             raise ValueError('{} not one of {}'.format(self.SERVICE_TYPE,
                                                        valid_types))
 
-        if isinstance(queues, (list, tuple)):
+        if self.SERVICE_TYPE == constants.CLIENT_TYPE.scheduler:
+            queues = ''
+
+        if isinstance(queues, (list, tuple)) and queues:
+            # queues shouldn't be empty. We don't want to send '[]' to the
+            # router.
             queues = json.dumps(queues)
+        else:
+            queues = ''
 
         msgid = sendmsg(self.outgoing, 'INFORM', [
             queues,

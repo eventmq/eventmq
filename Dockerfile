@@ -23,4 +23,4 @@ WORKDIR /eventmq
 
 RUN pip install -e .
 
-ADD etc/eventmq.docker.conf /etc/eventmq.conf
+ADD etc/eventmq.conf-dist /etc/eventmq.conf
