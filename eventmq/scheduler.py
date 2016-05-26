@@ -24,7 +24,7 @@ import redis
 from croniter import croniter
 from six import next
 
-from . import conf
+from . import conf, constants
 from .sender import Sender
 from .poller import Poller, POLLIN
 from .utils.classes import EMQPService, HeartbeatMixin
@@ -45,7 +45,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
     """
     Keeper of time, master of schedules
     """
-    SERVICE_TYPE = 'scheduler'
+    SERVICE_TYPE = constants.CLIENT_TYPE.scheduler
 
     def __init__(self, *args, **kwargs):
         logger.info('Initializing Scheduler...')

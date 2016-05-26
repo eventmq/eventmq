@@ -112,6 +112,17 @@ class EMQPServiceTestCase(unittest.TestCase):
 
         return obj
 
+    def get_scheduler(self):
+        """return an EMQPService mimicking a scheduler"""
+        obj = classes.EMQPService()
+        obj.SERVICE_TYPE = constants.CLIENT_TYPE.scheduler
+        obj.outgoing = self.outgoing
+        obj._meta = {
+            'last_sent_heartbeat': 0
+        }
+
+        return obj
+
     @mock.patch('eventmq.utils.classes.sendmsg')
     def test_send_inform_return_msgid(self, sendmsg_mock):
         obj = self.get_worker()
@@ -122,27 +133,25 @@ class EMQPServiceTestCase(unittest.TestCase):
         self.assertEqual(retval, sendmsg_mock.return_value)
 
     @mock.patch('eventmq.utils.classes.sendmsg')
-    def test_send_inform_single_weightless_queue(self, sendmsg_mock):
-        # Test that the inform message is backward compatible with a change
-        # in v0.2.0
-        obj = self.get_worker()
-
-        obj.send_inform(queues='derpfault')
-
-        sendmsg_mock.assert_called_with(
-            'some-outgoing-socket', 'INFORM',
-            ['derpfault', constants.CLIENT_TYPE.worker]
-        )
-
-    @mock.patch('eventmq.utils.classes.sendmsg')
     def test_send_inform_empty_queue_name(self, sendmsg_mock):
         obj = self.get_worker()
 
         obj.send_inform()
 
         sendmsg_mock.assert_called_with(
-            'some-outgoing-socket', 'INFORM',
+            self.outgoing, 'INFORM',
             ['', constants.CLIENT_TYPE.worker])
+
+    @mock.patch('eventmq.utils.classes.sendmsg')
+    def test_send_inform_scheduler(self, sendmsg_mock):
+        obj = self.get_scheduler()
+
+        obj.send_inform(queues="this shouldn't matter")
+
+        sendmsg_mock.assert_called_with(
+            self.outgoing, 'INFORM',
+            ['', constants.CLIENT_TYPE.scheduler]
+        )
 
     @mock.patch('eventmq.utils.classes.sendmsg')
     def test_send_inform_specified_valid_queues(self, sendmsg_mock):

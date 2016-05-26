@@ -16,6 +16,7 @@ import unittest
 
 from freezegun import freeze_time
 import mock
+from testfixtures import LogCapture
 import zmq
 
 from .. import conf, constants, exceptions, receiver, router
@@ -67,6 +68,8 @@ class TestCase(unittest.TestCase):
         queues = ''
         inform_msgid = 'msg29'
 
+        conf.QUEUES = [(10, 'default'), ]
+
         self.router.on_inform(
             sender_id, inform_msgid, [queues, constants.CLIENT_TYPE.worker])
 
@@ -74,6 +77,24 @@ class TestCase(unittest.TestCase):
             self.router.outgoing, sender_id, inform_msgid)
         self.router.add_worker.assert_called_with(
             sender_id, [(10, 'default'), ])
+
+    def test_on_inform_invalid_queues(self):
+        # https://github.com/enderlabs/eventmq/issues/33
+        # when receiving an invalid queue name for inform, the router shouldn't
+        # crash
+        sender_id = 'sch01'
+        msgid = 'msg01'
+        msg = ["invalid queue name", constants.CLIENT_TYPE.worker]
+
+        with LogCapture() as log_checker:
+            self.router.on_inform(sender_id, msgid, msg)
+
+            log_checker.check(
+                ('eventmq.router',
+                 'ERROR',
+                 'Received invalid queue names in INFORM. names:{} from:{} '
+                 'type:{}'.format(msg[0], sender_id, msg[1]))
+            )
 
     # @mock.patch('eventmq.router.Router.prioritize_queue_list')
     def test_add_worker(self):

@@ -248,9 +248,17 @@ class Router(HeartbeatMixin):
         client_type = msg[1]
 
         if not queue_names:  # Ideally, this matches some workers
-            queues = [(conf.DEFAULT_QUEUE_WEIGHT, conf.DEFAULT_QUEUE_NAME), ]
+            queues = conf.QUEUES
         else:
-            queues = list(map(tuplify, json.loads(queue_names)))
+            try:
+                queues = list(map(tuplify, json.loads(queue_names)))
+            except ValueError:
+                # this was invalid json
+                logger.error(
+                    'Received invalid queue names in INFORM. names:{} from:{} '
+                    'type:{}'.format(
+                        queue_names, sender, client_type))
+                return
 
         logger.info('Received INFORM request from {} (type: {})'.format(
             sender, client_type))
