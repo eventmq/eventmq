@@ -66,11 +66,15 @@ class JobManager(HeartbeatMixin, EMQPService):
         logger.info('Initializing JobManager {}...'.format(self.name))
 
         #: keep track of workers
-        concurrent_jobs = kwargs.pop('concurrent_jobs', conf.CONCURRENT_JOBS)
+        concurrent_jobs = kwargs.pop('concurrent_jobs', None)
+        if concurrent_jobs is None:
+            concurrent_jobs = conf.CONCURRENT_JOBS
         self.workers = Pool(processes=concurrent_jobs)
 
         #: List of queues that this job manager is listening on
-        self.queues = kwargs.pop('queues', conf.QUEUES)
+        self.queues = kwargs.pop('queues', None)
+        if self.queues is None:
+            self.quques = conf.QUEUES
 
         if not kwargs.pop('skip_signal', False):
             # handle any sighups by reloading config
