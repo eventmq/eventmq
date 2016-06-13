@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+"""
+Usage: ./send_msg <ipaddresss> <command> <frame w/ values space separated>
+"""
+import sys
+
+from eventmq.sender import Sender
+from eventmq.client.messages import send_request
+
+
+if __name__ == "__main__":
+    s = Sender()
+    s.connect(sys.argv[1])
+
+    msg = ['run', {
+           'path': 'eventmq.scheduler',
+           'callable': 'test_job',
+           'class_args': (),
+           'class_kwargs': {},
+           'args': (),
+           'kwargs': {}
+           }]
+
+    send_request(s, msg, guarantee=True, reply_requested=True)

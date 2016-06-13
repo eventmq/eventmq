@@ -105,6 +105,12 @@ class Router(HeartbeatMixin):
         #:     }
         self.schedulers = {}
 
+
+        #: Latency tracking dictionary
+        #: Key: msgid of message each REQUEST received and forwarded to a worker
+        #: Value: (timestamp, queue_name)
+        self.job_latencies = {}
+
         #: Set to True when the router should die.
         self.received_disconnect = False
 
@@ -270,6 +276,25 @@ class Router(HeartbeatMixin):
             self.add_scheduler(sender)
             self.send_ack(self.incoming, sender, msgid)
 
+    def on_reply(self, sender, msgid, msg):
+        """
+        Handles an REPLY message. Replies are sent by the worker for latanecy
+        measurements
+        """
+
+        orig_msgid = msg[1]
+        logger.info('Received REPLY from {} (msgid: {}, ACK msgid: {})'.format(
+            sender, msgid, orig_msgid))
+
+        if orig_msgid in self.job_latencies:
+            logger.info("Completed {queue} job with msgid: {msgid} in "
+                        "{time:.2f}ms".\
+                format(queue=self.job_latencies[orig_msgid][1],
+                       msgid=orig_msgid,
+                       time=(monotonic()-self.job_latencies[orig_msgid][0])*1000.0))
+            del self.job_latencies[orig_msgid]
+
+
     def on_disconnect(self, msgid, msg):
         # Loops event loops should check for this and break out
         self.received_disconnect = True
@@ -364,6 +389,7 @@ class Router(HeartbeatMixin):
         try:
             # Rebuild the message to be sent to the worker. fwdmsg will
             # properly address the message.
+            self.job_latencies[msgid] = (monotonic(), queue_name)
             fwdmsg(self.outgoing, worker_addr, ['', constants.PROTOCOL_VERSION,
                                                 'REQUEST', msgid, ] + msg)
             self.workers[worker_addr]['available_slots'] -= 1

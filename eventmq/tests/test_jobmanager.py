@@ -80,7 +80,7 @@ class TestCase(unittest.TestCase):
 
         jm.on_request(_msgid, _msg)
         apply_async_mock.assert_called_with(
-            args=({'a': 1},),
+            args=({'a': 1}, _msgid),
             callback=jm.worker_done,
             func=run_mock)
 
