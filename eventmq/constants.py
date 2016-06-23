@@ -16,3 +16,7 @@ class CLIENT_TYPE(object):
 
 # See doc/protocol.rst
 PROTOCOL_VERSION = 'eMQP/1.0'
+
+# PROTOCOL COMMANDS
+DISCONNECT = "DISCONNECT"
+KBYE = "KBYE"

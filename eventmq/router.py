@@ -200,9 +200,20 @@ class Router(HeartbeatMixin):
             msgid: The ID of the ACK message
         """
         logger.info('Sending ACK to %s' % recipient)
+        logger.info('Queue information %s' % self.queues)
+        logger.info('Worker information %s' % self.workers)
         msgid = sendmsg(socket, recipient, 'ACK', msgid)
 
         return msgid
+
+    def send_disconnect(self, socket, receipient, msgid):
+        logger.info('Sending DISCONNECT to %s' % receipient)
+        msgid = sendmsg(socket, receipient, 'DISCONNECT', msgid)
+
+        return msgid
+
+    def send_kbye(self, socket, recipient):
+        pass
 
     def send_heartbeat(self, socket, recipient):
         """
@@ -672,6 +683,21 @@ class Router(HeartbeatMixin):
                                  format(scheduler_addr))
                     self.process_client_message(original_msg[1:], depth+1)
 
+        elif command == "DISCONNECT":
+            # Shutdown schedulers
+            while len(self.scheduler_queue) > 0:
+                scheduler_addr = self.scheduler_queue.pop()
+                self.schedulers[scheduler_addr] = {
+                    'hb': monotonic(),
+                }
+
+
+                self.scheduler_queue.append(scheduler_addr)
+            #TODO: Signal it to finish sending all messages in its queues
+            pass
+
+            # TODO: Shutdown the router
+
     def process_worker_message(self, msg):
         """
         This method is called when a message comes in from the worker socket.
@@ -694,7 +720,16 @@ class Router(HeartbeatMixin):
 
         # Treat any message like a HEARTBEAT.
         if sender in self.workers:
-            self.workers[sender]['hb'] = monotonic()
+            if command == constants.KBYE:
+                # TODO: May need to check for key exception here
+                worker = self.workers.pop(sender)
+                for queue in worker['queues']:
+                    name = queue[1]
+                    workers = self.queues[name]
+                    revised_list = filter(lambda x : x[1] != worker, workers)
+                    self.queues[name] = revised_list
+            else:
+                self.workers[sender]['hb'] = monotonic()
         elif command.lower() != 'inform':
             logger.critical('Unknown worker %s attempting to run %s command: '
                             '%s' % (sender, command, str(msg)))
