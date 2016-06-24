@@ -23,6 +23,7 @@ import logging
 import signal
 
 from . import conf
+from .constants import KBYE
 from .poller import Poller, POLLIN
 from .sender import Sender
 from .utils.classes import EMQPService, HeartbeatMixin
@@ -113,6 +114,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         while True:
             # Clear any workers if it's time to shut down
             if self.received_disconnect:
+                self.send_kbye()
                 self.workers.close()
                 break
 
@@ -201,6 +203,9 @@ class JobManager(HeartbeatMixin, EMQPService):
          reply = serializer(reply)
 
          sendmsg(self.outgoing, 'REPLY', [reply, msgid])
+
+    def send_kbye(self):
+        sendmsg(self.outgoing, KBYE)
 
     def on_heartbeat(self, msgid, message):
         """

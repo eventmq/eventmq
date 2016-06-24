@@ -17,6 +17,7 @@
 =============================
 Handles cron and other scheduled tasks
 """
+import sys
 import json
 import logging
 import redis
@@ -25,11 +26,13 @@ from croniter import croniter
 from six import next
 
 from . import conf, constants
+from constants import KBYE
 from .sender import Sender
 from .poller import Poller, POLLIN
 from .utils.classes import EMQPService, HeartbeatMixin
 from json import loads as deserialize
 from json import dumps as serialize
+from .utils.messages import send_emqp_message
 from .utils.settings import import_settings
 from .utils.timeutils import IntervalIter
 from .utils.timeutils import seconds_until, timestamp, monotonic
@@ -136,6 +139,9 @@ class Scheduler(HeartbeatMixin, EMQPService):
         Starts the actual event loop. Usually called by :meth:`Scheduler.start`
         """
         while True:
+            if self.received_disconnect:
+                break
+
             ts_now = int(timestamp())
             m_now = monotonic()
             events = self.poller.poll()
@@ -209,6 +215,13 @@ class Scheduler(HeartbeatMixin, EMQPService):
         msgid = send_request(self.outgoing, jobmsg, queue=queue)
 
         return msgid
+
+    def on_disconnect(self, msgid, message):
+        logger.info("Received DISCONNECT request: {}".format(message))
+        self._redis_server.connection_pool.disconnect()
+        send_emqp_message(self.outgoing, KBYE)
+        self.outgoing.unbind(conf.SCHEDULER_ADDR)
+        super(Scheduler, self).on_disconnect(msgid, message)
 
     def on_unschedule(self, msgid, message):
         """
