@@ -23,7 +23,7 @@ import logging
 import signal
 
 from . import conf, constants, exceptions, poller, receiver
-from .constants import STATUS, CLIENT_TYPE, PROTOCOL_VERSION
+from .constants import STATUS, CLIENT_TYPE, PROTOCOL_VERSION, KBYE, DISCONNECT
 from .utils.classes import EMQdeque, HeartbeatMixin
 from .utils.messages import (
     send_emqp_router_message as sendmsg,
@@ -136,11 +136,7 @@ class Router(HeartbeatMixin):
         """
         Starts the actual eventloop. Usually called by :meth:`Router.start`
         """
-        while True:
-
-            if self.received_disconnect:
-                break
-
+        while not self.received_disconnect:
             now = monotonic()
             events = self.poller.poll()
 
@@ -200,14 +196,10 @@ class Router(HeartbeatMixin):
 
         return msgid
 
-    def send_disconnect(self, socket, receipient, msgid):
-        logger.info('Sending DISCONNECT to %s' % receipient)
-        msgid = sendmsg(socket, receipient, 'DISCONNECT', msgid)
-
-        return msgid
-
-    def send_kbye(self, socket, recipient):
-        pass
+    def send_kbye(self, socket, recipient, msgid):
+        logger.info('Sending {} to {}'.format(KBYE, recipient))
+        msg_id = sendmsg(socket, recipient, KBYE, msgid)
+        return msg_id
 
     def send_heartbeat(self, socket, recipient):
         """
@@ -284,6 +276,22 @@ class Router(HeartbeatMixin):
     def on_disconnect(self, msgid, msg):
         # Loops event loops should check for this and break out
         self.received_disconnect = True
+
+        # Remove schedulers and send them a kbye
+        while len(self.scheduler_queue) > 0:
+            scheduler_addr = self.scheduler_queue.pop()
+            self.send_kbye(self.incoming, scheduler_addr, msgid)
+
+        self.incoming.unbind(conf.FRONTEND_ADDR)
+
+        # TODO: Signal it to finish sending all messages in its queues
+
+        # TODO: Notify workers that it is closing
+        for worker in self.workers.keys():
+            self.send_kbye(self.outgoing, worker, msgid)
+            del self.workers[worker]
+
+        self.outgoing.unbind(conf.BACKEND_ADDR)
 
     def on_ready(self, sender, msgid, msg):
         """
@@ -582,6 +590,7 @@ class Router(HeartbeatMixin):
             InvalidMessageError: Unable to parse the message
         """
         # Limit recusive depth (timeout on PeerGoneAwayError)
+        logger.info('process_client called orig_msg: {}'.format(original_msg))
         if (depth > 100):
             logger.error('Recursion Error: process_client_message called too '
                          'many times with message: {}'.format(original_msg))
@@ -607,6 +616,8 @@ class Router(HeartbeatMixin):
             # If it is a heartbeat then there is nothing left to do
             if command == "HEARTBEAT":
                 return
+            elif command == KBYE:
+                self._remove_scheduler(sender)
 
         # REQUEST is the most common message so it goes at the top
         if command == "REQUEST":
@@ -657,20 +668,8 @@ class Router(HeartbeatMixin):
                                  format(scheduler_addr))
                     self.process_client_message(original_msg[1:], depth+1)
 
-        elif command == "DISCONNECT":
-            # Shutdown schedulers
-            while len(self.scheduler_queue) > 0:
-                scheduler_addr = self.scheduler_queue.pop()
-                self.schedulers[scheduler_addr] = {
-                    'hb': monotonic(),
-                }
-
-
-                self.scheduler_queue.append(scheduler_addr)
-            #TODO: Signal it to finish sending all messages in its queues
-            pass
-
-            # TODO: Shutdown the router
+        elif command == DISCONNECT:
+            self.on_disconnect(msgid, msg)
 
     def process_worker_message(self, msg):
         """
@@ -692,16 +691,10 @@ class Router(HeartbeatMixin):
         msgid = message[2]
         message = message[3]
 
-        # Treat any message like a HEARTBEAT.
         if sender in self.workers:
-            if command == constants.KBYE:
-                # TODO: May need to check for key exception here
-                worker = self.workers.pop(sender)
-                for queue in worker['queues']:
-                    name = queue[1]
-                    workers = self.queues[name]
-                    revised_list = filter(lambda x : x[1] != worker, workers)
-                    self.queues[name] = revised_list
+            if command == KBYE:
+                self._remove_worker(sender)
+            # Treat any other message like a HEARTBEAT.
             else:
                 self.workers[sender]['hb'] = monotonic()
         elif command.lower() != 'inform':
@@ -712,6 +705,34 @@ class Router(HeartbeatMixin):
         if hasattr(self, "on_%s" % command.lower()):
             func = getattr(self, "on_%s" % command.lower())
             func(sender, msgid, message)
+
+    def _remove_worker(self, worker_id):
+        """
+        For a given worker, remove all references of that worker to any queue it belongs to.
+
+        Args:
+            worker_id: (str) ID of worker to remove
+        """
+        worker = self.workers.pop(worker_id)
+        for queue in worker['queues']:
+            name = queue[1]
+            workers = self.queues[name]
+            revised_list = filter(lambda x: x[1] != worker, workers)
+            self.queues[name] = revised_list
+
+    def _remove_scheduler(self, scheduler_id):
+        """
+        For a given scheduler, remove it from dict of registered schedulers and as
+        as from the light of queued schedulers.
+        Args:
+            scheduler_id: (str) ID of scheduler to remove
+        """
+        self.schedulers.pop(scheduler_id)
+        schedulers_to_remove = self.scheduler_queue
+        self.scheduler_queue = filter(lambda x: x != scheduler_id,
+                                      schedulers_to_remove)
+        logger.debug('Removed scheduler - {} from known schedulers'.format(
+            scheduler_id))
 
     @classmethod
     def prioritize_queue_list(cls, unprioritized_iterable):
