@@ -196,9 +196,9 @@ class Router(HeartbeatMixin):
 
         return msgid
 
-    def send_kbye(self, socket, recipient, msgid):
+    def send_kbye(self, socket, recipient):
         logger.info('Sending {} to {}'.format(KBYE, recipient))
-        msg_id = sendmsg(socket, recipient, KBYE, msgid)
+        msg_id = sendmsg(socket, recipient, KBYE)
         return msg_id
 
     def send_heartbeat(self, socket, recipient):
@@ -274,24 +274,34 @@ class Router(HeartbeatMixin):
             self.send_ack(self.incoming, sender, msgid)
 
     def on_disconnect(self, msgid, msg):
-        # Loops event loops should check for this and break out
-        self.received_disconnect = True
+        """
+        Prepare router for disconnecting by removing schedulers, clearing
+        worker queue (if needed), and removing workers.
+        """
 
         # Remove schedulers and send them a kbye
-        while len(self.scheduler_queue) > 0:
-            scheduler_addr = self.scheduler_queue.pop()
-            self.send_kbye(self.incoming, scheduler_addr, msgid)
+        logger.info("Router preparing to disconnect...")
+        for scheduler in self.schedulers:
+            self.send_kbye(self.incoming, scheduler)
 
+        self.schedulers.clear()
         self.incoming.unbind(conf.FRONTEND_ADDR)
 
-        # TODO: Signal it to finish sending all messages in its queues
+        if len(self.waiting_messages) > 0:
+            logger.info("Router processing messages in queue.")
+            for queue in self.waiting_messages.keys():
+                while not self.waiting_messages[queue].is_empty():
+                    msg = self.waiting_messages[queue].popleft()
+                    self.process_worker_message(msg)
 
-        # TODO: Notify workers that it is closing
         for worker in self.workers.keys():
-            self.send_kbye(self.outgoing, worker, msgid)
-            del self.workers[worker]
+            self.send_kbye(self.outgoing, worker)
 
+        self.workers.clear()
         self.outgoing.unbind(conf.BACKEND_ADDR)
+
+        # Loops event loops should check for this and break out
+        self.received_disconnect = True
 
     def on_ready(self, sender, msgid, msg):
         """
@@ -610,14 +620,17 @@ class Router(HeartbeatMixin):
 
         # Count this message as a heart beat if it came from a scheduler that
         # the router is aware of.
+
+        if sender in self.schedulers and command == KBYE:
+            self._remove_scheduler(sender)
+            return
+
         if sender in self.schedulers and sender in self.scheduler_queue:
             self.schedulers[sender]['hb'] = monotonic()
 
             # If it is a heartbeat then there is nothing left to do
             if command == "HEARTBEAT":
                 return
-            elif command == KBYE:
-                self._remove_scheduler(sender)
 
         # REQUEST is the most common message so it goes at the top
         if command == "REQUEST":
@@ -692,7 +705,7 @@ class Router(HeartbeatMixin):
         message = message[3]
 
         if sender in self.workers:
-            if command == KBYE:
+            if command.upper() == KBYE:
                 self._remove_worker(sender)
             # Treat any other message like a HEARTBEAT.
             else:

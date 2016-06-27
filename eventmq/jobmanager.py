@@ -72,10 +72,13 @@ class JobManager(HeartbeatMixin, EMQPService):
             concurrent_jobs = conf.CONCURRENT_JOBS
         self.workers = Pool(processes=concurrent_jobs)
 
+        self.job_slots = concurrent_jobs
+        self.active_jobs = concurrent_jobs
+
         #: List of queues that this job manager is listening on
         self.queues = kwargs.pop('queues', None)
         if self.queues is None:
-            self.quques = conf.QUEUES
+            self.queues = conf.QUEUES
 
         if not kwargs.pop('skip_signal', False):
             # handle any sighups by reloading config
@@ -102,9 +105,8 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         while True:
             # Clear any workers if it's time to shut down
-            if self.received_disconnect:
-                self.send_kbye()
-                self.workers.close()
+            if self.received_disconnect and self.active_jobs == self.job_slots:
+                self.disconnect()
                 break
 
             events = self.poller.poll()
@@ -152,11 +154,13 @@ class JobManager(HeartbeatMixin, EMQPService):
         # subcmd = payload[0]
         params = payload[1]
 
+        self.active_jobs -= 1
         self.workers.apply_async(func=worker.run,
                                  args=(params,),
                                  callback=self.worker_done)
 
     def worker_done(self, result):
+        self.active_jobs += 1
         self.send_ready()
 
     def send_ready(self):
@@ -166,8 +170,9 @@ class JobManager(HeartbeatMixin, EMQPService):
         """
         sendmsg(self.outgoing, 'READY')
 
-    def send_kbye(self):
+    def disconnect(self):
         sendmsg(self.outgoing, KBYE)
+        self.workers.close()
 
     def on_heartbeat(self, msgid, message):
         """
@@ -175,6 +180,14 @@ class JobManager(HeartbeatMixin, EMQPService):
         in :meth:`self.process_message` as every message is counted as a
         HEARTBEAT
         """
+
+    def on_disconnect(self, msgid, msg):
+        self.outgoing.unbind(conf.WORKER_ADDR)
+        super(JobManager, self).on_disconnect(msgid, msg)
+
+    def on_kbye(self, msgid, msg):
+        if not self.is_heartbeat_enabled:
+            self.reset()
 
     def sighup_handler(self, signum, frame):
         logger.info('Caught signal %s' % signum)

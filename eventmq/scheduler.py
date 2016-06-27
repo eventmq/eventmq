@@ -32,7 +32,7 @@ from .poller import Poller, POLLIN
 from .utils.classes import EMQPService, HeartbeatMixin
 from json import loads as deserialize
 from json import dumps as serialize
-from .utils.messages import send_emqp_message
+from .utils.messages import send_emqp_message as sendmsg
 from .utils.settings import import_settings
 from .utils.timeutils import IntervalIter
 from .utils.timeutils import seconds_until, timestamp, monotonic
@@ -219,9 +219,13 @@ class Scheduler(HeartbeatMixin, EMQPService):
     def on_disconnect(self, msgid, message):
         logger.info("Received DISCONNECT request: {}".format(message))
         self._redis_server.connection_pool.disconnect()
-        send_emqp_message(self.outgoing, KBYE)
+        sendmsg(self.outgoing, KBYE)
         self.outgoing.unbind(conf.SCHEDULER_ADDR)
         super(Scheduler, self).on_disconnect(msgid, message)
+
+    def on_kbye(self, msgid, msg):
+        if not self.is_heartbeat_enabled:
+            self.reset()
 
     def on_unschedule(self, msgid, message):
         """
