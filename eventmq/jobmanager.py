@@ -94,9 +94,6 @@ class JobManager(HeartbeatMixin, EMQPService):
     def workers(self):
         if not hasattr(self, '_workers'):
             self._workers = Pool(processes=conf.CONCURRENT_JOBS)
-        elif self._workers.processes != conf.CONCURRENT_JOBS:
-            self._workers.close()
-            self._workers = Pool(processes=conf.CONCURRENT_JOBS)
 
         return self._workers
 
