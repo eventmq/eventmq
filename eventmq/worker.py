@@ -18,9 +18,12 @@
 Defines different short-lived workers that execute jobs
 """
 from importlib import import_module
-import logging
 
-logger = logging.getLogger(__name__)
+# the run function is executed in a different process, so we need to set the
+# logger up.
+from . import log
+
+logger = log.setup_logger(__name__)
 
 
 def run(payload):
