@@ -26,7 +26,7 @@ from . import log
 logger = log.setup_logger(__name__)
 
 
-def run(payload):
+def run(payload, msgid):
     """
     process a run message and execute a job
 
@@ -47,7 +47,7 @@ def run(payload):
         reload(package)
     except Exception as e:
         logger.exception('Error importing module: {}'.format(str(e)))
-        return 'DONE'
+        return (msgid, str(e))
 
     if s_cls:
         cls = getattr(package, s_cls)
@@ -70,7 +70,7 @@ def run(payload):
         callable_ = getattr(obj, s_callable)
     except AttributeError as e:
         logger.exception('Error getting callable: {}'.format(str(e)))
-        return 'DONE'
+        return (msgid, str(e))
 
     if "args" in payload:
         args = payload["args"]
@@ -83,10 +83,11 @@ def run(payload):
         kwargs = {}
 
     try:
-        callable_(*args, **kwargs)
+        r = callable_(*args, **kwargs)
+        return (msgid, r)
     except Exception as e:
         logger.exception(e)
-        return 'DONE'
+        return (msgid, str(e))
 
     # Signal that we're done with this job
-    return 'DONE'
+    return (msgid, '')

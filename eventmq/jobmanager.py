@@ -17,7 +17,8 @@
 ================================
 Ensures things about jobs and spawns the actual tasks
 """
-from json import loads as serializer
+from json import loads as deserializer
+from json import dumps as serializer
 import logging
 import signal
 
@@ -67,14 +68,13 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         #: keep track of workers
         concurrent_jobs = kwargs.pop('concurrent_jobs', None)
-        if concurrent_jobs is None:
-            concurrent_jobs = conf.CONCURRENT_JOBS
-        self.workers = Pool(processes=concurrent_jobs)
+        if concurrent_jobs is not None:
+            conf.CONCURRENT_JOBS = concurrent_jobs
 
         #: List of queues that this job manager is listening on
         self.queues = kwargs.pop('queues', None)
         if self.queues is None:
-            self.quques = conf.QUEUES
+            self.queues = conf.QUEUES
 
         if not kwargs.pop('skip_signal', False):
             # handle any sighups by reloading config
@@ -90,12 +90,23 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         self._setup()
 
+    @property
+    def workers(self):
+        if not hasattr(self, '_workers'):
+            self._workers = Pool(processes=conf.CONCURRENT_JOBS)
+        elif self._workers.processes != conf.CONCURRENT_JOBS:
+            self._workers.close()
+            self._workers = Pool(processes=conf.CONCURRENT_JOBS)
+
+        return self._workers
+
     def _start_event_loop(self):
         """
         Starts the actual event loop. Usually called by :meth:`start`
         """
         # Acknowledgment has come
         # Send a READY for each available worker
+
         for i in range(0, conf.CONCURRENT_JOBS):
             self.send_ready()
 
@@ -145,16 +156,26 @@ class JobManager(HeartbeatMixin, EMQPService):
         # s_ indicates the string path vs the actual module and class
         # queue_name = msg[0]
 
-        # run callable
-        payload = serializer(msg[2])
-        # subcmd = payload[0]
+        # Parse REQUEST message values
+        headers = msg[1]
+        payload = deserializer(msg[2])
         params = payload[1]
 
-        self.workers.apply_async(func=worker.run,
-                                 args=(params,),
-                                 callback=self.worker_done)
+        if 'reply-requested' in headers:
+           callback = self.worker_done_with_reply
+        else:
+           callback = self.worker_done
 
-    def worker_done(self, result):
+        # kick off the job asynchronously with an appropiate callback
+        self.workers.apply_async(func=worker.run,
+                                 args=(params, msgid),
+                                 callback=callback)
+
+    def worker_done_with_reply(self, msgid):
+        self.send_reply(msgid)
+        self.send_ready()
+
+    def worker_done(self, msgid):
         self.send_ready()
 
     def send_ready(self):
@@ -163,6 +184,23 @@ class JobManager(HeartbeatMixin, EMQPService):
         for another REQUEST message.
         """
         sendmsg(self.outgoing, 'READY')
+
+    def send_reply(self, res):
+         """
+         Sends an REPLY response
+
+         Args:
+             socket (socket): The socket to use for this ack
+             recipient (str): The recipient id for the ack
+             msgid: The unique id that we are acknowledging
+         """
+         msgid = res[0]
+
+         reply = res[1]
+
+         reply = serializer(reply)
+
+         sendmsg(self.outgoing, 'REPLY', [reply, msgid])
 
     def on_heartbeat(self, msgid, message):
         """
