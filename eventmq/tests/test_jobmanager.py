@@ -100,12 +100,11 @@ class TestCase(unittest.TestCase):
     @mock.patch('multiprocessing.pool.Pool.apply_async')
     def test_active_job_counts(self, apply_async_mock, send_ready_mock):
         msgids = ('goog8l-uitty40-007b','aaa0j8-ac40jf0-04tjv',
-                 'a3jd90-yte3c00-3dfxw', 'bcvyej1-3sdfxv-34dsf',
-                 '23aax3-abc342-ccc3d', 'uitty40-ac40jf0-003bx')
+                 'a3jd90-yte3c00-3dfxw', 'bcvyej1-3sdfxv-34dsf')
         msg = ['a', 'b', '["run", {"a": 1}]']
 
         jm = jobmanager.JobManager()
-        apply_async_mock.side_effects = [x for x in range(0,6)]
+        apply_async_mock.side_effects = [x for x in range(0, 8)]
         send_ready_mock.return_value = True
         for msgid in msgids:
             jm.on_request(msgid, msg)
