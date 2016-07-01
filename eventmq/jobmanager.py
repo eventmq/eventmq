@@ -75,6 +75,9 @@ class JobManager(HeartbeatMixin, EMQPService):
         self.job_slots = conf.CONCURRENT_JOBS
         self.available_workers = conf.CONCURRENT_JOBS
 
+        self.job_slots = concurrent_jobs
+        self.active_jobs = concurrent_jobs
+
         #: List of queues that this job manager is listening on
         self.queues = kwargs.pop('queues', None)
         if self.queues is None:
