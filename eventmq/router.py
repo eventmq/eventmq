@@ -142,7 +142,9 @@ class Router(HeartbeatMixin):
         """
         Starts the actual eventloop. Usually called by :meth:`Router.start`
         """
-        while not self.received_disconnect:
+        while True:
+            if self.received_disconnect:
+                break
             now = monotonic()
             events = self.poller.poll()
 
@@ -296,7 +298,6 @@ class Router(HeartbeatMixin):
                        msgid=orig_msgid,
                        time=(monotonic()-self.job_latencies[orig_msgid][0])*1000.0))
             del self.job_latencies[orig_msgid]
-
 
     def on_disconnect(self, msgid, msg):
         """

@@ -72,9 +72,6 @@ class JobManager(HeartbeatMixin, EMQPService):
         if concurrent_jobs is not None:
             conf.CONCURRENT_JOBS = concurrent_jobs
 
-        self.job_slots = conf.CONCURRENT_JOBS
-        self.available_workers = conf.CONCURRENT_JOBS
-
         #: List of queues that this job manager is listening on
         self.queues = kwargs.pop('queues', None)
         if self.queues is None:
@@ -116,8 +113,8 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         while True:
             # Clear any workers if it's time to shut down
-            if self.received_disconnect and self.available_workers == self.job_slots:
-                self.disconnect()
+            if self.received_disconnect:
+                self.workers.close()
                 break
 
             events = self.poller.poll()
@@ -171,18 +168,15 @@ class JobManager(HeartbeatMixin, EMQPService):
            callback = self.worker_done
 
         # kick off the job asynchronously with an appropiate callback
-        self.available_workers -= 1
         self.workers.apply_async(func=worker.run,
                                  args=(params, msgid),
                                  callback=callback)
 
     def worker_done_with_reply(self, msgid):
         self.send_reply(msgid)
-        self.available_workers += 1
         self.send_ready()
 
     def worker_done(self, msgid):
-        self.available_workers += 1
         self.send_ready()
 
     def send_ready(self):
@@ -206,12 +200,7 @@ class JobManager(HeartbeatMixin, EMQPService):
          reply = res[1]
 
          reply = serializer(reply)
-         self.available_workers -= 1
          sendmsg(self.outgoing, 'REPLY', [reply, msgid])
-
-    def disconnect(self):
-        sendmsg(self.outgoing, KBYE)
-        self.workers.close()
 
     def on_heartbeat(self, msgid, message):
         """
@@ -221,6 +210,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         """
 
     def on_disconnect(self, msgid, msg):
+        sendmsg(self.outgoing, KBYE)
         self.outgoing.unbind(conf.WORKER_ADDR)
         super(JobManager, self).on_disconnect(msgid, msg)
 

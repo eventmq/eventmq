@@ -84,8 +84,9 @@ class TestCase(unittest.TestCase):
             callback=jm.worker_done,
             func=run_mock)
 
+    @mock.patch('eventmq.jobmanager.sendmsg')
     @mock.patch('zmq.Socket.unbind')
-    def test_on_disconnect(self, socket_mock):
+    def test_on_disconnect(self, socket_mock, sendmsg_mock):
         msgid = 'goog8l-uitty40-007b'
         msg = ['a', 'b', 'whatever']
 
@@ -95,24 +96,6 @@ class TestCase(unittest.TestCase):
         jm.outgoing.status = constants.STATUS.listening
         jm.on_disconnect(msgid, msg)
         self.assertTrue(jm.received_disconnect, "Did not receive disconnect.")
-
-    @mock.patch('eventmq.jobmanager.JobManager.send_ready')
-    @mock.patch('multiprocessing.pool.Pool.apply_async')
-    def test_active_job_counts(self, apply_async_mock, send_ready_mock):
-        msgids = ('goog8l-uitty40-007b','aaa0j8-ac40jf0-04tjv',
-                 'a3jd90-yte3c00-3dfxw', 'bcvyej1-3sdfxv-34dsf')
-        msg = ['a', 'b', '["run", {"a": 1}]']
-
-        jm = jobmanager.JobManager()
-        apply_async_mock.side_effects = [x for x in range(0, 8)]
-        send_ready_mock.return_value = True
-        for msgid in msgids:
-            jm.on_request(msgid, msg)
-            self.assertTrue(jm.job_slots > jm.available_workers)
-            pretend_job()
-            jm.worker_done(msgid)
-            self.assertTrue(jm.job_slots == jm.available_workers)
-        self.assertTrue(jm.job_slots == jm.available_workers)
 
     # Other Tests
     @mock.patch('eventmq.jobmanager.JobManager.start')
