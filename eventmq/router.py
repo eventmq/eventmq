@@ -627,7 +627,6 @@ class Router(HeartbeatMixin):
             InvalidMessageError: Unable to parse the message
         """
         # Limit recusive depth (timeout on PeerGoneAwayError)
-        logger.info('process_client called orig_msg: {}'.format(original_msg))
         if (depth > 100):
             logger.error('Recursion Error: process_client_message called too '
                          'many times with message: {}'.format(original_msg))
@@ -748,7 +747,7 @@ class Router(HeartbeatMixin):
 
     def _remove_worker(self, worker_id):
         """
-        For a given worker, remove all references of that worker to any queue it belongs to.
+        Remove worker with given id from any queues it belongs to.
 
         Args:
             worker_id: (str) ID of worker to remove
@@ -759,11 +758,12 @@ class Router(HeartbeatMixin):
             workers = self.queues[name]
             revised_list = filter(lambda x: x[1] != worker, workers)
             self.queues[name] = revised_list
+            logger.debug('Removed worker - {} from {}'.format(worker_id, name))
 
     def _remove_scheduler(self, scheduler_id):
         """
-        For a given scheduler, remove it from dict of registered schedulers and as
-        as from the light of queued schedulers.
+        Remove scheduler with given id from registered schedulers.
+
         Args:
             scheduler_id: (str) ID of scheduler to remove
         """
