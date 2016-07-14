@@ -23,6 +23,7 @@ import logging
 import signal
 
 from . import conf
+from .constants import KBYE
 from .poller import Poller, POLLIN
 from .sender import Sender
 from .utils.classes import EMQPService, HeartbeatMixin
@@ -91,6 +92,9 @@ class JobManager(HeartbeatMixin, EMQPService):
     @property
     def workers(self):
         if not hasattr(self, '_workers'):
+            self._workers = Pool(processes=conf.CONCURRENT_JOBS)
+        elif self._workers._processes != conf.CONCURRENT_JOBS:
+            self._workers.close()
             self._workers = Pool(processes=conf.CONCURRENT_JOBS)
 
         return self._workers
@@ -194,7 +198,6 @@ class JobManager(HeartbeatMixin, EMQPService):
          reply = res[1]
 
          reply = serializer(reply)
-
          sendmsg(self.outgoing, 'REPLY', [reply, msgid])
 
     def on_heartbeat(self, msgid, message):
@@ -203,6 +206,15 @@ class JobManager(HeartbeatMixin, EMQPService):
         in :meth:`self.process_message` as every message is counted as a
         HEARTBEAT
         """
+
+    def on_disconnect(self, msgid, msg):
+        sendmsg(self.outgoing, KBYE)
+        self.outgoing.unbind(conf.WORKER_ADDR)
+        super(JobManager, self).on_disconnect(msgid, msg)
+
+    def on_kbye(self, msgid, msg):
+        if not self.is_heartbeat_enabled:
+            self.reset()
 
     def sighup_handler(self, signum, frame):
         logger.info('Caught signal %s' % signum)

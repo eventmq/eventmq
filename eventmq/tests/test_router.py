@@ -19,13 +19,12 @@ import mock
 from testfixtures import LogCapture
 import zmq
 
-from .. import conf, constants, exceptions, receiver, router
-from ..utils.classes import EMQdeque
-from ..utils.timeutils import monotonic
+from eventmq import conf, constants, exceptions, receiver, router
+from eventmq.utils.classes import EMQdeque
+from eventmq.utils.timeutils import monotonic
 
 
 class TestCase(unittest.TestCase):
-
     def setUp(self):
         self.router = router.Router(skip_signal=True)
         self.router.zcontext = mock.Mock(spec=zmq.Context)
@@ -175,7 +174,6 @@ class TestCase(unittest.TestCase):
 
     @mock.patch('eventmq.router.Router.send_heartbeat')
     def test_send_worker_heartbeats(self, send_heartbeat_mock):
-
         # last heartbeat should start at 0
         self.assertEqual(self.router._meta['last_sent_heartbeat'], 0)
         self.router.workers = {
@@ -585,3 +583,140 @@ class TestCase(unittest.TestCase):
         self.assertEqual(sorted3.pop(0), (0, 'e'))
         self.assertEqual(sorted3.pop(0), (0, 'c'))
         self.assertEqual(sorted3.pop(0), (0, 'd'))
+
+    def test_disconnect(self):
+        msgid = 'msg53'
+        msg = ('goodbye', 'world')
+        command = constants.DISCONNECT
+
+        queue1_id = 'default'
+        queue2_id = 'scoundrel'
+        workers = ('w1', 'w2', 'w3')
+        schedulers = ('s1', 's2', 's3')
+
+        self.router.queues = {
+            queue1_id: [(10, workers[0]), (0, workers[1])],
+            queue2_id: [(10, workers[2]), (0, workers[1])]
+        }
+
+        self.router.workers = {
+            workers[0]: {
+                'queues': [(10, queue1_id), ],
+                'hb': monotonic() + 3,
+                'available_slots': 0,
+            },
+            workers[1]: {
+                'queues': [(0, queue1_id), (10, queue2_id)],
+                'hb': monotonic() + 3,
+                'available_slots': 2,
+            },
+            workers[2]: {
+                'queues': [(10, queue2_id), ],
+                'hb': monotonic() + 3,
+                'available_slots': 0,
+            }
+        }
+
+        self.router.schedulers = {
+            schedulers[0]: {
+                'hb': 2903.34,
+            },
+            schedulers[1]: {
+                'hb': 2902.99,
+            },
+            schedulers[2]: {
+                'hb': 2904.00,
+            }
+        }
+
+        self.router.process_client_message((schedulers[2], '',
+                                            constants.PROTOCOL_VERSION,
+                                            command, msgid) + msg)
+        for i in range(0, 3):
+            self.assertNotIn(schedulers[i], self.router.schedulers,
+                             "Disconnect failed to remove scheduler {} from "
+                             "schedulers.".format(schedulers[i]))
+            self.assertNotIn(workers[i], self.router.workers,
+                             "Disconnect failed to remove worker {} from "
+                             "workers.".format(workers[i]))
+
+        self.assertTrue(self.router.received_disconnect, "Router did not "
+                                                         "receive disconnect.")
+
+    def test_handle_kbye_from_scheduler(self):
+        msgid = 'msg18'
+        msg = ('hello', 'world')
+        command = constants.KBYE
+
+        # Scheduler ids
+        s1 = 's1'
+        s2 = 's2'
+        s3 = 's3'
+
+        self.router.schedulers = {
+            s1: {
+                'hb': 2903.34,
+            },
+            s2: {
+                'hb': 2902.99,
+            },
+            s3: {
+                'hb': 2904.00,
+            }
+        }
+
+        self.router.scheduler_queue = [s1, s2, s3, s1, s2, s3]
+        self.router.process_client_message(
+            (s1, '', constants.PROTOCOL_VERSION, command, msgid) +
+            msg)
+        self.assertNotIn(s1, self.router.scheduler_queue,
+                         'Scheduler not '
+                         'removed. {'
+                         '}'.format(
+                             self.router.scheduler_queue))
+
+    def test_handle_kbye_from_worker(self):
+        msgid = 'msg10'
+        msg = ('hello', 'world')
+        command = constants.KBYE
+
+        queue1_id = 'default'
+        queue2_id = 'scallywag'
+
+        # Worker ids
+        w1 = 'w1'
+        w2 = 'w2'
+        w3 = 'w3'
+
+        self.router.queues = {
+            queue1_id: [(10, w1), (0, w2)],
+            queue2_id: [(10, w3), (10, w2)],
+        }
+
+        self.router.workers = {
+            w1: {
+                'queues': [(10, queue1_id), ],
+                'hb': monotonic() + 3,
+                'available_slots': 0,
+            },
+            w2: {
+                'queues': [(0, queue1_id), (10, queue2_id)],
+                'hb': monotonic() + 3,
+                'available_slots': 2,
+            },
+            w3: {
+                'queues': [(10, queue2_id), ],
+                'hb': monotonic() + 3,
+                'available_slots': 0,
+            }
+        }
+
+        self.router.process_worker_message((w2, '', constants.PROTOCOL_VERSION,
+                                         command, msgid) + msg)
+        self.assertNotIn(w2, self.router.queues[queue1_id], "Worker not "
+                                                            "removed from {"
+                                                            "}".format(queue1_id))
+        self.assertNotIn(w2, self.router.queues[queue2_id], "Worker not "
+                                                            "removed from {"
+                                                            "}".format(queue2_id))
+

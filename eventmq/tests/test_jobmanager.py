@@ -84,7 +84,20 @@ class TestCase(unittest.TestCase):
             callback=jm.worker_done,
             func=run_mock)
 
-# Other Tests
+    @mock.patch('eventmq.jobmanager.sendmsg')
+    @mock.patch('zmq.Socket.unbind')
+    def test_on_disconnect(self, socket_mock, sendmsg_mock):
+        msgid = 'goog8l-uitty40-007b'
+        msg = ['a', 'b', 'whatever']
+
+        socket_mock.return_value = True
+
+        jm = jobmanager.JobManager()
+        jm.outgoing.status = constants.STATUS.listening
+        jm.on_disconnect(msgid, msg)
+        self.assertTrue(jm.received_disconnect, "Did not receive disconnect.")
+
+    # Other Tests
     @mock.patch('eventmq.jobmanager.JobManager.start')
     @mock.patch('eventmq.jobmanager.import_settings')
     @mock.patch('eventmq.jobmanager.Sender.rebuild')
@@ -133,6 +146,11 @@ class TestCase(unittest.TestCase):
     def cleanup(self):
         self.jm.on_disconnect(None, None)
         self.jm = None
+
+
+def call_done(jm):
+    jm.active_jobs += 1
+    return True
 
 
 def start_jm(jm, addr):
