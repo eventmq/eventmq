@@ -62,7 +62,8 @@ def schedule(socket, func, interval_secs=None, args=(), kwargs=None,
                      'scheduling interval jobs')
         return
 
-    if (interval_secs and cron) or (not interval_secs and not cron):
+    if not unschedule and \
+       ((interval_secs and cron) or (not interval_secs and not cron)):
         logger.error('You must sepcify either `interval_secs` or `cron`, '
                      'but not both (or neither)')
         return

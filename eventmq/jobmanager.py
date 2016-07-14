@@ -74,8 +74,6 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         #: List of queues that this job manager is listening on
         self.queues = kwargs.pop('queues', None)
-        if self.queues is None:
-            self.queues = conf.QUEUES
 
         if not kwargs.pop('skip_signal', False):
             # handle any sighups by reloading config
