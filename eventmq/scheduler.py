@@ -17,7 +17,6 @@
 =============================
 Handles cron and other scheduled tasks
 """
-import sys
 import json
 import logging
 import redis
@@ -298,6 +297,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
         logger.info("Received new SCHEDULE request: {}".format(message))
 
         queue = message[0]
+        headers = message[1]
         interval = int(message[2])
         cron = str(message[4])
 
@@ -354,7 +354,8 @@ class Scheduler(HeartbeatMixin, EMQPService):
         except Exception as e:
             logger.warning(str(e))
 
-        self.send_request(message[3], queue=queue)
+        if 'nohaste' not in headers:
+            self.send_request(message[3], queue=queue)
 
     def on_heartbeat(self, msgid, message):
         """

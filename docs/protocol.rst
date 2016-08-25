@@ -204,16 +204,17 @@ Heartbeating
  * If the broker detects that a worker has disconnected it should stop sending it a message of any type.
  * If the scheduler detects that the broker disconnects it SHOULD restart the conversation.
 
-REQUEST Headers
+Headers
 ---------------
 Headers MUST be 0 to many comma seperated values inserted into the header field. If there are no headers required, send an empty string MUST be sent where headers are required.
 
 Below is a table which defines and describes the headers.
 
-=============== ======= ======= ======= ===========
-Header          REQUEST PUBLISH Default Description
-=============== ======= ======= ======= ===========
-reply-requested X               False   Once the job is finished, send a reply back with information from the job. If there is no information reply with a True value.
-retry-count:#   X               0       Retry a failed job this many times before accepting defeat.
-guarantee       X               False   Ensure the job completes by letting someone else worry about a success reply.
-=============== ======= ======= ======= ===========
+================= ======= ======= ======== ======= ===========
+Header            REQUEST PUBLISH SCHEDULE Default Description
+================= ======= ======= ======== ======= ===========
+reply-requested   X                        False   Once the job is finished, send a reply back with information from the job. If there is no information reply with a True value.
+retry-count:#     X                        0       Retry a failed job this many times before accepting defeat.
+guarantee         X                        False   Ensure the job completes by letting someone else worry about a success reply.
+nohaste                           X        False   When scheduling a job, set this to True if you don't want the job to run immediately as it's scheduled.  Instead, it will run for the first time when the interval has elapsed.
+================= ======= ======= ======== ======= ===========
