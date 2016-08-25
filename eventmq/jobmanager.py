@@ -161,9 +161,9 @@ class JobManager(HeartbeatMixin, EMQPService):
         params = payload[1]
 
         if 'reply-requested' in headers:
-           callback = self.worker_done_with_reply
+            callback = self.worker_done_with_reply
         else:
-           callback = self.worker_done
+            callback = self.worker_done
 
         # kick off the job asynchronously with an appropiate callback
         self.workers.apply_async(func=worker.run,
@@ -185,7 +185,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         sendmsg(self.outgoing, 'READY')
 
     def send_reply(self, res):
-         """
+        """
          Sends an REPLY response
 
          Args:
@@ -193,12 +193,10 @@ class JobManager(HeartbeatMixin, EMQPService):
              recipient (str): The recipient id for the ack
              msgid: The unique id that we are acknowledging
          """
-         msgid = res[0]
-
-         reply = res[1]
-
-         reply = serializer(reply)
-         sendmsg(self.outgoing, 'REPLY', [reply, msgid])
+        msgid = res[0]
+        reply = res[1]
+        reply = serializer(reply)
+        sendmsg(self.outgoing, 'REPLY', [reply, msgid])
 
     def on_heartbeat(self, msgid, message):
         """
