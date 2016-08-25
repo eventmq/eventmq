@@ -354,7 +354,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
         except Exception as e:
             logger.warning(str(e))
 
-        if 'dont_start_immediately' not in headers:
+        if 'nohaste' not in headers:
             self.send_request(message[3], queue=queue)
 
     def on_heartbeat(self, msgid, message):
