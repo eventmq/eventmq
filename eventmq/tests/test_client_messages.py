@@ -23,12 +23,12 @@ from ..client import messages
 
 class TestClass(object):
     """
-    class to use in the build_module_path test
+    class to use in the path_from_callable test
     """
     def mymethod(self):
         """
         this method is used as the callable in
-        :meth:`TestCase.test_build_module_path`
+        :meth:`TestCase.test_path_from_callable`
         """
         return True
 
@@ -115,12 +115,12 @@ class TestCase(unittest.TestCase):
                  'eventmq.tests.test_client_messages'),
             )
 
-    def test_build_module_path(self):
+    def test_path_from_callable(self):
         import mimetools
-        funcpath = messages.build_module_path(mimetools.choose_boundary)
+        funcpath = messages.path_from_callable(mimetools.choose_boundary)
 
         t = TestClass()
-        methpath = messages.build_module_path(t.mymethod)
+        methpath = messages.path_from_callable(t.mymethod)
 
         self.assertEqual(funcpath, ('mimetools', 'choose_boundary'))
         self.assertEqual(

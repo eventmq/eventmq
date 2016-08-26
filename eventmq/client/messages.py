@@ -18,12 +18,17 @@
 """
 import inspect
 import logging
+import importlib
 from json import dumps as serialize
 
 from .. import conf
 from ..utils.messages import send_emqp_message
 
 logger = logging.getLogger(__name__)
+
+
+class CallableFromPathError(Exception):
+    pass
 
 
 def schedule(socket, func, interval_secs=None, args=(), kwargs=None,
@@ -69,7 +74,7 @@ def schedule(socket, func, interval_secs=None, args=(), kwargs=None,
         return
 
     if callable(func):
-        path, callable_name = build_module_path(func)
+        path, callable_name = path_from_callable(func)
     else:
         logger.error('Encountered non-callable func: {}'.format(func))
         return
@@ -151,7 +156,7 @@ def defer_job(socket, func, args=(), kwargs=None, class_args=(),
         kwargs = {}
 
     if callable(func):
-        path, callable_name = build_module_path(func)
+        path, callable_name = path_from_callable(func)
     else:
         logger.error('Encountered non-callable func: {}'.format(func))
         return
@@ -185,7 +190,7 @@ def defer_job(socket, func, args=(), kwargs=None, class_args=(),
     return msgid
 
 
-def build_module_path(func):
+def path_from_callable(func):
     """
     Builds the module path in string format for a callable.
 
@@ -199,7 +204,7 @@ def build_module_path(func):
 
     Returns:
         list: (import path (w/ class seperated by a ':'), callable name) or
-        (None, None) on error
+            (None, None) on error.
     """
     callable_name = None
 
@@ -226,6 +231,57 @@ def build_module_path(func):
         return None, None
 
     return path, callable_name
+
+
+def callable_from_path(path, callable_name, *args, **kwargs):
+    """Build a callable from a path and callable_name.
+
+    This function is the opposite of `path_from_callable`.  It takes what is
+    returned from `build_module_name` and converts it back to the original
+    caller.
+
+    Args:
+        path (str): The module path of the callable.  This is the first
+            position in the tuple returned from `path_from_callable`.
+        callable_name (str): The name of the function.  This is the second
+            position of the tuple returned from `path_from_callable`.
+        *args (list): if `callable_name` is a method on a class, these
+            arguments will be passed to the constructor when instantiating the
+            class.
+        *kwargs (dict): if `callable_name` is a method on a class, these
+            arguments will be passed to the constructor when instantiating the
+            class.
+
+    Returns:
+        function: The callable
+    """
+    if ':' in path:
+        _pksplit = path.split(':')
+        s_package = _pksplit[0]
+        s_cls = _pksplit[1]
+    else:
+        s_package = path
+        s_cls = None
+
+    try:
+        package = importlib.import_module(s_package)
+        reload(package)
+    except Exception as e:
+        raise CallableFromPathError(str(e))
+
+    if s_cls:
+        cls = getattr(package, s_cls)
+
+        obj = cls(*args, **kwargs)
+    else:
+        obj = package
+
+    try:
+        callable_ = getattr(obj, callable_name)
+    except AttributeError as e:
+        raise CallableFromPathError(str(e))
+
+    return callable_
 
 
 def send_request(socket, message, reply_requested=False, guarantee=False,

@@ -17,7 +17,7 @@
 ===============================
 Defines different short-lived workers that execute jobs
 """
-from importlib import import_module
+from client.messages import callable_from_path, CallableFromPathError
 
 # the run function is executed in a different process, so we need to set the
 # logger up.
@@ -32,44 +32,18 @@ def run(payload, msgid):
 
     This is designed to run in a seperate process.
     """
-    # Pull the payload off the queue and run it
-    if ":" in payload["path"]:
-        _pkgsplit = payload["path"].split(':')
-        s_package = _pkgsplit[0]
-        s_cls = _pkgsplit[1]
-    else:
-        s_package = payload["path"]
-        s_cls = None
-
-    s_callable = payload["callable"]
-    try:
-        package = import_module(s_package)
-        reload(package)
-    except Exception as e:
-        logger.exception('Error importing module: {}'.format(str(e)))
-        return (msgid, str(e))
-
-    if s_cls:
-        cls = getattr(package, s_cls)
-
-        if "class_args" in payload:
-            class_args = payload["class_args"]
-        else:
-            class_args = ()
-
-        if "class_kwargs" in payload:
-            class_kwargs = payload["class_kwargs"]
-        else:
-            class_kwargs = {}
-
-        obj = cls(*class_args, **class_kwargs)
-    else:
-        obj = package
+    # deconstruct the payload
+    path = payload.get('path')
+    callable_name = payload.get('callable')
+    class_args = payload.get('class_args', tuple()) or tuple()
+    class_kwargs = payload.get('class_kwargs', dict()) or dict()
 
     try:
-        callable_ = getattr(obj, s_callable)
-    except AttributeError as e:
-        logger.exception('Error getting callable: {}'.format(str(e)))
+        callable_ = callable_from_path(
+            path, callable_name, *class_args, **class_kwargs)
+    except CallableFromPathError as e:
+        logger.exception('Error importing callable {}.{}: {}'.format(
+            path, callable_name, str(e)))
         return (msgid, str(e))
 
     if "args" in payload:
