@@ -17,7 +17,7 @@
 ===============================
 Defines different short-lived workers that execute jobs
 """
-from client.messages import callable_from_path, CallableFromPathError
+from .utils.functions import run_function
 
 # the run function is executed in a different process, so we need to set the
 # logger up.
@@ -37,27 +37,12 @@ def run(payload, msgid):
     callable_name = payload.get('callable')
     class_args = payload.get('class_args', tuple()) or tuple()
     class_kwargs = payload.get('class_kwargs', dict()) or dict()
+    args = payload.get('args', tuple()) or tuple()
+    kwargs = payload.get('kwargs', dict()) or dict()
 
     try:
-        callable_ = callable_from_path(
-            path, callable_name, *class_args, **class_kwargs)
-    except CallableFromPathError as e:
-        logger.exception('Error importing callable {}.{}: {}'.format(
-            path, callable_name, str(e)))
-        return (msgid, str(e))
-
-    if "args" in payload:
-        args = payload["args"]
-    else:
-        args = ()
-
-    if "kwargs" in payload:
-        kwargs = payload["kwargs"]
-    else:
-        kwargs = {}
-
-    try:
-        r = callable_(*args, **kwargs)
+        r = run_function(
+            path, callable_name, class_args, class_kwargs, *args, **kwargs)
         return (msgid, r)
     except Exception as e:
         logger.exception(e)
