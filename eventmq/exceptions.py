@@ -55,3 +55,10 @@ class UnknownQueueError(EventMQError):
     """
     Raised when a queue is not found in the internal list of queues.
     """
+
+
+class CallableFromPathError(EventMQError):
+    """
+    Raised when construction of a callable from a path and callable_name fails.
+    """
+    pass

@@ -20,7 +20,7 @@
 #: SUPER_DEBUG basically enables more debugging logs. Specifically the messages
 #: at different levels in the application.
 #: Default: False
-SUPER_DEBUG = False
+SUPER_DEBUG = True
 
 #: Don't show HEARTBEAT message when debug logging is enabled
 #: Default: True

@@ -105,7 +105,7 @@ class TestCase(unittest.TestCase):
                 ('eventmq.client.messages',
                  'ERROR',
                  'Encountered callable with no __module__ path nameless_func'),
-                ('eventmq.client.messages',
+                ('eventmq.utils.functions',
                  'ERROR',
                  'Encountered unknown callable ({}) type instanceobject'.
                  format(callable_obj)),
@@ -210,7 +210,7 @@ class TestCase(unittest.TestCase):
                 ('eventmq.client.messages',
                  'ERROR',
                  'Encountered callable with no __module__ path nameless_func'),
-                ('eventmq.client.messages',
+                ('eventmq.utils.functions',
                  'ERROR',
                  'Encountered unknown callable ({}) type instanceobject'.
                  format(callable_obj)),
