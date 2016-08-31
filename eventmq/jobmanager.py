@@ -92,10 +92,12 @@ class JobManager(HeartbeatMixin, EMQPService):
     @property
     def workers(self):
         if not hasattr(self, '_workers'):
-            self._workers = Pool(processes=conf.CONCURRENT_JOBS)
+            self._workers = Pool(processes=conf.CONCURRENT_JOBS,
+                                 initializer=mp_init)
         elif self._workers._processes != conf.CONCURRENT_JOBS:
             self._workers.close()
-            self._workers = Pool(processes=conf.CONCURRENT_JOBS)
+            self._workers = Pool(processes=conf.CONCURRENT_JOBS,
+                                 initializer=mp_init)
 
         return self._workers
 
@@ -246,3 +248,14 @@ class JobManager(HeartbeatMixin, EMQPService):
 def jobmanager_main():
     j = JobManager()
     j.jobmanager_main()
+
+
+def mp_init():
+    """
+    The instance of Context is copied when python multiprocessing fork()s the
+    worker processes, so we need to terminate that Context so a new one can be
+    rebuilt. Without doing this, messages sent from functions in those child
+    processes will never be delivered.
+    """
+    import zmq
+    zmq.Context.instance().term()
