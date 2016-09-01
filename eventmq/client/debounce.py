@@ -185,7 +185,8 @@ def _debounce_deferred_job(context):
         'scheduled': False,
         })
 
-    if not redis_connection.get(cache_key1):
+    if not redis_connection.get(cache_key1) \
+            and not redis_connection.get(cache_key2):
         logger.debug('DEBOUNCE: {}.{} - cache_key1 was not set, '
                      'deferring immediately.'.format(path, callable_name))
         redis_connection.set(cache_key1, 1)
@@ -219,7 +220,7 @@ def _debounce_deferred_job(context):
         schedule(
             socket=socket,
             func=_debounce_run_deferred_job,
-            queue=context.get('queue'),
+            queue=str(context.get('queue')),
             interval_secs=debounce_secs,
             kwargs={'context': context},
             headers=('nohaste', 'guarantee'),
