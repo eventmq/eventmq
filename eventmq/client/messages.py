@@ -138,8 +138,6 @@ def defer_job(
         str: ID for the message/deferred job. This value will be None if there
             was an error.
     """
-    from eventmq.client import debounce
-
     callable_name = None
     path = None
 
@@ -168,25 +166,6 @@ def defer_job(
     if not path:
         logger.error('Encountered callable with no __module__ path {}'.
                      format(func.__name__))
-        return
-
-    if debounce_secs:
-        logger.debug('DEBOUNCE: {} - called, debounce_secs: {}...'.format(
-            func.__name__,
-            debounce_secs))
-        debounce._debounce_schedule(
-            socket=socket,
-            path=path,
-            callable_name=callable_name,
-            debounce_secs=debounce_secs,
-            args=args,
-            kwargs=kwargs,
-            class_args=class_args,
-            class_kwargs=class_kwargs,
-            reply_requested=reply_requested,
-            guarantee=guarantee,
-            retry_count=retry_count,
-            queue=queue)
         return
 
     msg = ['run', {
