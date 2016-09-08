@@ -121,14 +121,11 @@ class TestCase(unittest.TestCase):
 
     @mock.patch('eventmq.jobmanager.JobManager.start')
     @mock.patch('eventmq.jobmanager.import_settings')
-    @mock.patch('eventmq.jobmanager.setup_logger')
-    def test_jobmanager_main(self, setup_logger_mock, import_settings_mock,
-                             start_mock):
+    def test_jobmanager_main(self, import_settings_mock, start_mock):
         jm = jobmanager.JobManager()
 
         jm.jobmanager_main()
 
-        setup_logger_mock.assert_called_with('')
         self.assertEqual(2, import_settings_mock.call_count)
         # Assert that the last call to import settings was for the jobmanager
         # section

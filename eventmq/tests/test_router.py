@@ -12,6 +12,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
+import json
 import unittest
 
 from freezegun import freeze_time
@@ -31,8 +32,9 @@ class TestCase(unittest.TestCase):
         self.router.incoming = mock.Mock(spec=receiver.Receiver)
         self.router.outgoing = mock.Mock(spec=receiver.Receiver)
 
+    @mock.patch('eventmq.receiver.zmq.Socket.bind')
     @mock.patch('eventmq.router.Router._start_event_loop')
-    def test_start(self, event_loop_mock):
+    def test_start(self, event_loop_mock, zsocket_bind_mock):
         # Test default args
         self.router.start()
         self.router.incoming.listen.assert_called_with(conf.FRONTEND_ADDR)
@@ -713,10 +715,75 @@ class TestCase(unittest.TestCase):
 
         self.router.process_worker_message((w2, '', constants.PROTOCOL_VERSION,
                                          command, msgid) + msg)
-        self.assertNotIn(w2, self.router.queues[queue1_id], "Worker not "
-                                                            "removed from {"
-                                                            "}".format(queue1_id))
-        self.assertNotIn(w2, self.router.queues[queue2_id], "Worker not "
-                                                            "removed from {"
-                                                            "}".format(queue2_id))
+        self.assertNotIn(
+            w2, self.router.queues[queue1_id],
+            "Worker not removed from {}".format(queue1_id))
+        self.assertNotIn(
+            w2, self.router.queues[queue2_id],
+            "Worker not removed from {}".format(queue2_id))
 
+    def test_get_status(self):
+        msgid1 = 'msg21'
+        msgid2 = 'msg19'
+        msgid3 = 'msg6'
+
+        queue1_id = 'default'
+        queue2_id = 'scallywag'
+
+        # Worker ids
+        w1 = 'w1'
+        w2 = 'w2'
+        w3 = 'w3'
+
+        waiting_msg1 = ['', constants.PROTOCOL_VERSION, 'REQUEST', msgid1,
+                        'kun', '', 'hello world']
+        waiting_msg2 = ['', constants.PROTOCOL_VERSION, 'REQUEST', msgid2,
+                        'kun', '', 'world hello']
+        waiting_msg3 = ['', constants.PROTOCOL_VERSION, 'REQUEST', msgid3,
+                        'blu', '', 'goodbye']
+
+        self.router.queues = {
+            queue1_id: [(10, w1), (0, w2)],
+            queue2_id: [(10, w3), (10, w2)],
+        }
+
+        t = monotonic()
+
+        self.router.workers = {
+            w1: {
+                'queues': [(10, queue1_id), ],
+                'hb': t,
+                'available_slots': 0,
+            },
+            w2: {
+                'queues': [(0, queue1_id), (10, queue2_id)],
+                'hb': t,
+                'available_slots': 2,
+            },
+            w3: {
+                'queues': [(10, queue2_id), ],
+                'hb': t,
+                'available_slots': 0,
+            }
+        }
+
+        self.router.waiting_messages = {
+            'kun': EMQdeque(initial=[waiting_msg1, waiting_msg2]),
+            'blu': EMQdeque(initial=[waiting_msg3, ]),
+        }
+
+
+        # hacky, but the serialize/deserialize converts the keys to unicode
+        # correctly and what not.
+        self.assertEqual(
+            json.loads(json.dumps({
+                'workers': self.router.workers,
+                'schedulers': self.router.schedulers,
+                'queues': self.router.queues,
+                'waiting_message_counts': [
+                '{}: {}'.
+                format(q,
+                       len(self.router.waiting_messages[q]))
+                for q in self.router.waiting_messages]
+            })),
+            json.loads(self.router.get_status()))

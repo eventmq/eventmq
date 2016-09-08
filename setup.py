@@ -14,16 +14,8 @@ setup(
                       'six==1.10.0',
                       'monotonic==0.4',
                       'croniter==0.3.10',
-                      'sphinxcontrib-napoleon==0.4.3',
-                      'Sphinx==1.3.1',
-                      'nose==1.3.6',
-                      'coverage==4.0.3',
-                      'testfixtures==4.7.0',
-                      'freezegun==0.3.7',
                       'future==0.15.2',
                       'redis==2.10.3',
-                      'mock==1.3.0',
-                      'tl.testing==0.5',
                       'python-dateutil>=2.1,<3.0.0'],
 
 
@@ -48,8 +40,9 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
     scripts=[
-        'bin/emq-router',
+        'bin/emq-cli',
         'bin/emq-jobmanager',
+        'bin/emq-router',
         'bin/emq-scheduler',
     ],
 )

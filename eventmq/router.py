@@ -54,9 +54,11 @@ class Router(HeartbeatMixin):
 
         self.incoming = receiver.Receiver()
         self.outgoing = receiver.Receiver()
+        self.administrative_socket = receiver.Receiver()
 
         self.poller.register(self.incoming, poller.POLLIN)
         self.poller.register(self.outgoing, poller.POLLIN)
+        self.poller.register(self.administrative_socket, poller.POLLIN)
 
         self.status = STATUS.ready
 
@@ -105,7 +107,6 @@ class Router(HeartbeatMixin):
         #:     }
         self.schedulers = {}
 
-
         #: Latency tracking dictionary
         #: Key: msgid of message each REQUEST received and forwarded to a worker
         #: Value: (timestamp, queue_name)
@@ -114,27 +115,34 @@ class Router(HeartbeatMixin):
         #: Set to True when the router should die.
         self.received_disconnect = False
 
+        # Tests skip setting the signals.
         if not kwargs.pop('skip_signal', False):
             signal.signal(signal.SIGHUP, self.sighup_handler)
 
     def start(self,
               frontend_addr=conf.FRONTEND_ADDR,
-              backend_addr=conf.BACKEND_ADDR):
+              backend_addr=conf.BACKEND_ADDR,
+              administrative_addr=conf.ADMINISTRATIVE_ADDR):
         """
         Begin listening for connections on the provided connection strings
 
         Args:
             frontend_addr (str): connection string to listen for requests
             backend_addr (str): connection string to listen for workers
+            administrative_addr (str): connection string to listen for emq-cli
+                commands on.
         """
         self.status = STATUS.starting
 
         self.incoming.listen(frontend_addr)
         self.outgoing.listen(backend_addr)
+        self.administrative_socket.listen(administrative_addr)
 
         self.status = STATUS.listening
-        logger.info('Listening for requests on %s' % frontend_addr)
-        logger.info('Listening for workers on %s' % backend_addr)
+        logger.info('Listening for requests on {}'.format(frontend_addr))
+        logger.info('Listening for workers on {}'.format(backend_addr))
+        logger.info('Listening for administrative commands on {}'.format(
+            administrative_addr))
 
         self._start_event_loop()
 
@@ -155,6 +163,20 @@ class Router(HeartbeatMixin):
             if events.get(self.outgoing) == poller.POLLIN:
                 msg = self.outgoing.recv_multipart()
                 self.process_worker_message(msg)
+
+            if events.get(self.administrative_socket) == poller.POLLIN:
+                msg = self.administrative_socket.recv_multipart()
+                logger.debug('ADMIN: {}'.format(msg))
+                # ##############
+                # Admin Commands
+                # ##############
+                if len(msg) > 4 and msg[3] == 'DISCONNECT':
+                    logger.info('Received DISCONNECT from administrator')
+                    self.send_ack(self.administrative_socket, msg[0], msg[4])
+                    self.on_disconnect(msg[4], msg)
+                elif len(msg) > 4 and msg[3] == 'STATUS':
+                    sendmsg(self.administrative_socket, msg[0], 'REPLY',
+                            (self.get_status(),))
 
             # TODO: Optimization: the calls to functions could be done in
             #     another thread so they don't block the loop. synchronize
@@ -791,6 +813,23 @@ class Router(HeartbeatMixin):
             decsending order list. E.g. ((20, 'a'), (14, 'b'), (12, 'c'))
         """
         return sorted(unprioritized_iterable, cmp=zero_index_cmp, reverse=True)
+
+    def get_status(self):
+        """
+        Return
+           (str) Serialized information about the current state of the router.
+        """
+        # Workers
+        return json.dumps({
+            'workers': self.workers,
+            'schedulers': self.schedulers,
+            'queues': self.queues,
+            'waiting_message_counts': [
+                '{}: {}'.
+                format(q,
+                       len(self.waiting_messages[q]))
+                for q in self.waiting_messages]
+        })
 
     def sighup_handler(self, signum, frame):
         """

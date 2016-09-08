@@ -5,6 +5,9 @@ super_debug = true
 # Hide the heartbeat logs when super_debug is enabled. Showing them will generate a lot of messages.
 hide_heartbeat_logs = True
 
+# Port to listen on for administrative commands sent via emq-cli
+administrative_addr=tcp://127.0.0.1:47293
+
 frontend_addr=tcp://0.0.0.0:47291
 backend_addr=tcp://0.0.0.0:47290
 worker_addr=tcp://eventmq:47290

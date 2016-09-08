@@ -52,10 +52,15 @@ HEARTBEAT_INTERVAL = 3
 # Default configuration file
 CONFIG_FILE = '/etc/eventmq.conf'
 # Default addresses to localhost
+# Router:
 FRONTEND_ADDR = 'tcp://127.0.0.1:47291'
 BACKEND_ADDR = 'tcp://127.0.0.1:47290'
+# Where the Scheduler should connect.
 SCHEDULER_ADDR = 'tcp://127.0.0.1:47291'
+# Where the worker should connect
 WORKER_ADDR = 'tcp://127.0.0.1:47290'
+# Used to monitor and manage the devices
+ADMINISTRATIVE_ADDR = 'tcp://127.0.0.1:47293'
 
 # How many jobs should the job manager concurrently handle?
 CONCURRENT_JOBS = 4

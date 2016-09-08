@@ -19,32 +19,45 @@ from __future__ import print_function
 
 import argparse
 import cmd
+import json
+from pprint import pprint
 import sys
 
 from eventmq import exceptions
 from eventmq.client.messages import send_emqp_message
 from eventmq.constants import PROTOCOL_VERSION
+from eventmq.poller import Poller, POLLIN
 from eventmq.sender import Sender
 from eventmq.utils.messages import generate_msgid
 
 class Shell(cmd.Cmd):
     """
-    Interactive EventMQ Shell
+    Interactive EventMQ Shell.
+
+     To add a command, add a method called "do_<MYCOMMDAND>".
+
+    .. note::
+
+       Any replies from a component should be json encoded so it can be pretty
+       printed with this tool
     """
     def __init__(self, addr=None):
         cmd.Cmd.__init__(self)
 
         self.prompt = "> "
 
+        self.socket = Sender()
+        self.poller = Poller()
+
+        self.poller.register(self.socket, POLLIN)
+
         self.addr = addr
         if self.addr:
             self.do_connect(addr)
 
-        self.socket = Sender()
-
     def do_connect(self, line):
         """
-        Connect to a service
+        Connect to a component
         """
         if not line:
             sys.stderr.write('Error: No address provided\n')
@@ -68,16 +81,17 @@ class Shell(cmd.Cmd):
         Disconnect from a service
         """
         print('Closing connection to {}'.format(self.addr))
+        self.poller.unregister(self.socket)
         self.socket.rebuild()
+        self.poller.register(self.socket)
         self.addr = None
 
     def do_status(self, line):
         """
         Request the status of the connected component
         """
-        raise NotImplementedError('TODO: STATUS command')
-        self.send_message(('STATUS',))
-        print(self.socket.recv_multipart())
+        self.send_message('STATUS')
+        pprint(self.recv_reply())
 
     def do_shutdown(self, line):
         """
@@ -100,6 +114,11 @@ class Shell(cmd.Cmd):
         message = (command, generate_msgid('admin:')) + message
 
         self.socket.send_multipart(message, PROTOCOL_VERSION)
+
+    def recv_reply(self, timeout_secs=1000):
+        if self.socket in self.poller.poll(timeout_secs):
+            msg = self.socket.recv_multipart()
+            return json.loads(msg[4])
 
     def do_quit(self, line):
         return True
