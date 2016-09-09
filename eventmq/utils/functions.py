@@ -19,7 +19,7 @@ class IgnoreJSONEncoder(json.JSONEncoder):
 
 
 def run_function(path, callable_name,
-                 class_args=(), class_kwargs=None, *args, **kwargs):
+                 class_args=(), class_kwargs=None, args=(), kwargs=None):
     """Constructs a callable from `path` and `callable_name` and calls it.
 
     Args:
@@ -36,6 +36,18 @@ def run_function(path, callable_name,
         object: Whatever is returned by calling the callable will be returned
             from this function.
     """
+    if not class_args:
+        class_args = ()
+
+    if not class_kwargs:
+        class_kwargs = {}
+
+    if not args:
+        args = ()
+
+    if not kwargs:
+        kwargs = {}
+
     try:
         callable_ = callable_from_path(
             path, callable_name, *class_args, **class_kwargs)
