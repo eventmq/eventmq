@@ -41,6 +41,7 @@ from eventmq.log import setup_logger
 
 logger = logging.getLogger(__name__)
 CRON_CALLER_ID = -1
+INFINITE_RUN_COUNT=-1
 
 
 class Scheduler(HeartbeatMixin, EMQPService):
@@ -66,7 +67,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
         # 3 = the queue to execute the job in
         self.cron_jobs = {}
 
-        # contains dict of 4-item lists representing jobs based on an interval
+        # contains dict of 5-item lists representing jobs based on an interval
         # key of this dictionary is a hash of caller_id, path, and callable
         # from the message of the SCHEDULE command received
         # values of this list follow this format:
@@ -75,6 +76,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
         # 1 = the function to be executed
         # 2 = the interval iter for this job
         # 3 = the queue to execute the job in
+        # 4 = run_count: # of times to execute this job
         self.interval_jobs = {}
 
         self.poller = Poller()
@@ -167,6 +169,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
                     logger.debug("Next execution will be in %ss" %
                                  seconds_until(cron[0]))
 
+            cancel_jobs = []
             for k, v in self.interval_jobs.iteritems():
                 if v[0] <= m_now:
                     msg = v[1]
@@ -177,6 +180,31 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
                     self.send_request(msg, queue=queue)
                     v[0] = next(v[2])
+
+                    # Decrement run_count - cancel when it hits 0
+                    if v[4] != INFINITE_RUN_COUNT:
+                        v[4] -= 1
+                        if v[4] <= 0:
+                            cancel_jobs.append(k)
+                        else:
+                            # Rename redis key and save new run_count counter
+                            try:
+                                self.redis_server.rename(k,
+                                                         self.schedule_hash(v))
+                                self.redis_server.set(self.schedule_hash(v),
+                                                      serialize(v))
+                                self.redis_server.save()
+                            except redis.ConnectionError:
+                                logger.warning("Could'nt contact redis server")
+                            except Exception as e:
+                                logger.warning(
+                                    'Unable to update key in redis server: {}'\
+                                    .format(e.message))
+
+            for job in cancel_jobs:
+                message = self.interval_jobs[k][1]
+                self.unschedule_job(message)
+                del self.interval_jobs[k]
 
             if not self.maybe_send_heartbeat(events):
                 break
@@ -232,9 +260,15 @@ class Scheduler(HeartbeatMixin, EMQPService):
         """
         logger.info("Received new UNSCHEDULE request: {}".format(message))
 
+        # TODO: Notify router whether or not this succeeds
+        self.unschedule_job(schedule_hash)
+
+    def unschedule_job(self, message):
+        """
+        Unschedules a job if it exists based on the message used to generate it
+        """
         schedule_hash = self.schedule_hash(message)
 
-        # TODO: Notify router whether or not this succeeds
         if schedule_hash in self.interval_jobs:
             # Remove scheduled job
             self.interval_jobs.pop(schedule_hash)
@@ -262,6 +296,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
         from .utils.timeutils import IntervalIter
 
         queue = message[0].encode('utf-8')
+        headers = message[1]
         interval = int(message[2])
         inter_iter = IntervalIter(monotonic(), interval)
         schedule_hash = self.schedule_hash(message)
@@ -274,7 +309,8 @@ class Scheduler(HeartbeatMixin, EMQPService):
                 next(inter_iter),
                 message[3],
                 inter_iter,
-                queue
+                queue,
+                self.get_run_count_from_headers(headers)
             ]
         # Non empty strings are valid
         # Expecting '* * * * *' etc.
@@ -320,7 +356,8 @@ class Scheduler(HeartbeatMixin, EMQPService):
                 next(inter_iter),
                 message[3],
                 inter_iter,
-                queue
+                queue,
+                self.get_run_count_from_headers(headers)
             ]
 
             if schedule_hash in self.cron_jobs:
@@ -356,6 +393,13 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
         if 'nohaste' not in headers:
             self.send_request(message[3], queue=queue)
+
+    def get_run_count_from_headers(self, headers):
+        run_count = INFINITE_RUN_COUNT
+        for header in headers:
+            if 'run_count:' in header:
+                run_count = int(header.split(':')[1])
+        return run_count
 
     def on_heartbeat(self, msgid, message):
         """
