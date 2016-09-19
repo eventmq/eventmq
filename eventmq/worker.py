@@ -42,7 +42,12 @@ def run(payload, msgid):
 
     try:
         r = run_function(
-            path, callable_name, class_args, class_kwargs, *args, **kwargs)
+            path=path,
+            callable_name=callable_name,
+            class_args=class_args or (),
+            class_kwargs=class_kwargs or {},
+            args=args or (),
+            kwargs=kwargs or {})
         return (msgid, r)
     except Exception as e:
         logger.exception(e)
