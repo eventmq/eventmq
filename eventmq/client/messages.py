@@ -107,9 +107,9 @@ def schedule(socket, func, interval_secs=None, args=(), kwargs=None,
 
 
 def defer_job(
-        socket, func, args=(), kwargs=None, class_args=(), class_kwargs=None,
-        reply_requested=False, guarantee=False, retry_count=0,
-        debounce_secs=False, queue=conf.DEFAULT_QUEUE_NAME):
+        socket, func, wrapper=None, args=(), kwargs=None, class_args=(),
+        class_kwargs=None, reply_requested=False, guarantee=False,
+        retry_count=0, debounce_secs=False, queue=conf.DEFAULT_QUEUE_NAME):
     """
     Used to send a job to a worker to execute via `socket`.
 
@@ -119,6 +119,8 @@ def defer_job(
     Args:
         socket (socket): eventmq socket to use for sending the message
         func (callable): the callable to be deferred to a worker
+        wrapper (callable): optional wrapper for the call to func to be
+             wrapped with
         args (list): list of *args for the callable
         kwargs (dict): dict of **kwargs for the callable
         class_args (list): list of *args to pass to the the class when
@@ -155,6 +157,14 @@ def defer_job(
         path, callable_name = path_from_callable(func)
     else:
         logger.error('Encountered non-callable func: {}'.format(func))
+        return
+
+    if wrapper and callable(wrapper):
+        # Prepend the original path and callable name to args
+        args = (path, callable_name, args)
+        path, callable_name = build_module_path(wrapper)
+    elif wrapper:
+        logger.error('Encountered non-callable wrapper: {}'.format(wrapper))
         return
 
     # Check for and log errors
