@@ -225,31 +225,6 @@ class Scheduler(HeartbeatMixin, EMQPService):
                 self.unschedule_job(message)
                 del self.interval_jobs[k]
 
-                    # Decrement run_count - cancel when it hits 0
-                    if v[4] != INFINITE_RUN_COUNT:
-                        v[4] -= 1
-                        if v[4] <= 0:
-                            cancel_jobs.append(k)
-                        else:
-                            # Rename redis key and save new run_count counter
-                            try:
-                                self.redis_server.rename(k,
-                                                         self.schedule_hash(v))
-                                self.redis_server.set(self.schedule_hash(v),
-                                                      serialize(v))
-                                self.redis_server.save()
-                            except redis.ConnectionError:
-                                logger.warning("Could'nt contact redis server")
-                            except Exception as e:
-                                logger.warning(
-                                    'Unable to update key in redis server: {}'\
-                                    .format(e.message))
-
-            for job in cancel_jobs:
-                message = self.interval_jobs[k][1]
-                self.unschedule_job(message)
-                del self.interval_jobs[k]
-
             if not self.maybe_send_heartbeat(events):
                 break
 
