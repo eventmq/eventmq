@@ -171,6 +171,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
             cancel_jobs = []
             for k, v in self.interval_jobs.iteritems():
+                # The schedule time has elapsed
                 if v[0] <= m_now:
                     msg = v[1]
                     queue = v[3]
@@ -178,8 +179,51 @@ class Scheduler(HeartbeatMixin, EMQPService):
                     logger.debug("Time is: %s; Schedule is: %s - Running %s"
                                  % (ts_now, v[0], msg))
 
-                    self.send_request(msg, queue=queue)
-                    v[0] = next(v[2])
+                    if v[4] != INFINITE_RUN_COUNT:
+                        # Decrement run_count
+                        v[4] -= 1
+                        # If run_count was 0, we cancel the job
+                        if v[4] <= 0:
+                            cancel_jobs.append(k)
+                        # Otherwise we run the job
+                        else:
+                            # Send job and update next schedule time
+                            self.send_request(msg, queue=queue)
+                            v[0] = next(v[2])
+                            # Rename redis key and save new run_count counter
+                            try:
+                                self.redis_server.rename(k,
+                                                         self.schedule_hash(v))
+                                self.redis_server.set(self.schedule_hash(v),
+                                                      serialize(v))
+                                self.redis_server.save()
+                            except redis.ConnectionError:
+                                logger.warning("Couldn't contact redis server")
+                            except Exception as e:
+                                logger.warning(
+                                    'Unable to update key in redis server: {}'\
+                                    .format(e.message))
+                    else:
+                        # Scheduled job is in running infinitely
+                        # Send job and update next schedule time
+                        self.send_request(msg, queue=queue)
+                        v[0] = next(v[2])
+                        # Persist changes to redis
+                        try:
+                            self.redis_server.set(self.schedule_hash(v),
+                                                    serialize(v))
+                            self.redis_server.save()
+                        except redis.ConnectionError:
+                            logger.warning("Couldn't contact redis server")
+                        except Exception as e:
+                            logger.warning(
+                                'Unable to update key in redis server: {}'\
+                                .format(e.message))
+
+            for job in cancel_jobs:
+                message = self.interval_jobs[k][1]
+                self.unschedule_job(message)
+                del self.interval_jobs[k]
 
                     # Decrement run_count - cancel when it hits 0
                     if v[4] != INFINITE_RUN_COUNT:
