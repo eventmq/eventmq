@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.2.1
+                0.2.6.2
               </div>
             
           
@@ -263,6 +263,34 @@ of work.</p>
 for another REQUEST message.</p>
 </dd></dl>
 
+<dl class="method">
+<dt id="eventmq.jobmanager.JobManager.send_reply">
+<code class="descname">send_reply</code><span class="sig-paren">(</span><em>res</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.send_reply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sends an REPLY response</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; The socket to use for this ack</li>
+<li><strong>recipient</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; The recipient id for the ack</li>
+<li><strong>msgid</strong> &#8211; The unique id that we are acknowledging</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="eventmq.jobmanager.mp_init">
+<code class="descclassname">eventmq.jobmanager.</code><code class="descname">mp_init</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.mp_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>The instance of Context is copied when python multiprocessing fork()s the
+worker processes, so we need to terminate that Context so a new one can be
+rebuilt. Without doing this, messages sent from functions in those child
+processes will never be delivered.</p>
 </dd></dl>
 
 </div>

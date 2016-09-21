@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.2.1
+                0.2.6.2
               </div>
             
           
@@ -150,27 +150,8 @@
   <span class="target" id="module-eventmq.client.messages"></span><div class="section" id="messages-client-messaging">
 <h1><code class="xref py py-mod docutils literal"><span class="pre">messages</span></code> &#8211; Client Messaging<a class="headerlink" href="#messages-client-messaging" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
-<dt id="eventmq.client.messages.build_module_path">
-<code class="descclassname">eventmq.client.messages.</code><code class="descname">build_module_path</code><span class="sig-paren">(</span><em>func</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.client.messages.build_module_path" title="Permalink to this definition">¶</a></dt>
-<dd><p>Builds the module path in string format for a callable.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>func</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#callable" title="(in Python v2.7)"><em>callable</em></a>) &#8211; The function or method to build the path for</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">(import path (w/ class seperated by a &#8216;:&#8217;), callable name) or
-(None, None) on error</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/library/functions.html#list" title="(in Python v2.7)">list</a></td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
 <dt id="eventmq.client.messages.defer_job">
-<code class="descclassname">eventmq.client.messages.</code><code class="descname">defer_job</code><span class="sig-paren">(</span><em>socket</em>, <em>func</em>, <em>args=()</em>, <em>kwargs=None</em>, <em>class_args=()</em>, <em>class_kwargs=None</em>, <em>reply_requested=False</em>, <em>guarantee=False</em>, <em>retry_count=0</em>, <em>queue='default'</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.client.messages.defer_job" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">eventmq.client.messages.</code><code class="descname">defer_job</code><span class="sig-paren">(</span><em>socket</em>, <em>func</em>, <em>args=()</em>, <em>kwargs=None</em>, <em>class_args=()</em>, <em>class_kwargs=None</em>, <em>reply_requested=False</em>, <em>guarantee=False</em>, <em>retry_count=0</em>, <em>debounce_secs=False</em>, <em>queue='default'</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.client.messages.defer_job" title="Permalink to this definition">¶</a></dt>
 <dd><p>Used to send a job to a worker to execute via <cite>socket</cite>.</p>
 <p>This tries not to raise any exceptions so use some of the message flags to
 guarentee things.</p>
@@ -188,11 +169,11 @@ initializing (if applicable).</li>
 <li><strong>class_kwargs</strong> (<a class="reference external" href="https://docs.python.org/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; dict of <a href="#id7"><span class="problematic" id="id8">**</span></a>kwargs to pass to the class when
 initializing (if applicable).</li>
 <li><strong>reply_requested</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; request the return value of func as a reply</li>
-<li><strong>guarantee</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; (Give your best effort) to guarantee that func is
-executed. Exceptions and things will be logged.</li>
 <li><strong>retry_count</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; How many times should be retried when encountering
 an Exception or some other failure before giving up. (default: 0
 or immediately fail)</li>
+<li><strong>debounce_secs</strong> (<em>secs</em>) &#8211; Number of seconds to debounce the job.   See
+<cite>debounce_deferred_job</cite> for more information.</li>
 <li><strong>queue</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Name of queue to use when executing the job. If this value
 evaluates to False, the default is used. Default: is configured
 default queue name</li>

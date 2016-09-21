@@ -5,12 +5,12 @@ EventMQ Protocol Specification
 
 Goals
 =====
-The EventMQ Protocol (eMQP) defines a reliable service-oriented request-reply and pub-sub dialog between a set of clients, a broker, and a set of workers. This goal is to
+The EventMQ Protocol (eMQP) defines a reliable service-oriented request-reply and pub-sub dialog between a set of clients, a broker, and a set of workers.
 
 The goals are to:
 
  * Specify a protocol to follow when implementing a component to EventMQ.
- * Allow requests to be routed to workers by an abstracted service name.
+ * Allow requests to be routed to workers by an abstracted service name (named queues).
  * Detect disconnected peers through heartbeating.
  * Allow for message tracing and debugging.
 
@@ -58,6 +58,52 @@ FRAME  Value          Description
 2      ACK            command
 3      _MSGID_        A unique id for the msg
 4      _MSGID_        The message id of the message this ACK is acknowledging
+====== ============== ===========
+
+A **REPLY** frame consists of a 5-frame multipart message, formatted as follows.
+
+====== ============== ===========
+FRAME  Value          Description
+====== ============== ===========
+0      _EMPTY_        leave empty
+1      eMQP/1.0       Protocol version
+2      REPLY          command
+3      _MSGID_        A unique id for the msg
+4      _MSG_          The reply to respond with
+====== ============== ===========
+
+A **HEARTBEAT** frame consists of a
+
+====== ============== ===========
+FRAME  Value          Description
+====== ============== ===========
+0      _EMPTY_        leave empty
+1      eMQP/1.0       Protocol version
+2      HEARTBEAT      command
+3      _MSGID_        A unique id for the msg
+4      _UNIX_TS_      A unix timestamp
+====== ============== ===========
+
+A **DISCONNECT** frame consists of
+
+====== ============== ===========
+FRAME  Value          Description
+====== ============== ===========
+0      _EMPTY_        leave empty
+1      eMQP/1.0       Protocol version
+2      DISCONNECT     command
+3      _MSGID_        A unique id for the msg
+====== ============== ===========
+
+A **KBAI** frame consists of
+
+====== ============== ===========
+FRAME  Value          Description
+====== ============== ===========
+0      _EMPTY_        leave empty
+1      eMQP/1.0       Protocol version
+2      KBAI           command
+3      _MSGID_        A unique id for the msg
 ====== ============== ===========
 
 eMQP / Client
@@ -159,44 +205,9 @@ FRAME  Value          Description
 3      _MSGID_        A unique id for the msg
 ====== ============== ===========
 
-A **REPLY** frame consists of a 5-frame multipart message, formatted as follows.
-
-====== ============== ===========
-FRAME  Value          Description
-====== ============== ===========
-0      _EMPTY_        leave empty
-1      eMQP/1.0       Protocol version
-2      REPLY          command
-3      _MSGID_        A unique id for the msg
-4      _MSG_          The reply to respond with
-====== ============== ===========
-
-A **HEARTBEAT** frame consists of a
-
-====== ============== ===========
-FRAME  Value          Description
-====== ============== ===========
-0      _EMPTY_        leave empty
-1      eMQP/1.0       Protocol version
-2      HEARTBEAT      command
-3      _MSGID_        A unique id for the msg
-4      _UNIX_TS_      A unix timestamp
-====== ============== ===========
-
-A **DISCONNECT** frame consists of
-
-====== ============== ===========
-FRAME  Value          Description
-====== ============== ===========
-0      _EMPTY_        leave empty
-1      eMQP/1.0       Protocol version
-2      DISCONNECT     command
-3      _MSGID_        A unique id for the msg
-====== ============== ===========
-
 Heartbeating
 ------------
- * HEARTBEAT commands are valid at any time after an INFORM command
+ * HEARTBEAT commands are valid at any time after an INFORM command.
  * Any command except DISCONNECT act as a heartbeat. Peers SHOULD NOT send HEARTBEAT commands while sending other commands.
  * Worker and broker MUST send heartbeats at regular and agreed-upon intervals.
  * Scheduler and broker MUST send heartbeats at regular and agreed-upon intervals.
@@ -204,16 +215,29 @@ Heartbeating
  * If the broker detects that a worker has disconnected it should stop sending it a message of any type.
  * If the scheduler detects that the broker disconnects it SHOULD restart the conversation.
 
-REQUEST Headers
+Headers
 ---------------
-Headers MUST be 0 to many comma seperated values inserted into the header field. If there are no headers required, send an empty string MUST be sent where headers are required.
+Headers MUST be 0 to many comma seperated values inserted into the header field. If there are no headers required, an empty string MUST be sent where headers are required.
 
 Below is a table which defines and describes the headers.
 
-=============== ======= ======= ======= ===========
-Header          REQUEST PUBLISH Default Description
-=============== ======= ======= ======= ===========
-reply-requested X               False   Once the job is finished, send a reply back with information from the job. If there is no information reply with a True value.
-retry-count:#   X               0       Retry a failed job this many times before accepting defeat.
-guarantee       X               False   Ensure the job completes by letting someone else worry about a success reply.
-=============== ======= ======= ======= ===========
+
+================= ======= ======= ======== ======= ===========
+Header            REQUEST PUBLISH SCHEDULE Default Description
+================= ======= ======= ======== ======= ===========
+reply-requested   X                        False   Once the job is finished, send a reply back with information from the job. If there is no information reply with a True value.
+retry-count:#     X                        0       Retry a failed job this many times before accepting defeat.
+guarantee         X                        False   Ensure the job completes by letting someone else worry about a success reply.
+nohaste                           X        False   When scheduling a job, set this to True if you don't want the job to run immediately as it's scheduled.  Instead, it will run for the first time when the interval has elapsed.
+================= ======= ======= ======== ======= ===========
+
+DISCONNECT and KBAI
+===================
+When a component receives a DISCONNECT command it:
+ * MUST send a KBAI command to all connected components.
+ * MUST stop sending and receiving any messages
+ * MUST allow any pending messages or jobs to complete.
+
+When a component receives a KBAI command it:
+ * MUST stop sending any messages to the disconnecting component.
+ * SHOULD Clean up references to the disconnecting component.

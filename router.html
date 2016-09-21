@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.2.1
+                0.2.6.2
               </div>
             
           
@@ -226,6 +226,30 @@ self.queues</li>
 </dd></dl>
 
 <dl class="method">
+<dt id="eventmq.router.Router.get_status">
+<code class="descname">get_status</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.get_status" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Return</dt>
+<dd>(str) Serialized information about the current state of the router.</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="eventmq.router.Router.job_latencies">
+<code class="descname">job_latencies</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.router.Router.job_latencies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Latency tracking dictionary
+Key: msgid of message each REQUEST received and forwarded to a worker
+Value: (timestamp, queue_name)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.router.Router.on_disconnect">
+<code class="descname">on_disconnect</code><span class="sig-paren">(</span><em>msgid</em>, <em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.on_disconnect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare router for disconnecting by removing schedulers, clearing
+worker queue (if needed), and removing workers.</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="eventmq.router.Router.on_heartbeat">
 <code class="descname">on_heartbeat</code><span class="sig-paren">(</span><em>sender</em>, <em>msgid</em>, <em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.on_heartbeat" title="Permalink to this definition">¶</a></dt>
 <dd><p>a placeholder for a no-op command. The actual &#8216;logic&#8217; for HEARTBEAT is
@@ -257,6 +281,13 @@ and announces itself.</p>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.router.Router.on_reply">
+<code class="descname">on_reply</code><span class="sig-paren">(</span><em>sender</em>, <em>msgid</em>, <em>msg</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.on_reply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles an REPLY message. Replies are sent by the worker for latanecy
+measurements</p>
 </dd></dl>
 
 <dl class="method">
@@ -465,7 +496,7 @@ process receives a SIGHUP from the system.</p>
 
 <dl class="method">
 <dt id="eventmq.router.Router.start">
-<code class="descname">start</code><span class="sig-paren">(</span><em>frontend_addr='tcp://127.0.0.1:47291'</em>, <em>backend_addr='tcp://127.0.0.1:47290'</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.start" title="Permalink to this definition">¶</a></dt>
+<code class="descname">start</code><span class="sig-paren">(</span><em>frontend_addr='tcp://127.0.0.1:47291'</em>, <em>backend_addr='tcp://127.0.0.1:47290'</em>, <em>administrative_addr='tcp://127.0.0.1:47293'</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.start" title="Permalink to this definition">¶</a></dt>
 <dd><p>Begin listening for connections on the provided connection strings</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -474,6 +505,8 @@ process receives a SIGHUP from the system.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>frontend_addr</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; connection string to listen for requests</li>
 <li><strong>backend_addr</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; connection string to listen for workers</li>
+<li><strong>administrative_addr</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; connection string to listen for emq-cli
+commands on.</li>
 </ul>
 </td>
 </tr>
