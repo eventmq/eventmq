@@ -30,6 +30,9 @@
   
 
   
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="EventMQ 0 documentation" href="index.html"/>
         <link rel="up" title="API Documentation" href="api.html"/>
         <link rel="next" title="poller – Poller" href="poller.html"/>
@@ -61,7 +64,7 @@
             
             
               <div class="version">
-                0.2.6.2
+                0.2.6.3
               </div>
             
           
@@ -87,7 +90,7 @@
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">API Documentation</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="client.html"><code class="docutils literal"><span class="pre">client</span></code> &#8211; Client Utilities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="exceptions.html"><code class="docutils literal"><span class="pre">exceptions</span></code> &#8211; Exceptions</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href=""><code class="docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#"><code class="docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager</a></li>
 <li class="toctree-l2"><a class="reference internal" href="poller.html"><code class="docutils literal"><span class="pre">poller</span></code> &#8211; Poller</a></li>
 <li class="toctree-l2"><a class="reference internal" href="receiver.html"><code class="docutils literal"><span class="pre">receiver</span></code> &#8211; Receiver</a></li>
 <li class="toctree-l2"><a class="reference internal" href="router.html"><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</a></li>
@@ -118,7 +121,7 @@
         <div class="rst-content">
           
 
-
+ 
 
 
 
@@ -163,10 +166,10 @@ to manage the resources on the server it&#8217;s running.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; unique name of this instance. By default a uuid will be
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; unique name of this instance. By default a uuid will be
 generated.</li>
-<li><strong>queues</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) &#8211; List of queue names to listen on.</li>
-<li><strong>skip_signal</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; Don&#8217;t register the signal handlers. Useful for
+<li><strong>queues</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) &#8211; List of queue names to listen on.</li>
+<li><strong>skip_signal</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; Don&#8217;t register the signal handlers. Useful for
 testing.</li>
 </ul>
 </td>
@@ -189,7 +192,7 @@ testing.</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>broker_addr</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; The address of the broker to connect to.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>broker_addr</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; The address of the broker to connect to.</td>
 </tr>
 </tbody>
 </table>
@@ -272,8 +275,8 @@ for another REQUEST message.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; The socket to use for this ack</li>
-<li><strong>recipient</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; The recipient id for the ack</li>
+<li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/2/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; The socket to use for this ack</li>
+<li><strong>recipient</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; The recipient id for the ack</li>
 <li><strong>msgid</strong> &#8211; The unique id that we are acknowledging</li>
 </ul>
 </td>
