@@ -118,6 +118,11 @@ class Router(HeartbeatMixin):
         # Tests skip setting the signals.
         if not kwargs.pop('skip_signal', False):
             signal.signal(signal.SIGHUP, self.sighup_handler)
+            signal.signal(signal.SIGUSR1, self.handle_pdb)
+
+    def handle_pdb(self, sig, frame):
+        import pdb
+        pdb.Pdb().set_trace(frame)
 
     def start(self,
               frontend_addr=conf.FRONTEND_ADDR,
