@@ -126,6 +126,12 @@ class JobManager(HeartbeatMixin, EMQPService):
             # Note: `maybe_send_heartbeat` is mocked by the tests to return
             #       False, so it should stay at the bottom of the loop.
             if not self.maybe_send_heartbeat(events):
+                # Toggle default and failover worker_addr
+                if (conf.WORKER_ADDR == conf.WORKER_ADDR_DEFAULT):
+                    conf.WORKER_ADDR = conf.WORKER_ADDR_FAILOVER
+                else:
+                    conf.WORKER_ADDR = conf.WORKER_ADDR_DEFAULT
+
                 break
 
     def on_request(self, msgid, msg):

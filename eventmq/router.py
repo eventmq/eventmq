@@ -408,6 +408,7 @@ class Router(HeartbeatMixin):
             depth (int): The recusion depth in retrying when PeerGoneAwayError
                 is raised.
         """
+
         try:
             queue_name = msg[0]
         except IndexError:
@@ -447,9 +448,14 @@ class Router(HeartbeatMixin):
             # Rebuild the message to be sent to the worker. fwdmsg will
             # properly address the message.
             self.job_latencies[msgid] = (monotonic(), queue_name)
+
             fwdmsg(self.outgoing, worker_addr, ['', constants.PROTOCOL_VERSION,
                                                 'REQUEST', msgid, ] + msg)
+
             self.workers[worker_addr]['available_slots'] -= 1
+            # Acknowledgment of the request being submitted to the client
+            sendmsg(self.incoming, sender, 'REPLY',
+                    (msgid,))
         except exceptions.PeerGoneAwayError:
             logger.debug(
                 "Worker {} has unexpectedly gone away. Removing this worker "

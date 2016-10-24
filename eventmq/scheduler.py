@@ -280,7 +280,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
         logger.info("Received new UNSCHEDULE request: {}".format(message))
 
         # TODO: Notify router whether or not this succeeds
-        self.unschedule_job(schedule_hash)
+        self.unschedule_job(message)
 
     def unschedule_job(self, message):
         """

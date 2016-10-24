@@ -59,6 +59,8 @@ BACKEND_ADDR = 'tcp://127.0.0.1:47290'
 SCHEDULER_ADDR = 'tcp://127.0.0.1:47291'
 # Where the worker should connect
 WORKER_ADDR = 'tcp://127.0.0.1:47290'
+WORKER_ADDR_DEFAULT = 'tcp://127.0.0.1:47290'
+WORKER_ADDR_FAILOVER = 'tcp://127.0.0.1:47290'
 # Used to monitor and manage the devices
 ADMINISTRATIVE_ADDR = 'tcp://127.0.0.1:47293'
 
