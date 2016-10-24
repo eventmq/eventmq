@@ -157,14 +157,19 @@ def fwd_emqp_router_message(socket, recipient_id, payload):
             empty string
     """
     import zmq
+    import errno
+
+    errnos = [errno.EHOSTUNREACH,
+              errno.EAGAIN]
 
     payload = [recipient_id, ] + payload
     if conf.SUPER_DEBUG:
         logger.debug('Forwarding message: {}'.format(str(payload)))
     try:
-        socket.zsocket.send_multipart(payload)
+        socket.zsocket.send_multipart(payload,
+                                      flags=zmq.NOBLOCK)
     except zmq.error.ZMQError as e:
-        if e.errno == 113 or e.errno == 65:
+        if e.errno in errnos:
             e.message = e.message + " {}".format(recipient_id)
             raise exceptions.PeerGoneAwayError(e)
         else:

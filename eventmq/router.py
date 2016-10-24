@@ -379,9 +379,15 @@ class Router(HeartbeatMixin):
             if queue_name in self.waiting_messages.keys():
                 logger.debug('Found waiting message in the %s waiting_messages'
                              ' queue' % queue_name)
-                msg = self.waiting_messages[queue_name].popleft()
+                msg = self.waiting_messages[queue_name].peekleft()
 
-                fwdmsg(self.outgoing, sender, msg)
+                try:
+                    fwdmsg(self.outgoing, sender, msg)
+                    self.waiting_messages[queue_name].popleft()
+                except exceptions.PeerGoneAwayError:
+                    # Cleanup a worker that cannot be contacted, leaving the message in queue
+                    self.workers[sender]['hb'] = 0
+                    self.clean_up_dead_workers()
 
                 # It is easier to check if a key exists rather than the len of
                 # a key's value if it exists elsewhere, so if that was the last
