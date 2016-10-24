@@ -546,6 +546,20 @@ class EMQdeque(object):
         """
         return self._queue.popleft()
 
+    def peek(self):
+        """
+        Returns:
+            object: the last (right-most) element of the deque
+        """
+        return self._queue[-1]
+
+    def peekleft(self):
+        """
+        Returns:
+            object: the first (left-most) element of the deque
+        """
+        return self._queue[0]
+
     def appendleft(self, item):
         """
         Append item to the left this deque if the deque isn't full.
