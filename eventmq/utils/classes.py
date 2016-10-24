@@ -406,7 +406,8 @@ class ZMQSendMixin(object):
                 logger.debug('Sending message: %s' % str(msg))
 
         try:
-            self.zsocket.send_multipart(msg)
+            self.zsocket.send_multipart(msg,
+                                        flags=zmq.NOBLOCK)
         except zmq.error.ZMQError as e:
             if 'No route' in e.message:
                 raise exceptions.PeerGoneAwayError(e)
