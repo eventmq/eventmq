@@ -32,6 +32,10 @@ def schedule(socket, func, interval_secs=None, args=(), kwargs=None,
     """
     Execute a task on a defined interval.
 
+    .. note::
+
+       All passed class & fuction kwargs/args MUST be json serializable.
+
     Args:
         socket (socket): eventmq socket to use for sending the message
         func (callable): the callable to be scheduled on a worker
@@ -48,6 +52,8 @@ def schedule(socket, func, interval_secs=None, args=(), kwargs=None,
             guarantee is enabled to ensure the scheduler schedules the job.
         queue (str): name of the queue to use when executing the job. The
             default value is the default queue.
+    Raises:
+        TypeError: When one or more parameters are not JSON serializable.
     Returns:
        str: ID of the schedule message that was sent. None if there was an
            error
@@ -116,6 +122,10 @@ def defer_job(
     This tries not to raise any exceptions so use some of the message flags to
     guarentee things.
 
+    .. note::
+
+       All passed class & fuction kwargs/args MUST be json serializable.
+
     Args:
         socket (socket): eventmq socket to use for sending the message
         func (callable): the callable to be deferred to a worker
@@ -136,6 +146,8 @@ def defer_job(
         queue (str): Name of queue to use when executing the job. If this value
             evaluates to False, the default is used. Default: is configured
             default queue name
+    Raises:
+        TypeError: When one or more parameters are not JSON serializable.
     Returns:
         str: ID for the message/deferred job. This value will be None if there
             was an error.
