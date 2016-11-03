@@ -30,9 +30,6 @@
   
 
   
-        <link rel="index" title="Index"
-              href="../genindex.html"/>
-        <link rel="search" title="Search" href="../search.html"/>
     <link rel="top" title="EventMQ 0 documentation" href="../index.html"/>
         <link rel="up" title="utils – Utilities" href="index.html"/>
         <link rel="next" title="devices – Device Utilities" href="devices.html"/>
@@ -64,7 +61,7 @@
             
             
               <div class="version">
-                0.2.6.3
+                0.2.6.5
               </div>
             
           
@@ -96,7 +93,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../router.html"><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../sender.html"><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></li>
 <li class="toctree-l2 current"><a class="reference internal" href="index.html"><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</a><ul class="current">
-<li class="toctree-l3 current"><a class="current reference internal" href="#"><code class="docutils literal"><span class="pre">classes</span></code> &#8211; Utility Classes</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href=""><code class="docutils literal"><span class="pre">classes</span></code> &#8211; Utility Classes</a></li>
 <li class="toctree-l3"><a class="reference internal" href="devices.html"><code class="docutils literal"><span class="pre">devices</span></code> &#8211; Device Utilities</a></li>
 <li class="toctree-l3"><a class="reference internal" href="messages.html"><code class="docutils literal"><span class="pre">messages</span></code> &#8211; Message Utilities</a></li>
 <li class="toctree-l3"><a class="reference internal" href="settings.html"><code class="docutils literal"><span class="pre">settings</span></code> &#8211; Settings Utilities</a></li>
@@ -128,7 +125,7 @@
         <div class="rst-content">
           
 
- 
+
 
 
 
@@ -238,8 +235,8 @@ for.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>type</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Either &#8216;worker&#8217; or &#8216;scheduler&#8217;</li>
-<li><strong>queues</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; <ul>
+<li><strong>type</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Either &#8216;worker&#8217; or &#8216;scheduler&#8217;</li>
+<li><strong>queues</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; <ul>
 <li>For &#8216;worker&#8217; type, the queues the worker is listening on and
 their weights.<dl class="docutils">
 <dt>Example:</dt>
@@ -252,13 +249,14 @@ their weights.<dl class="docutils">
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><code class="xref py py-exc docutils literal"><span class="pre">ValueError</span></code> &#8211; When <cite>type_</cite> does not match a specified type</p>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><code class="xref py py-exc docutils literal"><span class="pre">ValueError</span></code> &#8211;
+When <cite>type_</cite> does not match a specified type</p>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">ID of the message</p>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)">str</a></p>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)">str</a></p>
 </td>
 </tr>
 </tbody>
@@ -278,7 +276,7 @@ compatibility and not recommended for new apps.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>addr</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; connection string to connect to</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>addr</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; connection string to connect to</td>
 </tr>
 </tbody>
 </table>
@@ -305,12 +303,12 @@ checked to ensure proper error handling.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>full</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; Hard limit on deque size. Rejects adding elements.
+<li><strong>full</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; Hard limit on deque size. Rejects adding elements.
 Default: 0 - no limit</li>
-<li><strong>pfull</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; Programmable limit on deque size, defaults
+<li><strong>pfull</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; Programmable limit on deque size, defaults
 to <code class="docutils literal"><span class="pre">full</span></code> length</li>
 <li><strong>on_full</strong> (<em>func</em>) &#8211; callback to call when <code class="docutils literal"><span class="pre">full</span></code> limit is hit</li>
-<li><strong>initial</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#iter" title="(in Python v2.7)"><em>iter</em></a>) &#8211; The initial iteratable used to contruct the deque</li>
+<li><strong>initial</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#iter" title="(in Python v2.7)"><em>iter</em></a>) &#8211; The initial iteratable used to contruct the deque</li>
 </ul>
 </td>
 </tr>
@@ -337,14 +335,11 @@ where False is returned.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="docutils">
-<dt>True if <code class="docutils literal"><span class="pre">item</span></code> was successfully added, False if the deque</dt>
-<dd>is at the <code class="docutils literal"><span class="pre">self.full</span></code> limit. If it is, <code class="docutils literal"><span class="pre">self.on_full</span></code> is
-called.</dd>
-</dl>
-</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if <code class="docutils literal"><span class="pre">item</span></code> was successfully added, False if the deque
+is at the <code class="docutils literal"><span class="pre">self.full</span></code> limit. If it is, <code class="docutils literal"><span class="pre">self.on_full</span></code> is
+called.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)">bool</a></td>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/library/functions.html#bool" title="(in Python v2.7)">bool</a></td>
 </tr>
 </tbody>
 </table>
@@ -363,14 +358,11 @@ where False is returned.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="docutils">
-<dt>True if <code class="docutils literal"><span class="pre">item</span></code> was successfully added, False if the deque</dt>
-<dd>is at the <code class="docutils literal"><span class="pre">self.full</span></code> limit. If it is, <code class="docutils literal"><span class="pre">self.on_full</span></code> is
-called.</dd>
-</dl>
-</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if <code class="docutils literal"><span class="pre">item</span></code> was successfully added, False if the deque
+is at the <code class="docutils literal"><span class="pre">self.full</span></code> limit. If it is, <code class="docutils literal"><span class="pre">self.on_full</span></code> is
+called.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)">bool</a></td>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/library/functions.html#bool" title="(in Python v2.7)">bool</a></td>
 </tr>
 </tbody>
 </table>
@@ -384,14 +376,11 @@ called.</dd>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="docutils">
-<dt>True if <code class="docutils literal"><span class="pre">item</span></code> was successfully added, False if the deque</dt>
-<dd>is at the <code class="docutils literal"><span class="pre">self.full</span></code> limit. If it is, <code class="docutils literal"><span class="pre">self.on_full</span></code> is
-called.</dd>
-</dl>
-</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if <code class="docutils literal"><span class="pre">item</span></code> was successfully added, False if the deque
+is at the <code class="docutils literal"><span class="pre">self.full</span></code> limit. If it is, <code class="docutils literal"><span class="pre">self.on_full</span></code> is
+called.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)">bool</a></td>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/library/functions.html#bool" title="(in Python v2.7)">bool</a></td>
 </tr>
 </tbody>
 </table>
@@ -407,7 +396,7 @@ called.</dd>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the deque contains 0 items. False otherwise</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)">bool</a></td>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/library/functions.html#bool" title="(in Python v2.7)">bool</a></td>
 </tr>
 </tbody>
 </table>
@@ -424,7 +413,7 @@ called.</dd>
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the deque contains at least <code class="docutils literal"><span class="pre">full</span></code> items. False
 otherwise</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)">bool</a></td>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/library/functions.html#bool" title="(in Python v2.7)">bool</a></td>
 </tr>
 </tbody>
 </table>
@@ -441,7 +430,37 @@ otherwise</td>
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the deque contains at least <code class="docutils literal"><span class="pre">pfull</span></code> items.
 False otherwise</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)">bool</a></td>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/library/functions.html#bool" title="(in Python v2.7)">bool</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.utils.classes.EMQdeque.peek">
+<code class="descname">peek</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.classes.EMQdeque.peek" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the last (right-most) element of the deque</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/library/functions.html#object" title="(in Python v2.7)">object</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.utils.classes.EMQdeque.peekleft">
+<code class="descname">peekleft</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.classes.EMQdeque.peekleft" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the first (left-most) element of the deque</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/library/functions.html#object" title="(in Python v2.7)">object</a></td>
 </tr>
 </tbody>
 </table>
@@ -456,7 +475,7 @@ False otherwise</td>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the last (right-most) element of the deque</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2/library/functions.html#object" title="(in Python v2.7)">object</a></td>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/library/functions.html#object" title="(in Python v2.7)">object</a></td>
 </tr>
 </tbody>
 </table>
@@ -471,7 +490,7 @@ False otherwise</td>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the first (left-most) element of the deque</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2/library/functions.html#object" title="(in Python v2.7)">object</a></td>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/library/functions.html#object" title="(in Python v2.7)">object</a></td>
 </tr>
 </tbody>
 </table>
@@ -485,7 +504,7 @@ False otherwise</td>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>item</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#object" title="(in Python v2.7)"><em>object</em></a>) &#8211; The item to remove from the deque</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>item</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#object" title="(in Python v2.7)"><em>object</em></a>) &#8211; The item to remove from the deque</td>
 </tr>
 </tbody>
 </table>
@@ -518,17 +537,14 @@ met.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>now</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; The time to use to check if death has occurred. If
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>now</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; The time to use to check if death has occurred. If
 this value is None, then <code class="xref py py-func docutils literal"><span class="pre">utils.timeutils.monotonic()</span></code>
 is used.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="docutils">
-<dt>True if the connection to the peer has died, otherwise</dt>
-<dd>False</dd>
-</dl>
-</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">True if the connection to the peer has died, otherwise
+False</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)">bool</a></td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/library/functions.html#bool" title="(in Python v2.7)">bool</a></td>
 </tr>
 </tbody>
 </table>
@@ -548,11 +564,11 @@ is used.</td>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/2/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; The eMQP socket to send the message to</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; The eMQP socket to send the message to</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">ID of the message</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)">str</a></td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)">str</a></td>
 </tr>
 </tbody>
 </table>
@@ -606,7 +622,7 @@ on it&#8217;s own</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>message</strong> &#8211; message to send to something</li>
-<li><strong>protocol_version</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; protocol version. it&#8217;s good practice, but
+<li><strong>protocol_version</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; protocol version. it&#8217;s good practice, but
 you may explicitly specify None to skip adding the version</li>
 </ul>
 </td>
@@ -628,10 +644,10 @@ like this</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>message</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) &#8211; Raw message to send.</li>
-<li><strong>protocol_version</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; protocol version. it&#8217;s good practice but
+<li><strong>message</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) &#8211; Raw message to send.</li>
+<li><strong>protocol_version</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; protocol version. it&#8217;s good practice but
 you may explicitly specify None to skip adding the version</li>
-<li><strong>_recipient_id</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#object" title="(in Python v2.7)"><em>object</em></a>) &#8211; When using a <code class="xref py py-attr docutils literal"><span class="pre">zmq.ROUTER</span></code> you must
+<li><strong>_recipient_id</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#object" title="(in Python v2.7)"><em>object</em></a>) &#8211; When using a <code class="xref py py-attr docutils literal"><span class="pre">zmq.ROUTER</span></code> you must
 specify the the recipient id of the remote socket</li>
 </ul>
 </td>

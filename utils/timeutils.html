@@ -30,9 +30,6 @@
   
 
   
-        <link rel="index" title="Index"
-              href="../genindex.html"/>
-        <link rel="search" title="Search" href="../search.html"/>
     <link rel="top" title="EventMQ 0 documentation" href="../index.html"/>
         <link rel="up" title="utils – Utilities" href="index.html"/>
         <link rel="next" title="Contributing to EventMQ" href="../contributing.html"/>
@@ -64,7 +61,7 @@
             
             
               <div class="version">
-                0.2.6.3
+                0.2.6.5
               </div>
             
           
@@ -100,7 +97,7 @@
 <li class="toctree-l3"><a class="reference internal" href="devices.html"><code class="docutils literal"><span class="pre">devices</span></code> &#8211; Device Utilities</a></li>
 <li class="toctree-l3"><a class="reference internal" href="messages.html"><code class="docutils literal"><span class="pre">messages</span></code> &#8211; Message Utilities</a></li>
 <li class="toctree-l3"><a class="reference internal" href="settings.html"><code class="docutils literal"><span class="pre">settings</span></code> &#8211; Settings Utilities</a></li>
-<li class="toctree-l3 current"><a class="current reference internal" href="#"><code class="docutils literal"><span class="pre">timeutils</span></code> &#8211; Time Utilites</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href=""><code class="docutils literal"><span class="pre">timeutils</span></code> &#8211; Time Utilites</a></li>
 </ul>
 </li>
 </ul>
@@ -128,7 +125,7 @@
         <div class="rst-content">
           
 
- 
+
 
 
 
@@ -181,8 +178,8 @@ next(interval)  # 600</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>start_value</strong> (<em>numeric</em>) &#8211; via <a class="reference internal" href="#eventmq.utils.timeutils.monotonic" title="eventmq.utils.timeutils.monotonic"><code class="xref py py-func docutils literal"><span class="pre">monotonic()</span></code></a> or <a class="reference internal" href="#eventmq.utils.timeutils.timestamp" title="eventmq.utils.timeutils.timestamp"><code class="xref py py-func docutils literal"><span class="pre">timestamp()</span></code></a></li>
-<li><strong>interval_secs</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; </li>
+<li><strong>(numeric) - the timestamp to begin with. usually gotten</strong> (<em>start_value</em>) &#8211; via <a class="reference internal" href="#eventmq.utils.timeutils.monotonic" title="eventmq.utils.timeutils.monotonic"><code class="xref py py-func docutils literal"><span class="pre">monotonic()</span></code></a> or <a class="reference internal" href="#eventmq.utils.timeutils.timestamp" title="eventmq.utils.timeutils.timestamp"><code class="xref py py-func docutils literal"><span class="pre">timestamp()</span></code></a></li>
+<li><strong>(int) - the number of seconds between intervals</strong> (<em>interval_secs</em>) &#8211; </li>
 </ul>
 </td>
 </tr>

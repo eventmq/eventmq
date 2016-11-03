@@ -30,9 +30,6 @@
   
 
   
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="EventMQ 0 documentation" href="index.html"/>
         <link rel="up" title="API Documentation" href="api.html"/>
         <link rel="next" title="sender – Sender" href="sender.html"/>
@@ -64,7 +61,7 @@
             
             
               <div class="version">
-                0.2.6.3
+                0.2.6.5
               </div>
             
           
@@ -93,7 +90,7 @@
 <li class="toctree-l2"><a class="reference internal" href="jobmanager.html"><code class="docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager</a></li>
 <li class="toctree-l2"><a class="reference internal" href="poller.html"><code class="docutils literal"><span class="pre">poller</span></code> &#8211; Poller</a></li>
 <li class="toctree-l2"><a class="reference internal" href="receiver.html"><code class="docutils literal"><span class="pre">receiver</span></code> &#8211; Receiver</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#"><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sender.html"><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils/index.html"><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</a></li>
 </ul>
@@ -121,7 +118,7 @@
         <div class="rst-content">
           
 
- 
+
 
 
 
@@ -160,7 +157,7 @@
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>scheduler_id</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; unique id of the scheduler to add</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>scheduler_id</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; unique id of the scheduler to add</td>
 </tr>
 </tbody>
 </table>
@@ -175,7 +172,7 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>worker_id</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; unique id of the worker to add</li>
+<li><strong>worker_id</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; unique id of the worker to add</li>
 <li><strong>queues</strong> &#8211; queue or queues this worker should be a member of</li>
 </ul>
 </td>
@@ -207,13 +204,15 @@ queue.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>queue_name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Name of the queue</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>queue_name</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Name of the queue</p>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first simple">
-<li><code class="xref py py-exc docutils literal"><span class="pre">NoAvailableWorkerSlotsError</span></code> &#8211; Raised when there are no available</li>
-<li>slots in any the job managers.</li>
-<li><code class="xref py py-exc docutils literal"><span class="pre">UnknownQueueError</span></code> &#8211; Raised when <code class="docutils literal"><span class="pre">queue_name</span></code> is not found in
+<li><code class="xref py py-exc docutils literal"><span class="pre">NoAvailableWorkerSlotsError</span></code> &#8211;
+Raised when there are no available</li>
+<li><strong>slots in any the job managers.</strong> &#8211;</li>
+<li><code class="xref py py-exc docutils literal"><span class="pre">UnknownQueueError</span></code> &#8211;
+Raised when <code class="docutils literal"><span class="pre">queue_name</span></code> is not found in
 self.queues</li>
 </ul>
 </td>
@@ -231,10 +230,14 @@ self.queues</li>
 <dl class="method">
 <dt id="eventmq.router.Router.get_status">
 <code class="descname">get_status</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.get_status" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="docutils">
-<dt>Return</dt>
-<dd>(str) Serialized information about the current state of the router.</dd>
-</dl>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(str) Serialized information about the current state of the router.</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
@@ -276,8 +279,8 @@ and announces itself.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>sender</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; The id of the sender</li>
-<li><strong>msgid</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Unique identifier for this message</li>
+<li><strong>sender</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; The id of the sender</li>
+<li><strong>msgid</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Unique identifier for this message</li>
 <li><strong>msg</strong> &#8211; The actual message that was sent</li>
 </ul>
 </td>
@@ -305,7 +308,7 @@ measurements</p>
 <li><strong>sender</strong> &#8211; </li>
 <li><strong>msgid</strong> &#8211; </li>
 <li><strong>msgid</strong> &#8211; </li>
-<li><strong>depth</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; The recusion depth in retrying when PeerGoneAwayError
+<li><strong>depth</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; The recusion depth in retrying when PeerGoneAwayError
 is raised.</li>
 </ul>
 </td>
@@ -322,11 +325,11 @@ is raised.</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>unprioritized_iterable</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#iter" title="(in Python v2.7)"><em>iter</em></a>) &#8211; Any list, tuple, etc where the
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>unprioritized_iterable</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#iter" title="(in Python v2.7)"><em>iter</em></a>) &#8211; Any list, tuple, etc where the
 0-index key is an integer to use as priority. Largest numbers
 come first.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">IndexError - There was no 0-index element.</td>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><strong>IndexError - There was no 0-index element.</strong> &#8211;</td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">decsending order list. E.g. ((20, &#8216;a&#8217;), (14, &#8216;b&#8217;), (12, &#8216;c&#8217;))</td>
 </tr>
@@ -348,7 +351,8 @@ called. This is used to short circuit message retry attempts.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">InvalidMessageError</span></code> &#8211; Unable to parse the message</p>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">InvalidMessageError</span></code> &#8211;
+Unable to parse the message</p>
 </td>
 </tr>
 </tbody>
@@ -409,7 +413,7 @@ worker slot, so you may see duplicate addresses.</p>
 <dl class="attribute">
 <dt id="eventmq.router.Router.scheduler_queue">
 <code class="descname">scheduler_queue</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.router.Router.scheduler_queue" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>Queue for schedulers to use</em></p>
+<dd><p>Queue for schedulers to use:</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -437,8 +441,8 @@ Contains dictionaries:</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/2/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; The socket to use for this ack</li>
-<li><strong>recipient</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; The recipient id for the ack</li>
+<li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; The socket to use for this ack</li>
+<li><strong>recipient</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; The recipient id for the ack</li>
 <li><strong>msgid</strong> &#8211; The unique id that we are acknowledging</li>
 </ul>
 </td>
@@ -463,8 +467,8 @@ needed when building messages</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/2/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; the socket to send the heartbeat with</li>
-<li><strong>recipient</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Worker I</li>
+<li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; the socket to send the heartbeat with</li>
+<li><strong>recipient</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Worker I</li>
 </ul>
 </td>
 </tr>
@@ -506,9 +510,9 @@ process receives a SIGHUP from the system.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>frontend_addr</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; connection string to listen for requests</li>
-<li><strong>backend_addr</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; connection string to listen for workers</li>
-<li><strong>administrative_addr</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; connection string to listen for emq-cli
+<li><strong>frontend_addr</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; connection string to listen for requests</li>
+<li><strong>backend_addr</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; connection string to listen for workers</li>
+<li><strong>administrative_addr</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; connection string to listen for emq-cli
 commands on.</li>
 </ul>
 </td>

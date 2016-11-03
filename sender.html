@@ -30,9 +30,6 @@
   
 
   
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="EventMQ 0 documentation" href="index.html"/>
         <link rel="up" title="API Documentation" href="api.html"/>
         <link rel="next" title="utils – Utilities" href="utils/index.html"/>
@@ -64,7 +61,7 @@
             
             
               <div class="version">
-                0.2.6.3
+                0.2.6.5
               </div>
             
           
@@ -94,7 +91,7 @@
 <li class="toctree-l2"><a class="reference internal" href="poller.html"><code class="docutils literal"><span class="pre">poller</span></code> &#8211; Poller</a></li>
 <li class="toctree-l2"><a class="reference internal" href="receiver.html"><code class="docutils literal"><span class="pre">receiver</span></code> &#8211; Receiver</a></li>
 <li class="toctree-l2"><a class="reference internal" href="router.html"><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href="#"><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href=""><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></li>
 <li class="toctree-l2"><a class="reference internal" href="utils/index.html"><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</a></li>
 </ul>
 </li>
@@ -121,7 +118,7 @@
         <div class="rst-content">
           
 
- 
+
 
 
 
@@ -155,19 +152,21 @@
 <dl class="attribute">
 <dt id="eventmq.sender.Sender.name">
 <code class="descname">name</code><a class="headerlink" href="#eventmq.sender.Sender.name" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> &#8211; Name of this socket</p>
+<dd><p><em>str</em></p>
+<p>Name of this socket</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="eventmq.sender.Sender.zcontext">
 <code class="descname">zcontext</code><a class="headerlink" href="#eventmq.sender.Sender.zcontext" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="http://pyzmq.readthedocs.io/en/v15.0.0/api/zmq.html#zmq.Context" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Context</span></code></a> &#8211; socket context</p>
+<dd><p><a class="reference external" href="http://pyzmq.readthedocs.org/en/v15.0.0/api/zmq.html#zmq.Context" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Context</span></code></a></p>
+<p>socket context</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="eventmq.sender.Sender.zsocket">
 <code class="descname">zsocket</code><a class="headerlink" href="#eventmq.sender.Sender.zsocket" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="http://pyzmq.readthedocs.io/en/v15.0.0/api/zmq.html#zmq.Socket" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Socket</span></code></a></p>
+<dd><p><a class="reference external" href="http://pyzmq.readthedocs.org/en/v15.0.0/api/zmq.html#zmq.Socket" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Socket</span></code></a></p>
 </dd></dl>
 
 <dl class="method">
@@ -182,13 +181,13 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of this socket. By default a uuid will be
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of this socket. By default a uuid will be
 generated</li>
-<li><strong>context</strong> (<a class="reference external" href="http://pyzmq.readthedocs.io/en/v15.0.0/api/zmq.html#zmq.Context" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Context</span></code></a>) &#8211; Context to use when building the
+<li><strong>context</strong> (<a class="reference external" href="http://pyzmq.readthedocs.org/en/v15.0.0/api/zmq.html#zmq.Context" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Context</span></code></a>) &#8211; Context to use when building the
 socket</li>
-<li><strong>socket</strong> (<a class="reference external" href="http://pyzmq.readthedocs.io/en/v15.0.0/api/zmq.html#zmq.Socket" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Socket</span></code></a>) &#8211; Should be one of <code class="xref py py-attr docutils literal"><span class="pre">zmq.REQ</span></code> or
+<li><strong>socket</strong> (<a class="reference external" href="http://pyzmq.readthedocs.org/en/v15.0.0/api/zmq.html#zmq.Socket" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Socket</span></code></a>) &#8211; Should be one of <code class="xref py py-attr docutils literal"><span class="pre">zmq.REQ</span></code> or
 <code class="xref py py-attr docutils literal"><span class="pre">zmq.DEALER</span></code>. By default a <cite>DEALER</cite> is used</li>
-<li><strong>skip_zmqstream</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; If set to true, skip creating the zmqstream
+<li><strong>skip_zmqstream</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; If set to true, skip creating the zmqstream
 socket</li>
 </ul>
 </td>
@@ -205,9 +204,10 @@ socket</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>addr</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Address to connect to as a connection string</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>addr</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Address to connect to as a connection string</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-class docutils literal"><span class="pre">Exception</span></code></td>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal"><span class="pre">:class</span></code> &#8211;
+<cite>Exception</cite></td>
 </tr>
 </tbody>
 </table>
@@ -221,9 +221,10 @@ socket</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>addr</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Address to listen on as a connction string</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>addr</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Address to listen on as a connction string</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-class docutils literal"><span class="pre">Exception</span></code></td>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal"><span class="pre">:class</span></code> &#8211;
+<cite>Exception</cite></td>
 </tr>
 </tbody>
 </table>
@@ -237,13 +238,10 @@ socket</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><dl class="docutils">
-<dt>True if the receiver is ready to connect or listen, otherwise</dt>
-<dd>False</dd>
-</dl>
-</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">True if the receiver is ready to connect or listen, otherwise
+False</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)">bool</a></td>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/library/functions.html#bool" title="(in Python v2.7)">bool</a></td>
 </tr>
 </tbody>
 </table>
@@ -261,9 +259,9 @@ parameters as <code class="xref py py-meth docutils literal"><span class="pre">s
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>socket</strong> (<a class="reference external" href="http://pyzmq.readthedocs.io/en/v15.0.0/api/zmq.html#zmq.Socket" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Socket</span></code></a>) &#8211; Should be one of <code class="xref py py-attr docutils literal"><span class="pre">zmq.REQ</span></code> or
+<li><strong>socket</strong> (<a class="reference external" href="http://pyzmq.readthedocs.org/en/v15.0.0/api/zmq.html#zmq.Socket" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Socket</span></code></a>) &#8211; Should be one of <code class="xref py py-attr docutils literal"><span class="pre">zmq.REQ</span></code> or
 <code class="xref py py-attr docutils literal"><span class="pre">zmq.DEALER</span></code>. By default a <cite>DEALER</cite> is used</li>
-<li><strong>skip_zmqstream</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; If set to true, skip creating the zmqstream
+<li><strong>skip_zmqstream</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; If set to true, skip creating the zmqstream
 socket</li>
 </ul>
 </td>
@@ -280,9 +278,10 @@ socket</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>addr</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Address to unbind from as a string</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>addr</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Address to unbind from as a string</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-class docutils literal"><span class="pre">Exception</span></code></td>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><code class="xref py py-exc docutils literal"><span class="pre">:class</span></code> &#8211;
+<cite>Exception</cite></td>
 </tr>
 </tbody>
 </table>
