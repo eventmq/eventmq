@@ -466,11 +466,13 @@ class Router(HeartbeatMixin):
             return
 
         try:
-            args_list = json.loads(msg[2])
-            args_dict = args_list[1]
-            function = args_dict.get('callable')
-            if function:
-                self.executed_functions[msgid] = (function, queue_name)
+            # Check if msg type is for executing function
+            if 'run' in msg and len(msg) > 2:
+                args_list = json.loads(msg[2])
+                args_dict = args_list[1]
+                function = args_dict.get('callable')
+                if function:
+                    self.executed_functions[msgid] = (function, queue_name)
             self.job_latencies[msgid] = (monotonic(), queue_name)
 
             # Rebuild the message to be sent to the worker. fwdmsg will
