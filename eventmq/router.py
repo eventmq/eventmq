@@ -23,7 +23,10 @@ import logging
 import signal
 
 from . import conf, constants, exceptions, poller, receiver
-from .constants import STATUS, CLIENT_TYPE, PROTOCOL_VERSION, KBYE, DISCONNECT
+from .constants import (
+        STATUS, CLIENT_TYPE, PROTOCOL_VERSION, KBYE, DISCONNECT,
+        ROUTER_INFO, ROUTER_SHOW_SCHEDULERS, ROUTER_SHOW_WORKERS
+)
 from .utils.classes import EMQdeque, HeartbeatMixin
 from .utils.messages import (
     send_emqp_router_message as sendmsg,
@@ -111,6 +114,11 @@ class Router(HeartbeatMixin):
         #: Key: msgid of message each REQUEST received and forwarded to a worker
         #: Value: (timestamp, queue_name)
         self.job_latencies = {}
+
+        #: Excecuted function tracking dictionary
+        #: Key: msgid of message each REQUEST received and forwarded to a worker
+        #: Value: (function_name, queue_name)
+        self.executed_functions = {}
 
         #: Set to True when the router should die.
         self.received_disconnect = False
@@ -444,9 +452,15 @@ class Router(HeartbeatMixin):
             return
 
         try:
+            args_list = json.loads(msg[2])
+            args_dict = args_list[1]
+            function = args_dict.get('callable')
+            if function:
+                self.executed_functions[msgid] = (function, queue_name)
+            self.job_latencies[msgid] = (monotonic(), queue_name)
+
             # Rebuild the message to be sent to the worker. fwdmsg will
             # properly address the message.
-            self.job_latencies[msgid] = (monotonic(), queue_name)
             fwdmsg(self.outgoing, worker_addr, ['', constants.PROTOCOL_VERSION,
                                                 'REQUEST', msgid, ] + msg)
             self.workers[worker_addr]['available_slots'] -= 1
@@ -607,6 +621,24 @@ class Router(HeartbeatMixin):
                 "There are no availabe workers for queue {}. Try again "
                 "later".format(queue_name))
 
+    def get_queues(self):
+        """
+        Returns a list of available queues
+        """
+        return -1
+
+    def get_connected_workers(self):
+        """
+        Returns a list of connected workers
+        """
+        return -1
+
+    def get_connected_schedulers(self):
+        """
+        Returns a list of connected schedulers
+        """
+        return -1
+
     def clean_up_dead_schedulers(self):
         """
         Loops through the list of schedulers and remove any schedulers who
@@ -733,6 +765,23 @@ class Router(HeartbeatMixin):
                                  " Schedule may still exist.".
                                  format(scheduler_addr))
                     self.process_client_message(original_msg[1:], depth+1)
+
+        elif command == ROUTER_INFO:
+            logger.info('Latencies: {}'.format(self.job_latencies))
+            logger.info('Executed Functions: {}'.format(
+                self.executed_functions))
+
+        elif command == ROUTER_SHOW_WORKERS:
+            workers = set()
+            for values in self.queues.values():
+                for value in values:
+                    workers.add(value)
+            queues = [self.queues.keys()]
+            logger.info('Connected Workers: {}'.format(workers))
+            logger.info('Connected Queues: {}'.format(queues))
+
+        elif command == ROUTER_SHOW_SCHEDULERS:
+            logger.info('Connected Schedulers: {}'.format(self.schedulers.keys()))
 
         elif command == DISCONNECT:
             self.on_disconnect(msgid, msg)
