@@ -25,7 +25,7 @@ import signal
 from . import conf, constants, exceptions, poller, receiver
 from .constants import (
         STATUS, CLIENT_TYPE, PROTOCOL_VERSION, KBYE, DISCONNECT,
-        ROUTER_INFO, ROUTER_SHOW_SCHEDULERS, ROUTER_SHOW_WORKERS
+        ROUTER_SHOW_SCHEDULERS, ROUTER_SHOW_WORKERS
 )
 from .utils.classes import EMQdeque, HeartbeatMixin
 from .utils.messages import (
@@ -183,13 +183,20 @@ class Router(HeartbeatMixin):
                 # ##############
                 # Admin Commands
                 # ##############
-                if len(msg) > 4 and msg[3] == 'DISCONNECT':
-                    logger.info('Received DISCONNECT from administrator')
-                    self.send_ack(self.administrative_socket, msg[0], msg[4])
-                    self.on_disconnect(msg[4], msg)
-                elif len(msg) > 4 and msg[3] == 'STATUS':
-                    sendmsg(self.administrative_socket, msg[0], 'REPLY',
-                            (self.get_status(),))
+                if len(msg) > 4:
+                    if msg[3] == DISCONNECT:
+                        logger.info('Received DISCONNECT from administrator')
+                        self.send_ack(self.administrative_socket, msg[0], msg[4])
+                        self.on_disconnect(msg[4], msg)
+                    elif msg[3] == 'STATUS':
+                        sendmsg(self.administrative_socket, msg[0], 'REPLY',
+                                (self.get_status(),))
+                    elif msg[3] == ROUTER_SHOW_WORKERS:
+                        sendmsg(self.administrative_socket, msg[0], 'REPLY',
+                                (self.get_workers_status(),))
+                    elif msg[3] == ROUTER_SHOW_SCHEDULERS:
+                        sendmsg(self.administrative_socket, msg[0], 'REPLY',
+                                (self.get_schedulers_status(),))
 
             # TODO: Optimization: the calls to functions could be done in
             #     another thread so they don't block the loop. synchronize
@@ -632,24 +639,6 @@ class Router(HeartbeatMixin):
                 "There are no availabe workers for queue {}. Try again "
                 "later".format(queue_name))
 
-    def get_queues(self):
-        """
-        Returns a list of available queues
-        """
-        return -1
-
-    def get_connected_workers(self):
-        """
-        Returns a list of connected workers
-        """
-        return -1
-
-    def get_connected_schedulers(self):
-        """
-        Returns a list of connected schedulers
-        """
-        return -1
-
     def clean_up_dead_schedulers(self):
         """
         Loops through the list of schedulers and remove any schedulers who
@@ -777,23 +766,6 @@ class Router(HeartbeatMixin):
                                  format(scheduler_addr))
                     self.process_client_message(original_msg[1:], depth+1)
 
-        elif command == ROUTER_INFO:
-            logger.info('Latencies: {}'.format(self.job_latencies))
-            logger.info('Executed Functions: {}'.format(
-                self.executed_functions))
-
-        elif command == ROUTER_SHOW_WORKERS:
-            workers = set()
-            for values in self.queues.values():
-                for value in values:
-                    workers.add(value)
-            queues = [self.queues.keys()]
-            logger.info('Connected Workers: {}'.format(workers))
-            logger.info('Connected Queues: {}'.format(queues))
-
-        elif command == ROUTER_SHOW_SCHEDULERS:
-            logger.info('Connected Schedulers: {}'.format(self.schedulers.keys()))
-
         elif command == DISCONNECT:
             self.on_disconnect(msgid, msg)
 
@@ -884,16 +856,25 @@ class Router(HeartbeatMixin):
         Return
            (str) Serialized information about the current state of the router.
         """
-        # Workers
         return json.dumps({
-            'workers': self.workers,
-            'schedulers': self.schedulers,
-            'queues': self.queues,
+            'job_latencies': self.job_latencies,
+            'executed_functions': self.executed_functions,
             'waiting_message_counts': [
                 '{}: {}'.
                 format(q,
                        len(self.waiting_messages[q]))
                 for q in self.waiting_messages]
+        })
+
+    def get_workers_status(self):
+        return json.dumps({
+            'connected_workers': self.workers,
+            'connected_queues': self.queues
+        })
+
+    def get_schedulers_status(self):
+        return json.dumps({
+            'connected_schedulers': self.schedulers
         })
 
     def sighup_handler(self, signum, frame):
