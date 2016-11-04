@@ -406,7 +406,8 @@ class ZMQSendMixin(object):
                 logger.debug('Sending message: %s' % str(msg))
 
         try:
-            self.zsocket.send_multipart(msg)
+            self.zsocket.send_multipart(msg,
+                                        flags=zmq.NOBLOCK)
         except zmq.error.ZMQError as e:
             if 'No route' in e.message:
                 raise exceptions.PeerGoneAwayError(e)
@@ -545,6 +546,20 @@ class EMQdeque(object):
             object: the first (left-most) element of the deque
         """
         return self._queue.popleft()
+
+    def peek(self):
+        """
+        Returns:
+            object: the last (right-most) element of the deque
+        """
+        return self._queue[-1]
+
+    def peekleft(self):
+        """
+        Returns:
+            object: the first (left-most) element of the deque
+        """
+        return self._queue[0]
 
     def appendleft(self, item):
         """

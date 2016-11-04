@@ -3,22 +3,34 @@
 Usage: ./send_msg <ipaddresss> <command> <frame w/ values space separated>
 """
 import sys
+import zmq
 
 from eventmq.sender import Sender
 from eventmq.client.messages import send_request
 
-
 if __name__ == "__main__":
-    s = Sender()
-    s.connect(sys.argv[1])
+    for i in xrange(1):
+        s = Sender()
+        poller = zmq.Poller()
 
-    msg = ['run', {
-           'path': 'path.to.some.module:Class',
-           'callable': 'do_thing',
-           'class_args': ('blurp',),
-           'class_kwargs': {'kwarg1': True},
-           'args': ('arg1', 'arg2'),
-           'kwargs': {'kwarg1': 'something'}
-           }]
+        poller.register(s.zsocket, flags=zmq.POLLIN)
 
-    send_request(s, msg, guarantee=True, reply_requested=True)
+        s.connect(sys.argv[1])
+
+        msg = ['run', {
+            'path': 'path.to.some.module:Class',
+            'callable': 'do_thing',
+            'class_args': ('blurp',),
+            'class_kwargs': {'kwarg1': True},
+            'args': ('arg1', 'arg2'),
+            'kwargs': {'kwarg1': 'something'}
+            }]
+
+        send_request(s, msg, guarantee=True, reply_requested=True)
+        print zmq.POLLOUT
+        events = dict(poller.poll(500))
+        print events
+        if events[s.zsocket] == zmq.POLLIN:
+            msg = s.recv_multipart()
+
+            print msg
