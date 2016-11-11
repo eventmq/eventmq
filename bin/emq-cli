@@ -25,7 +25,9 @@ import sys
 
 from eventmq import exceptions
 from eventmq.client.messages import send_emqp_message
-from eventmq.constants import PROTOCOL_VERSION
+from eventmq.constants import (
+        PROTOCOL_VERSION, ROUTER_SHOW_WORKERS, ROUTER_SHOW_SCHEDULERS
+)
 from eventmq.poller import Poller, POLLIN
 from eventmq.sender import Sender
 from eventmq.utils.messages import generate_msgid
@@ -91,6 +93,20 @@ class Shell(cmd.Cmd):
         Request the status of the connected component
         """
         self.send_message('STATUS')
+        pprint(self.recv_reply())
+
+    def do_show_workers(self, line):
+        """
+        Request the status of the connected workers and queues
+        """
+        self.send_message(ROUTER_SHOW_WORKERS)
+        pprint(self.recv_reply())
+
+    def do_show_schedulers(self, line):
+        """
+        Request the status of the connected schedulers
+        """
+        self.send_message(ROUTER_SHOW_SCHEDULERS)
         pprint(self.recv_reply())
 
     def do_shutdown(self, line):

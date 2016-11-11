@@ -14,6 +14,7 @@
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
 import json
 import unittest
+import uuid
 
 from freezegun import freeze_time
 import mock
@@ -722,7 +723,7 @@ class TestCase(unittest.TestCase):
             w2, self.router.queues[queue2_id],
             "Worker not removed from {}".format(queue2_id))
 
-    def test_get_status(self):
+    def test_router_status(self):
         msgid1 = 'msg21'
         msgid2 = 'msg19'
         msgid3 = 'msg6'
@@ -772,18 +773,28 @@ class TestCase(unittest.TestCase):
             'blu': EMQdeque(initial=[waiting_msg3, ]),
         }
 
-
         # hacky, but the serialize/deserialize converts the keys to unicode
         # correctly and what not.
         self.assertEqual(
             json.loads(json.dumps({
-                'workers': self.router.workers,
-                'schedulers': self.router.schedulers,
-                'queues': self.router.queues,
+                'job_latencies': self.router.job_latencies,
+                'executed_functions': self.router.executed_functions,
                 'waiting_message_counts': [
-                '{}: {}'.
-                format(q,
-                       len(self.router.waiting_messages[q]))
-                for q in self.router.waiting_messages]
+                    '{}: {}'.format(q,
+                                    len(self.router.waiting_messages[q]))
+                                    for q in self.router.waiting_messages]
             })),
             json.loads(self.router.get_status()))
+
+        self.assertEqual(
+            json.loads(json.dumps({
+                'connected_workers': self.router.workers,
+                'connected_queues': self.router.queues
+            })),
+            json.loads(self.router.get_workers_status()))
+
+        self.assertEqual(
+            json.loads(json.dumps({
+                'connected_schedulers': self.router.schedulers
+            })),
+            json.loads(self.router.get_schedulers_status()))
