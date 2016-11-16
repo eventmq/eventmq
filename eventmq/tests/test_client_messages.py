@@ -56,6 +56,7 @@ class TestCase(unittest.TestCase):
                                    reply_requested=True,
                                    guarantee=False,
                                    retry_count=3,
+                                   timeout=0,
                                    queue='test_queue')
         # defer_job should return _msgid untouched
         self.assertEqual(msgid, _msgid)
@@ -73,6 +74,7 @@ class TestCase(unittest.TestCase):
                                        reply_requested=True,
                                        guarantee=False,
                                        retry_count=3,
+                                       timeout=0,
                                        queue='test_queue')
 
         with LogCapture() as log_checker:
