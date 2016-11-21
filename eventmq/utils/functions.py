@@ -95,10 +95,16 @@ def name_from_callable(func):
     # Methods also have the func_name property
     if inspect.ismethod(func):
         path = ("{}:{}".format(func.__module__, func.im_class.__name__))
-        callable_name = func.func_name
+        try:
+            callable_name = func.func_name
+        except AttributeError:
+            callable_name = func.__name__
     elif inspect.isfunction(func):
         path = func.__module__
-        callable_name = func.func_name
+        try:
+            callable_name = func.func_name
+        except AttributeError:
+            callable_name = func.__name__
     else:
         # We should account for another callable type so log information
         # about it
@@ -111,6 +117,21 @@ def name_from_callable(func):
             func,
             func_type
         ))
+        return None
+
+    if not callable_name:
+        logger.error(
+            'Encountered callable with no name in {}'.format(func.__module__))
+        return None
+
+    if not path:
+        try:
+            func_name = func.func_name
+        except AttributeError:
+            func_name = func.__name__
+        logger.error(
+            'Encountered callable with no __module__ path {}'.format(
+                func_name))
         return None
 
     return '{}.{}'.format(path, callable_name)
