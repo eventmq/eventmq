@@ -41,7 +41,7 @@ from eventmq.log import setup_logger
 
 logger = logging.getLogger(__name__)
 CRON_CALLER_ID = -1
-INFINITE_RUN_COUNT=-1
+INFINITE_RUN_COUNT = -1
 
 
 class Scheduler(HeartbeatMixin, EMQPService):

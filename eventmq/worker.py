@@ -42,8 +42,7 @@ def run(payload, msgid):
 
     try:
         r = run_function(
-            path=path,
-            callable_name=callable_name,
+            callable_name='{}.{}'.format(path, callable_name),
             class_args=class_args or (),
             class_kwargs=class_kwargs or {},
             args=args or (),
