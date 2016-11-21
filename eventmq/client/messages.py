@@ -174,7 +174,7 @@ def defer_job(
     if wrapper and callable(wrapper):
         # Prepend the original path and callable name to args
         args = (path, callable_name, args)
-        path, callable_name = build_module_path(wrapper)
+        path, callable_name = path_from_callable(wrapper)
     elif wrapper:
         logger.error('Encountered non-callable wrapper: {}'.format(wrapper))
         return
