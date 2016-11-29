@@ -41,7 +41,7 @@ from eventmq.log import setup_logger
 
 logger = logging.getLogger(__name__)
 CRON_CALLER_ID = -1
-INFINITE_RUN_COUNT=-1
+INFINITE_RUN_COUNT = -1
 
 
 class Scheduler(HeartbeatMixin, EMQPService):
@@ -201,8 +201,8 @@ class Scheduler(HeartbeatMixin, EMQPService):
                                 logger.warning("Couldn't contact redis server")
                             except Exception as e:
                                 logger.warning(
-                                    'Unable to update key in redis server: {}'\
-                                    .format(e.message))
+                                    'Unable to update key in redis '
+                                    'server: {}'.format(e.message))
                     else:
                         # Scheduled job is in running infinitely
                         # Send job and update next schedule time
@@ -210,15 +210,15 @@ class Scheduler(HeartbeatMixin, EMQPService):
                         v[0] = next(v[2])
                         # Persist changes to redis
                         try:
-                            self.redis_server.set(self.schedule_hash(v),
-                                                    serialize(v))
+                            self.redis_server.set(
+                                self.schedule_hash(v), serialize(v))
                             self.redis_server.save()
                         except redis.ConnectionError:
                             logger.warning("Couldn't contact redis server")
                         except Exception as e:
                             logger.warning(
-                                'Unable to update key in redis server: {}'\
-                                .format(e.message))
+                                'Unable to update key in redis '
+                                'server: {}'.format(e.message))
 
             for job in cancel_jobs:
                 message = self.interval_jobs[k][1]

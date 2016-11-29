@@ -21,7 +21,7 @@ from json import dumps as serialize
 
 from .. import conf
 from ..utils.messages import send_emqp_message
-from ..utils.functions import path_from_callable
+from ..utils.functions import name_from_callable, split_callable_name
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,8 @@ def schedule(socket, func, interval_secs=None, args=(), kwargs=None,
 
     Args:
         socket (socket): eventmq socket to use for sending the message
-        func (callable): the callable to be scheduled on a worker
+        func (callable): the callable (or string path to calable) to be
+            scheduled on a worker
         minutes (int): minutes to wait in between executions
         args (list): list of *args to pass to the callable
         interval_secs (int): Run job every interval_secs or None if using cron
@@ -74,26 +75,24 @@ def schedule(socket, func, interval_secs=None, args=(), kwargs=None,
                      'but not both (or neither)')
         return
 
-    if callable(func):
-        path, callable_name = path_from_callable(func)
+    if func and isinstance(func, basestring):
+        if '.' not in func:
+            logger.error('Invalid callable string passed, '
+                         'absolute path required: "{}"'.format(func))
+            return
+        path, callable_name = split_callable_name(func)
+    elif callable(func):
+        callable_name = name_from_callable(func)
+        path, callable_name = split_callable_name(callable_name)
     else:
         logger.error('Encountered non-callable func: {}'.format(func))
         return
 
-    if not callable_name:
-        logger.error('Encountered callable with no name in {}'.format(
-            func.__module__
-        ))
-        return
-
-    if not path:
-        logger.error('Encountered callable with no __module__ path {}'.format(
-            func.__name__
-        ))
+    if not callable_name or not path:
+        logger.error('Encountered invalid callable, will not proceed.')
         return
 
     # TODO: convert all the times to seconds for the clock
-
     msg = ['run', {
         'callable': callable_name,
         'path': path,
@@ -128,7 +127,8 @@ def defer_job(
 
     Args:
         socket (socket): eventmq socket to use for sending the message
-        func (callable): the callable to be deferred to a worker
+        func (callable or str): the callable (or string path to callable) to be
+            deferred to a worker
         wrapper (callable): optional wrapper for the call to func to be
              wrapped with
         args (list): list of *args for the callable
@@ -165,8 +165,15 @@ def defer_job(
     if not kwargs:
         kwargs = {}
 
-    if callable(func):
-        path, callable_name = path_from_callable(func)
+    if func and isinstance(func, basestring):
+        if '.' not in func:
+            logger.error('Invalid callable string passed, '
+                         'absolute path required: "{}"'.format(func))
+            return
+        path, callable_name = split_callable_name(callable_name)
+    elif callable(func):
+        callable_name = name_from_callable(func)
+        path, callable_name = split_callable_name(callable_name)
     else:
         logger.error('Encountered non-callable func: {}'.format(func))
         return
@@ -174,20 +181,14 @@ def defer_job(
     if wrapper and callable(wrapper):
         # Prepend the original path and callable name to args
         args = (path, callable_name, args)
-        path, callable_name = build_module_path(wrapper)
+        callable_name = name_from_callable(wrapper)
+        path, callable_name = split_callable_name(callable_name)
     elif wrapper:
         logger.error('Encountered non-callable wrapper: {}'.format(wrapper))
         return
 
-    # Check for and log errors
-    if not callable_name:
-        logger.error('Encountered callable with no name in {}'.
-                     format(func.__module__))
-        return
-
-    if not path:
-        logger.error('Encountered callable with no __module__ path {}'.
-                     format(func.__name__))
+    if not callable_name or not path:
+        logger.error('Encountered invalid callable, will not proceed.')
         return
 
     msg = ['run', {

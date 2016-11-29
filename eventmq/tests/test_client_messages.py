@@ -23,12 +23,12 @@ from ..client import messages
 
 class TestClass(object):
     """
-    class to use in the path_from_callable test
+    class to use in the name_from_callable test
     """
     def mymethod(self):
         """
         this method is used as the callable in
-        :meth:`TestCase.test_path_from_callable`
+        :meth:`TestCase.test_name_from_callable`
         """
         return True
 
@@ -76,7 +76,7 @@ class TestCase(unittest.TestCase):
                                        queue='test_queue')
 
         with LogCapture() as log_checker:
-            # don't blow up on a non-callable
+            # don't blow up on an invalid callable path
             messages.defer_job(socket, 'non-callable')
 
             # don't blow up on some random nameless func
@@ -97,35 +97,38 @@ class TestCase(unittest.TestCase):
             log_checker.check(
                 ('eventmq.client.messages',
                  'ERROR',
-                 'Encountered non-callable func: non-callable'),
-                ('eventmq.client.messages',
-                 'ERROR',
-                 'Encountered callable with no name in '
-                 'eventmq.tests.test_client_messages'),
-                ('eventmq.client.messages',
-                 'ERROR',
-                 'Encountered callable with no __module__ path nameless_func'),
+                 'Invalid callable string passed, absolute path required: "non-callable"'),  # noqa
                 ('eventmq.utils.functions',
                  'ERROR',
-                 'Encountered unknown callable ({}) type instanceobject'.
-                 format(callable_obj)),
+                 'Encountered callable with no name in eventmq.tests.test_client_messages'),  # noqa
                 ('eventmq.client.messages',
                  'ERROR',
-                 'Encountered callable with no name in '
-                 'eventmq.tests.test_client_messages'),
+                 'Encountered invalid callable, will not proceed.'),
+                ('eventmq.utils.functions',
+                 'ERROR',
+                 'Encountered callable with no __module__ path nameless_func'),
+                ('eventmq.client.messages',
+                 'ERROR',
+                 'Encountered invalid callable, will not proceed.'),
+                ('eventmq.utils.functions',
+                 'ERROR',
+                 'Encountered unknown callable ({}) type instanceobject'.format(callable_obj)),  # noqa
+                ('eventmq.client.messages',
+                 'ERROR',
+                 'Encountered invalid callable, will not proceed.'),
             )
 
-    def test_path_from_callable(self):
+    def test_name_from_callable(self):
         import mimetools
-        funcpath = messages.path_from_callable(mimetools.choose_boundary)
+        funcpath = messages.name_from_callable(mimetools.choose_boundary)
 
         t = TestClass()
-        methpath = messages.path_from_callable(t.mymethod)
+        methpath = messages.name_from_callable(t.mymethod)
 
-        self.assertEqual(funcpath, ('mimetools', 'choose_boundary'))
+        self.assertEqual(funcpath, 'mimetools.choose_boundary')
         self.assertEqual(
             methpath,
-            ('eventmq.tests.test_client_messages:TestClass', 'mymethod'))
+            'eventmq.tests.test_client_messages:TestClass.mymethod')
 
     @mock.patch('eventmq.client.messages.send_schedule_request')
     def test_schedule(self, send_schedule_req_mock):
@@ -166,7 +169,7 @@ class TestCase(unittest.TestCase):
             unschedule=False)  # default arg
 
         with LogCapture() as log_checker:
-            # don't blow up on a non-callable
+            # don't blow up on an invalid callable path
             messages.schedule(socket, 'non-callable',
                               class_args=(123,),
                               interval_secs=10)
@@ -202,30 +205,31 @@ class TestCase(unittest.TestCase):
             log_checker.check(
                 ('eventmq.client.messages',
                  'ERROR',
-                 'Encountered non-callable func: non-callable'),
-                ('eventmq.client.messages',
-                 'ERROR',
-                 'Encountered callable with no name in '
-                 'eventmq.tests.test_client_messages'),
-                ('eventmq.client.messages',
-                 'ERROR',
-                 'Encountered callable with no __module__ path nameless_func'),
+                 'Invalid callable string passed, absolute path required: "non-callable"'),  # noqa
                 ('eventmq.utils.functions',
                  'ERROR',
-                 'Encountered unknown callable ({}) type instanceobject'.
-                 format(callable_obj)),
+                 'Encountered callable with no name in eventmq.tests.test_client_messages'),  # noqa
                 ('eventmq.client.messages',
                  'ERROR',
-                 'Encountered callable with no name in '
-                 'eventmq.tests.test_client_messages'),
+                 'Encountered invalid callable, will not proceed.'),
+                ('eventmq.utils.functions',
+                 'ERROR',
+                 'Encountered callable with no __module__ path nameless_func'),
                 ('eventmq.client.messages',
                  'ERROR',
-                 'First `class_args` argument must be caller_id for '
-                 'scheduling interval jobs'),
+                 'Encountered invalid callable, will not proceed.'),
+                ('eventmq.utils.functions',
+                 'ERROR',
+                 'Encountered unknown callable ({}) type instanceobject'.format(callable_obj)),  # noqa
                 ('eventmq.client.messages',
                  'ERROR',
-                 'You must sepcify either `interval_secs` or `cron`, but not '
-                 'both (or neither)'),
+                 'Encountered invalid callable, will not proceed.'),
+                ('eventmq.client.messages',
+                 'ERROR',
+                 'First `class_args` argument must be caller_id for scheduling interval jobs'),  # noqa
+                ('eventmq.client.messages',
+                 'ERROR',
+                 'You must sepcify either `interval_secs` or `cron`, but not both (or neither)'),  # noqa
             )
 
     @mock.patch('eventmq.client.messages.send_emqp_message')

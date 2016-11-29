@@ -18,11 +18,13 @@ class IgnoreJSONEncoder(json.JSONEncoder):
             return None
 
 
-def run_function(path, callable_name,
+def run_function(callable_name,
                  class_args=(), class_kwargs=None, args=(), kwargs=None):
     """Constructs a callable from `path` and `callable_name` and calls it.
 
     Args:
+        callable_name (str): The name and path of the function you wish to run,
+            eg ``eventmq.utils.functions.run_function``.
         class_args (list): If the callable is a class method, these args will
             be used to initialize the class.
         class_kwargs (dict): If the callable is a class method, these kwargs
@@ -49,11 +51,11 @@ def run_function(path, callable_name,
         kwargs = {}
 
     try:
-        callable_ = callable_from_path(
-            path, callable_name, *class_args, **class_kwargs)
+        callable_ = callable_from_name(
+            callable_name, *class_args, **class_kwargs)
     except CallableFromPathError as e:
         logger.exception('Error importing callable {}.{}: {}'.format(
-            path, callable_name, str(e)))
+            callable_name, str(e)))
         return
 
     return callable_(*args, **kwargs)
@@ -70,7 +72,7 @@ def arguments_hash(*args, **kwargs):
     return hashlib.sha1(data).hexdigest()
 
 
-def path_from_callable(func):
+def name_from_callable(func):
     """
     Builds the module path in string format for a callable.
 
@@ -83,8 +85,9 @@ def path_from_callable(func):
         func (callable): The function or method to build the path for
 
     Returns:
-        list: (import path (w/ class seperated by a ':'), callable name) or
-            (None, None) on error.
+        str: The callable path and name, eg
+            ``"eventmq.utils.functions.name_from_callable"`` would be returned
+            if you called this function on itself.
     """
     callable_name = None
 
@@ -92,10 +95,16 @@ def path_from_callable(func):
     # Methods also have the func_name property
     if inspect.ismethod(func):
         path = ("{}:{}".format(func.__module__, func.im_class.__name__))
-        callable_name = func.func_name
+        try:
+            callable_name = func.func_name
+        except AttributeError:
+            callable_name = func.__name__
     elif inspect.isfunction(func):
         path = func.__module__
-        callable_name = func.func_name
+        try:
+            callable_name = func.func_name
+        except AttributeError:
+            callable_name = func.__name__
     else:
         # We should account for another callable type so log information
         # about it
@@ -108,23 +117,55 @@ def path_from_callable(func):
             func,
             func_type
         ))
+        return None
+
+    if not callable_name:
+        logger.error(
+            'Encountered callable with no name in {}'.format(func.__module__))
+        return None
+
+    if not path:
+        try:
+            func_name = func.func_name
+        except AttributeError:
+            func_name = func.__name__
+        logger.error(
+            'Encountered callable with no __module__ path {}'.format(
+                func_name))
+        return None
+
+    return '{}.{}'.format(path, callable_name)
+
+
+def split_callable_name(callable_name):
+    """Split a callable name into it's path and name components.
+
+    Args:
+        callable_name (str): The callable name, with path, eg,
+            ``eventmq.utils.functions.callable_from_name``.
+
+    Returns:
+        (str, str): The path and callable name, or None, None if a path cannot
+            be found.
+    """
+    if not callable_name or '.' not in callable_name:
         return None, None
 
-    return path, callable_name
+    elements = callable_name.split('.')
+    path = '.'.join(elements[:-1])
+    return path, elements[-1]
 
 
-def callable_from_path(path, callable_name, *args, **kwargs):
+def callable_from_name(callable_name, *args, **kwargs):
     """Build a callable from a path and callable_name.
 
-    This function is the opposite of `path_from_callable`.  It takes what is
+    This function is the opposite of `name_from_callable`.  It takes what is
     returned from `build_module_name` and converts it back to the original
     caller.
 
     Args:
-        path (str): The module path of the callable.  This is the first
-            position in the tuple returned from `path_from_callable`.
-        callable_name (str): The name of the function.  This is the second
-            position of the tuple returned from `path_from_callable`.
+        callable_name (str): The name (and path) of the function, eg,
+            ``eventmq.utils.functions.callable_from_name``.
         *args (list): if `callable_name` is a method on a class, these
             arguments will be passed to the constructor when instantiating the
             class.
@@ -135,6 +176,7 @@ def callable_from_path(path, callable_name, *args, **kwargs):
     Returns:
         function: The callable
     """
+    path, callable_name = split_callable_name(callable_name)
     if ':' in path:
         _pksplit = path.split(':')
         s_package = _pksplit[0]
