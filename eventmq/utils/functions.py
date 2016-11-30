@@ -205,7 +205,7 @@ def callable_from_name(callable_name, *args, **kwargs):
     return callable_
 
 
-def get_timeout_from_headers(self, headers):
+def get_timeout_from_headers(headers):
     """Return the timeout value if it exists in the given headers
 
     Retruns:
