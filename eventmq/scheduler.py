@@ -51,6 +51,8 @@ class Scheduler(HeartbeatMixin, EMQPService):
     SERVICE_TYPE = constants.CLIENT_TYPE.scheduler
 
     def __init__(self, *args, **kwargs):
+        self.name = kwargs.get('name', None)
+
         logger.info('Initializing Scheduler...')
         import_settings()
         super(Scheduler, self).__init__(*args, **kwargs)
