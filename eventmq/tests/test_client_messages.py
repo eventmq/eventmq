@@ -56,6 +56,7 @@ class TestCase(unittest.TestCase):
                                    reply_requested=True,
                                    guarantee=False,
                                    retry_count=3,
+                                   timeout=0,
                                    queue='test_queue')
         # defer_job should return _msgid untouched
         self.assertEqual(msgid, _msgid)
@@ -73,6 +74,7 @@ class TestCase(unittest.TestCase):
                                        reply_requested=True,
                                        guarantee=False,
                                        retry_count=3,
+                                       timeout=0,
                                        queue='test_queue')
 
         with LogCapture() as log_checker:
@@ -253,6 +255,29 @@ class TestCase(unittest.TestCase):
             socket, 'REQUEST',
             ('mozo',
              'reply-requested,retry-count:2',
+             messages.serialize(msg)))
+
+    @mock.patch('eventmq.client.messages.send_emqp_message')
+    def test_send_request_all_headers(self, snd_empq_msg_mock):
+        _msgid = '0svny2rj8d0-aofinsud4839'
+        snd_empq_msg_mock.return_value = _msgid
+
+        socket = mock.Mock()
+
+        msg = {'alksjfd': [1, 2],
+               'laksdjf': 4,
+               'alkfjds': 'alksdjf'}
+
+        msgid = messages.send_request(socket, msg,
+                                      reply_requested=True,
+                                      guarantee=True,
+                                      retry_count=2,
+                                      timeout=3)
+        self.assertEqual(msgid, _msgid)
+        snd_empq_msg_mock.assert_called_with(
+            socket, 'REQUEST',
+            ('default',
+             'reply-requested,guarantee,retry-count:2,timeout:3',
              messages.serialize(msg)))
 
     @mock.patch('eventmq.client.messages.send_emqp_message')

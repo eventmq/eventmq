@@ -203,3 +203,16 @@ def callable_from_name(callable_name, *args, **kwargs):
         raise CallableFromPathError(str(e))
 
     return callable_
+
+
+def get_timeout_from_headers(headers):
+    """Return the timeout value if it exists in the given headers
+
+    Retruns:
+        timeout(int): The timeout if found, else None
+    """
+    timeout = None
+    for header in headers.split(','):
+        if 'timeout:' in header:
+            timeout = int(header.split(':')[1])
+    return timeout

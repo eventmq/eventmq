@@ -114,7 +114,8 @@ def schedule(socket, func, interval_secs=None, args=(), kwargs=None,
 def defer_job(
         socket, func, wrapper=None, args=(), kwargs=None, class_args=(),
         class_kwargs=None, reply_requested=False, guarantee=False,
-        retry_count=0, debounce_secs=False, queue=conf.DEFAULT_QUEUE_NAME):
+        retry_count=0, timeout=0, debounce_secs=False,
+        queue=conf.DEFAULT_QUEUE_NAME):
     """
     Used to send a job to a worker to execute via `socket`.
 
@@ -141,6 +142,8 @@ def defer_job(
         retry_count (int): How many times should be retried when encountering
             an Exception or some other failure before giving up. (default: 0
             or immediately fail)
+        timeout (int): How many seconds should we wait before killing the job
+            default: 0 which means infinite timeout
         debounce_secs (secs): Number of seconds to debounce the job.   See
             `debounce_deferred_job` for more information.
         queue (str): Name of queue to use when executing the job. If this value
@@ -204,13 +207,14 @@ def defer_job(
                          reply_requested=reply_requested,
                          guarantee=guarantee,
                          retry_count=retry_count,
+                         timeout=timeout,
                          queue=queue)
 
     return msgid
 
 
 def send_request(socket, message, reply_requested=False, guarantee=False,
-                 retry_count=0, queue=None):
+                 retry_count=0, timeout=0, queue=None):
     """
     Send a REQUEST command.
 
@@ -245,6 +249,8 @@ def send_request(socket, message, reply_requested=False, guarantee=False,
         retry_count (int): How many times should be retried when encountering
             an Exception or some other failure before giving up. (default: 0
             or immediatly fail)
+        timeout (int): How many seconds should we wait before killing the job
+            default: 0 which means infinite timeout
         queue (str): Name of queue to use when executing the job. Default: is
             configured default queue name
 
@@ -261,6 +267,9 @@ def send_request(socket, message, reply_requested=False, guarantee=False,
 
     if retry_count > 0:
         headers.append('retry-count:%d' % retry_count)
+
+    if timeout > 0:
+        headers.append('timeout:%d' % timeout)
 
     msgid = send_emqp_message(socket, 'REQUEST',
                               (queue or conf.DEFAULT_QUEUE_NAME,

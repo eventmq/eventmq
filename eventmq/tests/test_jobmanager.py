@@ -80,7 +80,22 @@ class TestCase(unittest.TestCase):
 
         jm.on_request(_msgid, _msg)
         apply_async_mock.assert_called_with(
-            args=({'a': 1}, _msgid),
+            args=({'a': 1}, _msgid, None),
+            callback=jm.worker_done,
+            func=run_mock)
+
+    @mock.patch('eventmq.jobmanager.worker.run')
+    @mock.patch('multiprocessing.pool.Pool.apply_async')
+    def test_on_request_with_timeout(self, apply_async_mock, run_mock):
+        timeout = 3
+        _msgid = 'aaa0j8-ac40jf0-04tjv'
+        _msg = ['a', 'timeout:{}'.format(timeout), '["run", {"a": 1}]']
+
+        jm = jobmanager.JobManager()
+
+        jm.on_request(_msgid, _msg)
+        apply_async_mock.assert_called_with(
+            args=({'a': 1}, _msgid, timeout),
             callback=jm.worker_done,
             func=run_mock)
 

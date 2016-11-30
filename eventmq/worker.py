@@ -19,6 +19,8 @@ Defines different short-lived workers that execute jobs
 """
 from .utils.functions import run_function
 
+from multiprocessing import Pool, TimeoutError
+
 # the run function is executed in a different process, so we need to set the
 # logger up.
 from . import log
@@ -26,7 +28,25 @@ from . import log
 logger = log.setup_logger(__name__)
 
 
-def run(payload, msgid):
+def run(payload, msgid, timeout=None):
+    """
+    executes job in a thread, killing it after a specified timeout
+    """
+    if timeout:
+        worker = Pool(1)
+        result = worker.apply_async(_run, args=(payload, msgid))
+
+        try:
+            out = result.get(timeout)
+            return out
+        except TimeoutError:
+            worker.terminate()
+            return (msgid, 'TimeoutError')
+    else:
+        _run(payload, msgid)
+
+
+def _run(payload, msgid):
     """
     process a run message and execute a job
 

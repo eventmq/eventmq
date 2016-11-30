@@ -444,6 +444,8 @@ class Router(HeartbeatMixin):
             # TODO: Don't discard the message
             return
 
+        self.job_latencies[msgid] = (monotonic(), queue_name)
+
         try:
             worker_addr = self.get_available_worker(queue_name=queue_name)
         except exceptions.NoAvailableWorkerSlotsError:
