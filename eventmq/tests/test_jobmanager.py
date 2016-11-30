@@ -134,6 +134,16 @@ class TestCase(unittest.TestCase):
             addr=conf.WORKER_ADDR,
         )
 
+    @mock.patch('eventmq.jobmanager.sendmsg')
+    def test_sigterm_handler(self, sendmsg_mock):
+        jm = jobmanager.JobManager()
+
+        jm.sigterm_handler(13231, "FRAMEY the evil frame")
+
+        sendmsg_mock.assert_called_with(jm.outgoing, constants.KBYE)
+        self.assertFalse(jm.awaiting_startup_ack)
+        self.assertTrue(jm.received_disconnect)
+
     @mock.patch('eventmq.jobmanager.JobManager.start')
     @mock.patch('eventmq.jobmanager.import_settings')
     def test_jobmanager_main(self, import_settings_mock, start_mock):

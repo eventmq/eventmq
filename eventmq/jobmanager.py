@@ -79,6 +79,9 @@ class JobManager(HeartbeatMixin, EMQPService):
         if not kwargs.pop('skip_signal', False):
             # handle any sighups by reloading config
             signal.signal(signal.SIGHUP, self.sighup_handler)
+            signal.signal(signal.SIGTERM, self.sigterm_handler)
+            signal.signal(signal.SIGINT, self.sigterm_handler)
+            signal.signal(signal.SIGQUIT, self.sigterm_handler)
 
         #: JobManager starts out by INFORMing the router of it's existence,
         #: then telling the router that it is READY. The reply will be the unit
@@ -231,6 +234,13 @@ class JobManager(HeartbeatMixin, EMQPService):
         import_settings()
         import_settings(section='jobmanager')
         self.start(addr=conf.WORKER_ADDR)
+
+    def sigterm_handler(self, signum, frame):
+        logger.info('Shutting down..')
+        sendmsg(self.outgoing, KBYE)
+
+        self.awaiting_startup_ack = False
+        self.received_disconnect = True
 
     def jobmanager_main(self, broker_addr=None):
         """
