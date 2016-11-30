@@ -227,6 +227,7 @@ Header            REQUEST PUBLISH SCHEDULE Default Description
 ================= ======= ======= ======== ======= ===========
 reply-requested   X                        False   Once the job is finished, send a reply back with information from the job. If there is no information reply with a True value.
 retry-count:#     X                        0       Retry a failed job this many times before accepting defeat.
+timeout:#         X                        0       Kill the job after X seconds, defaults to never timing out (0)
 guarantee         X                        False   Ensure the job completes by letting someone else worry about a success reply.
 nohaste                           X        False   When scheduling a job, set this to True if you don't want the job to run immediately as it's scheduled.  Instead, it will run for the first time when the interval has elapsed.
 ================= ======= ======= ======== ======= ===========
