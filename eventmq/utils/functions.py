@@ -212,7 +212,7 @@ def get_timeout_from_headers(headers):
         timeout(int): The timeout if found, else None
     """
     timeout = None
-    for header in headers:
+    for header in headers.split(','):
         if 'timeout:' in header:
             timeout = int(header.split(':')[1])
     return timeout

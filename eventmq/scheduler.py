@@ -415,7 +415,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
     def get_run_count_from_headers(self, headers):
         run_count = INFINITE_RUN_COUNT
-        for header in headers:
+        for header in headers.split(','):
             if 'run_count:' in header:
                 run_count = int(header.split(':')[1])
         return run_count
