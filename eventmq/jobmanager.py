@@ -30,6 +30,7 @@ from .utils.classes import EMQPService, HeartbeatMixin
 from .utils.settings import import_settings
 from .utils.devices import generate_device_name
 from .utils.messages import send_emqp_message as sendmsg
+from .utils.functions import get_timeout_from_headers
 from . import worker
 from eventmq.log import setup_logger
 from multiprocessing import Pool
@@ -173,9 +174,11 @@ class JobManager(HeartbeatMixin, EMQPService):
         else:
             callback = self.worker_done
 
+        timeout = get_timeout_from_headers(headers)
+
         # kick off the job asynchronously with an appropiate callback
         self.workers.apply_async(func=worker.run,
-                                 args=(params, msgid),
+                                 args=(params, msgid, timeout),
                                  callback=callback)
 
     def worker_done_with_reply(self, msgid):
