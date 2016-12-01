@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='eventmq',
-    version='0.2.6.5',
+    version='0.2.6.6',
     description='EventMQ messaging system based on ZeroMQ',
     packages=find_packages(),
     install_requires=['pyzmq==15.4.0',
@@ -17,7 +17,8 @@ setup(
                       'future==0.15.2',
                       'redis==2.10.3',
                       'python-dateutil>=2.1,<3.0.0'],
-
+    author='EventMQ Contributors',
+    url='https://github.com/enderlabs/eventmq/',
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
@@ -29,11 +30,12 @@ setup(
 
         # Indicate who your project is intended for
         'Intended Audience :: Developers',
-        'Topic :: Software Development :: Build Tools',
+        'Topic :: System :: Distributed Computing',
 
         # Pick your license as you wish (should match "license" above)
+        'License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)',
         'License :: OSI Approved :: MIT License',
-
+        'Operating System :: OS Independent',
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 2.6',
