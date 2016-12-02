@@ -34,7 +34,6 @@ setup(
 
         # Pick your license as you wish (should match "license" above)
         'License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)',
-        'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
