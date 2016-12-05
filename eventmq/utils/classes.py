@@ -157,8 +157,11 @@ class EMQPService(object):
                         self.process_message(msg)
 
             self.status = constants.STATUS.connected
-            logger.info('Starting event loop...')
-            self._start_event_loop()
+
+            if not self.received_disconnect:
+                logger.info('Starting event loop...')
+                self._start_event_loop()
+
             # When we return, soemthing has gone wrong and try to reconnect
             # unless self.received_disconnect is True
             if not self.received_disconnect:
