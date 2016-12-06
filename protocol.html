@@ -60,7 +60,7 @@
             
             
               <div class="version">
-                0.2.6.5
+                0.2.7
               </div>
             
           
@@ -717,14 +717,21 @@
 <td>0</td>
 <td>Retry a failed job this many times before accepting defeat.</td>
 </tr>
-<tr class="row-even"><td>guarantee</td>
+<tr class="row-even"><td>timeout:#</td>
+<td>X</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
+<td>0</td>
+<td>Kill the job after X seconds, defaults to never timing out (0)</td>
+</tr>
+<tr class="row-odd"><td>guarantee</td>
 <td>X</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>False</td>
 <td>Ensure the job completes by letting someone else worry about a success reply.</td>
 </tr>
-<tr class="row-odd"><td>nohaste</td>
+<tr class="row-even"><td>nohaste</td>
 <td>&nbsp;</td>
 <td>&nbsp;</td>
 <td>X</td>

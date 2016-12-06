@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.2.6.5
+                0.2.7
               </div>
             
           
@@ -151,7 +151,7 @@
 <h1><code class="xref py py-mod docutils literal"><span class="pre">messages</span></code> &#8211; Client Messaging<a class="headerlink" href="#messages-client-messaging" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="eventmq.client.messages.defer_job">
-<code class="descclassname">eventmq.client.messages.</code><code class="descname">defer_job</code><span class="sig-paren">(</span><em>socket</em>, <em>func</em>, <em>wrapper=None</em>, <em>args=()</em>, <em>kwargs=None</em>, <em>class_args=()</em>, <em>class_kwargs=None</em>, <em>reply_requested=False</em>, <em>guarantee=False</em>, <em>retry_count=0</em>, <em>debounce_secs=False</em>, <em>queue='default'</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.client.messages.defer_job" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">eventmq.client.messages.</code><code class="descname">defer_job</code><span class="sig-paren">(</span><em>socket</em>, <em>func</em>, <em>wrapper=None</em>, <em>args=()</em>, <em>kwargs=None</em>, <em>class_args=()</em>, <em>class_kwargs=None</em>, <em>reply_requested=False</em>, <em>guarantee=False</em>, <em>retry_count=0</em>, <em>timeout=0</em>, <em>debounce_secs=False</em>, <em>queue='default'</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.client.messages.defer_job" title="Permalink to this definition">¶</a></dt>
 <dd><p>Used to send a job to a worker to execute via <cite>socket</cite>.</p>
 <p>This tries not to raise any exceptions so use some of the message flags to
 guarentee things.</p>
@@ -165,7 +165,8 @@ guarentee things.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; eventmq socket to use for sending the message</li>
-<li><strong>func</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#callable" title="(in Python v2.7)"><em>callable</em></a>) &#8211; the callable to be deferred to a worker</li>
+<li><strong>func</strong> (<em>callable or str</em>) &#8211; the callable (or string path to callable) to be
+deferred to a worker</li>
 <li><strong>wrapper</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#callable" title="(in Python v2.7)"><em>callable</em></a>) &#8211; optional wrapper for the call to func to be
 wrapped with</li>
 <li><strong>args</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; list of <a href="#id1"><span class="problematic" id="id2">*</span></a>args for the callable</li>
@@ -178,6 +179,8 @@ initializing (if applicable).</li>
 <li><strong>retry_count</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; How many times should be retried when encountering
 an Exception or some other failure before giving up. (default: 0
 or immediately fail)</li>
+<li><strong>timeout</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; How many seconds should we wait before killing the job
+default: 0 which means infinite timeout</li>
 <li><strong>debounce_secs</strong> (<em>secs</em>) &#8211; Number of seconds to debounce the job.   See
 <cite>debounce_deferred_job</cite> for more information.</li>
 <li><strong>queue</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Name of queue to use when executing the job. If this value
@@ -215,7 +218,8 @@ was an error.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; eventmq socket to use for sending the message</li>
-<li><strong>func</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#callable" title="(in Python v2.7)"><em>callable</em></a>) &#8211; the callable to be scheduled on a worker</li>
+<li><strong>func</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#callable" title="(in Python v2.7)"><em>callable</em></a>) &#8211; the callable (or string path to calable) to be
+scheduled on a worker</li>
 <li><strong>minutes</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; minutes to wait in between executions</li>
 <li><strong>args</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; list of <a href="#id9"><span class="problematic" id="id10">*</span></a>args to pass to the callable</li>
 <li><strong>interval_secs</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; Run job every interval_secs or None if using cron</li>
@@ -249,7 +253,7 @@ error</p>
 
 <dl class="function">
 <dt id="eventmq.client.messages.send_request">
-<code class="descclassname">eventmq.client.messages.</code><code class="descname">send_request</code><span class="sig-paren">(</span><em>socket</em>, <em>message</em>, <em>reply_requested=False</em>, <em>guarantee=False</em>, <em>retry_count=0</em>, <em>queue=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.client.messages.send_request" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">eventmq.client.messages.</code><code class="descname">send_request</code><span class="sig-paren">(</span><em>socket</em>, <em>message</em>, <em>reply_requested=False</em>, <em>guarantee=False</em>, <em>retry_count=0</em>, <em>timeout=0</em>, <em>queue=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.client.messages.send_request" title="Permalink to this definition">¶</a></dt>
 <dd><p>Send a REQUEST command.</p>
 <p>Default headers are always all disabled by default. If they are included in
 the headers then they have been enabled.</p>
@@ -289,6 +293,8 @@ the headers then they have been enabled.</p>
 <li><strong>retry_count</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; How many times should be retried when encountering
 an Exception or some other failure before giving up. (default: 0
 or immediatly fail)</li>
+<li><strong>timeout</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; How many seconds should we wait before killing the job
+default: 0 which means infinite timeout</li>
 <li><strong>queue</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Name of queue to use when executing the job. Default: is
 configured default queue name</li>
 </ul>

@@ -61,7 +61,7 @@
             
             
               <div class="version">
-                0.2.6.5
+                0.2.7
               </div>
             
           
@@ -193,6 +193,14 @@ the router hasn&#8217;t received a heartbeat in HEARTBEAT_TIMEOUT</p>
 <code class="descname">clean_up_dead_workers</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.clean_up_dead_workers" title="Permalink to this definition">¶</a></dt>
 <dd><p>Loops through the worker queues and removes any workers who haven&#8217;t
 responded in HEARTBEAT_TIMEOUT</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="eventmq.router.Router.executed_functions">
+<code class="descname">executed_functions</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.router.Router.executed_functions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Excecuted function tracking dictionary
+Key: msgid of message each REQUEST received and forwarded to a worker
+Value: (function_name, queue_name)</p>
 </dd></dl>
 
 <dl class="method">
