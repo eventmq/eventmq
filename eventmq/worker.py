@@ -43,7 +43,7 @@ def run(payload, msgid, timeout=None):
             worker.terminate()
             return (msgid, 'TimeoutError')
     else:
-        _run(payload, msgid)
+        return _run(payload, msgid)
 
 
 def _run(payload, msgid):
