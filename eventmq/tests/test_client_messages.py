@@ -12,10 +12,10 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
-from testfixtures import LogCapture
 import unittest
 
 import mock
+from testfixtures import LogCapture
 
 from .. import conf
 from ..client import messages

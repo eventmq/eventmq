@@ -22,4 +22,5 @@ eventmq. (e.g. one who requests jobs)
    :maxdepth: 2
 
    client/messages
+   client/jobs
 """
