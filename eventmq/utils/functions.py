@@ -54,7 +54,7 @@ def run_function(callable_name,
         callable_ = callable_from_name(
             callable_name, *class_args, **class_kwargs)
     except CallableFromPathError as e:
-        logger.exception('Error importing callable {}.{}: {}'.format(
+        logger.exception('Error importing callable {}: {}'.format(
             callable_name, str(e)))
         return
 
