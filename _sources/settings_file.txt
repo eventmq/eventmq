@@ -1,6 +1,6 @@
-########
-Settings
-########
+##############################
+Server Settings (eventmq.conf)
+##############################
 EventMQ uses a standard INI style config file found at ``/etc/eventmq.conf``.
 
 ******
