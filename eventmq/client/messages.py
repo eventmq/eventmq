@@ -174,7 +174,7 @@ def defer_job(
             logger.error('Invalid callable string passed, '
                          'absolute path required: "{}"'.format(func))
             return
-        path, callable_name = split_callable_name(callable_name)
+        path, callable_name = split_callable_name(func)
     elif callable(func):
         callable_name = name_from_callable(func)
         path, callable_name = split_callable_name(callable_name)
