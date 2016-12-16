@@ -18,6 +18,7 @@
 """
 import logging
 from json import dumps as serialize
+from past.builtins import basestring
 
 from .. import conf
 from ..utils.messages import send_emqp_message
@@ -173,7 +174,7 @@ def defer_job(
             logger.error('Invalid callable string passed, '
                          'absolute path required: "{}"'.format(func))
             return
-        path, callable_name = split_callable_name(callable_name)
+        path, callable_name = split_callable_name(func)
     elif callable(func):
         callable_name = name_from_callable(func)
         path, callable_name = split_callable_name(callable_name)
