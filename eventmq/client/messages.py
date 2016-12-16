@@ -18,6 +18,7 @@
 """
 import logging
 from json import dumps as serialize
+from past.builtins import basestring
 
 from .. import conf
 from ..utils.messages import send_emqp_message
