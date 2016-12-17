@@ -33,7 +33,7 @@ from .utils.messages import (
     fwd_emqp_router_message as fwdmsg,
     parse_router_message
 )
-from .utils import tuplify, zero_index_cmp
+from .utils import tuplify
 from .utils.settings import import_settings
 from .utils.devices import generate_device_name
 from .utils.timeutils import monotonic, timestamp
@@ -853,7 +853,7 @@ class Router(HeartbeatMixin):
         Returns:
             decsending order list. E.g. ((20, 'a'), (14, 'b'), (12, 'c'))
         """
-        return sorted(unprioritized_iterable, cmp=zero_index_cmp, reverse=True)
+        return sorted(unprioritized_iterable, key=lambda x: x[0], reverse=True)
 
     def get_status(self):
         """
