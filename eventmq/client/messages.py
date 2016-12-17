@@ -310,3 +310,12 @@ def send_schedule_request(socket, message, interval_secs=-1, headers=(),
                                cron))
 
     return msgid
+
+
+def send_publish_request(socket, topic, message):
+
+    msgid = send_emqp_message(socket, 'PUBLISH',
+                              (topic,
+                               serialize(message), ))
+
+    return msgid

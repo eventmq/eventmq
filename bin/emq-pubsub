@@ -1,0 +1,8 @@
+#!/usr/bin/env python
+# -*- mode: python -*-
+from eventmq.log import setup_logger
+from eventmq.pub import Pub
+
+if __name__ == "__main__":
+    p = Pub()
+    p.pub_main()

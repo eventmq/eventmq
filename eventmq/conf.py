@@ -64,6 +64,10 @@ WORKER_ADDR_FAILOVER = 'tcp://127.0.0.1:47290'
 # Used to monitor and manage the devices
 ADMINISTRATIVE_ADDR = 'tcp://127.0.0.1:47293'
 
+# PubSub
+PUBLISHER_INCOMING_ADDR = 'tcp://*:47298'
+PUBLISHER_OUTGOING_ADDR = 'tcp://*:47299'
+
 # How many jobs should the job manager concurrently handle?
 CONCURRENT_JOBS = 4
 HWM = 10000

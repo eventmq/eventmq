@@ -45,5 +45,6 @@ setup(
         'bin/emq-jobmanager',
         'bin/emq-router',
         'bin/emq-scheduler',
+        'bin/emq-pubsub'
     ],
 )
