@@ -12,6 +12,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
+import sys
 import unittest
 
 import mock
@@ -41,14 +42,14 @@ class CallableTestClass(object):
 class TestCase(unittest.TestCase):
     @mock.patch('eventmq.client.messages.send_request')
     def test_defer_job(self, sndreq_mock):
-        import urlparse
+        from future.moves.urllib.parse import urlsplit
 
         _msgid = 'mv029aisjf-09asdfualksd-aklds290fjoiw'
 
         sndreq_mock.return_value = _msgid
         socket = mock.Mock()
 
-        msgid = messages.defer_job(socket, urlparse.urlsplit,
+        msgid = messages.defer_job(socket, urlsplit,
                                    args=[1, 2],
                                    kwargs={'a': 1, 'b': 2},
                                    class_args=[9, 8],
@@ -61,14 +62,24 @@ class TestCase(unittest.TestCase):
         # defer_job should return _msgid untouched
         self.assertEqual(msgid, _msgid)
 
-        msg = ['run', {
-            'callable': 'urlsplit',
-            'path': 'urlparse',
-            'args': [1, 2],
-            'kwargs': {'a': 1, 'b': 2},
-            'class_args': [9, 8],
-            'class_kwargs': {'z': 9, 'y': 8},
-        }]
+        if sys.version_info[0] == 3:
+            msg = ['run', {
+                'callable': 'urlsplit',
+                'path': 'urllib.parse',
+                'args': [1, 2],
+                'kwargs': {'a': 1, 'b': 2},
+                'class_args': [9, 8],
+                'class_kwargs': {'z': 9, 'y': 8},
+            }]
+        else:
+            msg = ['run', {
+                'callable': 'urlsplit',
+                'path': 'urlparse',
+                'args': [1, 2],
+                'kwargs': {'a': 1, 'b': 2},
+                'class_args': [9, 8],
+                'class_kwargs': {'z': 9, 'y': 8},
+            }]
 
         sndreq_mock.assert_called_with(socket, msg,
                                        reply_requested=True,
@@ -121,26 +132,26 @@ class TestCase(unittest.TestCase):
             )
 
     def test_name_from_callable(self):
-        import mimetools
-        funcpath = messages.name_from_callable(mimetools.choose_boundary)
+        import json
+        funcpath = messages.name_from_callable(json.dumps)
 
         t = TestClass()
         methpath = messages.name_from_callable(t.mymethod)
 
-        self.assertEqual(funcpath, 'mimetools.choose_boundary')
+        self.assertEqual(funcpath, 'json.dumps')
         self.assertEqual(
             methpath,
             'eventmq.tests.test_client_messages:TestClass.mymethod')
 
     @mock.patch('eventmq.client.messages.send_schedule_request')
     def test_schedule(self, send_schedule_req_mock):
-        import mimetools
+        import json
         _msgid = 'ovznopi4-)*(@#$Nn0av84-a0cn84n03'
         send_schedule_req_mock.return_value = _msgid
 
         socket = mock.Mock()
 
-        msgid = messages.schedule(socket, mimetools.decode,
+        msgid = messages.schedule(socket, json.dumps,
                                   interval_secs=500,
                                   args=(1, 2),
                                   kwargs={'a': 1, 'b': 2},
@@ -153,8 +164,8 @@ class TestCase(unittest.TestCase):
         self.assertEqual(msgid, _msgid)
 
         msg = ['run', {
-            'callable': 'decode',
-            'path': 'mimetools',
+            'callable': 'dumps',
+            'path': 'json',
             'args': (1, 2),
             'kwargs': {'a': 1, 'b': 2},
             'class_args': (9, 8),
@@ -199,10 +210,10 @@ class TestCase(unittest.TestCase):
 
             # error if class_args does't have an inital id. (if this test needs
             # to be removed, also remove the class_args from the above calls)
-            messages.schedule(socket, mimetools.decode)
+            messages.schedule(socket, json.dumps)
 
             # error if neither cron or interval_secs is specified
-            messages.schedule(socket, mimetools.decode, class_args=(123,))
+            messages.schedule(socket, json.dumps, class_args=(123,))
 
             log_checker.check(
                 ('eventmq.client.messages',
