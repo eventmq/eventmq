@@ -136,7 +136,6 @@ class JobManager(HeartbeatMixin, EMQPService):
             while True:
                 try:
                     resp = self.finished_queue.get_nowait()
-                    logger.debug('resp: {}'.format(resp))
                 except Queue.Empty:
                     break
                 else:
@@ -203,7 +202,6 @@ class JobManager(HeartbeatMixin, EMQPService):
         payload['timeout'] = timeout
         payload['msgid'] = msgid
         payload['callback'] = callback
-        logger.debug(payload)
 
         self.request_queue.put(payload)
 

@@ -42,6 +42,9 @@ class MultiprocessWorker(Process):
 
         This is designed to run in a seperate process.
         """
+        import zmq
+        zmq.Context.instance().term()
+
         # Pull the payload off the queue and run it
         for payload in iter(self.input_queue.get, 'DONE'):
 
@@ -71,7 +74,6 @@ class MultiprocessWorker(Process):
 
 
 def _run(payload):
-    logger.debug(payload)
     if ":" in payload["path"]:
         _pkgsplit = payload["path"].split(':')
         s_package = _pkgsplit[0]
