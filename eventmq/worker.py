@@ -118,8 +118,3 @@ def _run(payload):
         return str(e)
     # Signal that we're done with this job
     return 'DONE'
-
-def sleepy(t):
-    print 'hi'
-    import time
-    time.sleep(t)

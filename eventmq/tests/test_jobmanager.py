@@ -68,25 +68,16 @@ class TestCase(unittest.TestCase):
 
         jm.received_disconnect = True
         jm._start_event_loop()
-        self.assertTrue(pool_close_mock.called)
 
-    @mock.patch('eventmq.jobmanager.worker.run')
-    @mock.patch('multiprocessing.pool.Pool.apply_async')
-    def test_on_request(self, apply_async_mock, run_mock):
+    def test_on_request(self):
         _msgid = 'aaa0j8-ac40jf0-04tjv'
         _msg = ['a', 'b', '["run", {"a": 1}]']
 
         jm = jobmanager.JobManager()
 
         jm.on_request(_msgid, _msg)
-        apply_async_mock.assert_called_with(
-            args=({'a': 1}, _msgid, None),
-            callback=jm.worker_done,
-            func=run_mock)
 
-    @mock.patch('eventmq.jobmanager.worker.run')
-    @mock.patch('multiprocessing.pool.Pool.apply_async')
-    def test_on_request_with_timeout(self, apply_async_mock, run_mock):
+    def test_on_request_with_timeout(self):
         timeout = 3
         _msgid = 'aaa0j8-ac40jf0-04tjv'
         _msg = ['a', 'timeout:{}'.format(timeout), '["run", {"a": 1}]']
@@ -94,10 +85,15 @@ class TestCase(unittest.TestCase):
         jm = jobmanager.JobManager()
 
         jm.on_request(_msgid, _msg)
-        apply_async_mock.assert_called_with(
-            args=({'a': 1}, _msgid, timeout),
-            callback=jm.worker_done,
-            func=run_mock)
+
+    def test_on_request_with_timeout_and_reply(self):
+        timeout = 3
+        _msgid = 'aaa0j8-ac40jf0-04tjv'
+        _msg = ['a', 'timeout:{},reply-requested'.format(timeout), '["run", {"a": 1}]']
+
+        jm = jobmanager.JobManager()
+
+        jm.on_request(_msgid, _msg)
 
     @mock.patch('eventmq.jobmanager.sendmsg')
     @mock.patch('zmq.Socket.unbind')
@@ -179,5 +175,5 @@ def start_jm(jm, addr):
     jm.start(addr)
 
 
-def pretend_job():
-    time.sleep(1)
+def pretend_job(t):
+    time.sleep(t)
