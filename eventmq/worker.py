@@ -17,60 +17,109 @@
 ===============================
 Defines different short-lived workers that execute jobs
 """
-from .utils.functions import run_function
+from importlib import import_module
+from multiprocessing import Process
+from threading import Thread
 
-from multiprocessing import Pool, TimeoutError
+import logging
 
-# the run function is executed in a different process, so we need to set the
-# logger up.
-from . import log
-
-logger = log.setup_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
-def run(payload, msgid, timeout=None):
+class MultiprocessWorker(Process):
     """
-    executes job in a thread, killing it after a specified timeout
+    Defines a worker that spans the job in a multiprocessing task
     """
-    if timeout:
-        worker = Pool(1)
-        result = worker.apply_async(_run, args=(payload, msgid))
 
-        try:
-            out = result.get(timeout)
-            return out
-        except TimeoutError:
-            worker.terminate()
-            return (msgid, 'TimeoutError')
+    def __init__(self, input_queue, output_queue):
+        super(MultiprocessWorker, self).__init__()
+        self.input_queue = input_queue
+        self.output_queue = output_queue
+
+    def run(self):
+        """
+        process a run message and execute a job
+
+        This is designed to run in a seperate process.
+        """
+        # Pull the payload off the queue and run it
+        for payload in iter(self.input_queue.get, 'DONE'):
+
+            timeout = payload.get("timeout", None)
+            msgid = payload.get('msgid', '')
+
+            resp = {'msgid': msgid}
+
+            try:
+                if timeout:
+                    worker_thread = Thread(target=_run,
+                                           args=(payload['params'], ))
+                    worker_thread.start()
+                    worker_thread.join(timeout)
+
+                    if worker_thread.isAlive():
+                        resp['return'] = 'TimeoutError'
+                    else:
+                        resp['return'] = 'DONE'
+                else:
+                    resp['reutrn'] = _run(payload['params'])
+            except Exception as e:
+                resp['return'] = str(e)
+
+            resp['callback'] = payload['callback']
+            self.output_queue.put(resp)
+
+
+def _run(payload):
+    logger.debug(payload)
+    if ":" in payload["path"]:
+        _pkgsplit = payload["path"].split(':')
+        s_package = _pkgsplit[0]
+        s_cls = _pkgsplit[1]
     else:
-        return _run(payload, msgid)
+        s_package = payload["path"]
+        s_cls = None
 
+    s_callable = payload["callable"]
 
-def _run(payload, msgid):
-    """
-    process a run message and execute a job
+    package = import_module(s_package)
+    if s_cls:
+        cls = getattr(package, s_cls)
 
-    This is designed to run in a seperate process.
-    """
-    # deconstruct the payload
-    path = payload.get('path')
-    callable_name = payload.get('callable')
-    class_args = payload.get('class_args', tuple()) or tuple()
-    class_kwargs = payload.get('class_kwargs', dict()) or dict()
-    args = payload.get('args', tuple()) or tuple()
-    kwargs = payload.get('kwargs', dict()) or dict()
+        if "class_args" in payload:
+            class_args = payload["class_args"]
+        else:
+            class_args = ()
+
+        if "class_kwargs" in payload:
+            class_kwargs = payload["class_kwargs"]
+        else:
+            class_kwargs = {}
+
+        obj = cls(*class_args, **class_kwargs)
+        callable_ = getattr(obj, s_callable)
+    else:
+        callable_ = getattr(package, s_callable)
+
+    if "args" in payload:
+        args = payload["args"]
+    else:
+        args = ()
+
+    if "kwargs" in payload:
+        kwargs = payload["kwargs"]
+    else:
+        kwargs = {}
 
     try:
-        r = run_function(
-            callable_name='{}.{}'.format(path, callable_name),
-            class_args=class_args or (),
-            class_kwargs=class_kwargs or {},
-            args=args or (),
-            kwargs=kwargs or {})
-        return (msgid, r)
+        callable_(*args, **kwargs)
     except Exception as e:
         logger.exception(e)
-        return (msgid, str(e))
-
+        return str(e)
     # Signal that we're done with this job
-    return (msgid, '')
+    return 'DONE'
+
+def sleepy(t):
+    print 'hi'
+    import time
+    time.sleep(t)

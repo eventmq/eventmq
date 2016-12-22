@@ -21,6 +21,7 @@ from json import loads as deserializer
 from json import dumps as serializer
 import logging
 import signal
+import Queue
 
 from . import conf
 from .constants import KBYE
@@ -31,8 +32,9 @@ from .utils.settings import import_settings
 from .utils.devices import generate_device_name
 from .utils.messages import send_emqp_message as sendmsg
 from .utils.functions import get_timeout_from_headers
-from . import worker
+from .worker import MultiprocessWorker as Worker
 from eventmq.log import setup_logger
+from multiprocessing import Queue as mp_queue
 from multiprocessing import Pool
 # import Queue
 
@@ -91,17 +93,19 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         self.poller = Poller()
 
+        #: Setup worker queues
+        self.request_queue = mp_queue()
+        self.finished_queue = mp_queue()
         self._setup()
 
     @property
     def workers(self):
         if not hasattr(self, '_workers'):
-            self._workers = Pool(processes=conf.CONCURRENT_JOBS,
-                                 initializer=mp_init)
-        elif self._workers._processes != conf.CONCURRENT_JOBS:
-            self._workers.close()
-            self._workers = Pool(processes=conf.CONCURRENT_JOBS,
-                                 initializer=mp_init)
+            self._workers = []
+            for i in range(0, conf.CONCURRENT_JOBS):
+                w = Worker(self.request_queue, self.finished_queue)
+                w.start()
+                self._workers.append(w)
 
         return self._workers
 
@@ -112,13 +116,14 @@ class JobManager(HeartbeatMixin, EMQPService):
         # Acknowledgment has come
         # Send a READY for each available worker
 
-        for i in range(0, conf.CONCURRENT_JOBS):
+        for i in range(0, len(self.workers)):
             self.send_ready()
 
         while True:
             # Clear any workers if it's time to shut down
             if self.received_disconnect:
-                self.workers.close()
+                for w in self.workers:
+                    self.request_queue.put_nowait('DONE')
                 break
 
             events = self.poller.poll()
@@ -126,6 +131,20 @@ class JobManager(HeartbeatMixin, EMQPService):
             if events.get(self.outgoing) == POLLIN:
                 msg = self.outgoing.recv_multipart()
                 self.process_message(msg)
+
+            # Call appropiate callbacks for each finished job
+            while True:
+                try:
+                    resp = self.finished_queue.get_nowait()
+                    logger.debug('resp: {}'.format(resp))
+                except Queue.Empty:
+                    break
+                else:
+                    if resp['callback'] == 'worker_done':
+                        self.worker_done(resp['msgid'])
+                    elif resp['callback'] == 'worker_done_with_reply':
+                        self.worker_done_with_reply(resp['return'],
+                                                    resp['msgid'])
 
             # Note: `maybe_send_heartbeat` is mocked by the tests to return
             #       False, so it should stay at the bottom of the loop.
@@ -173,19 +192,23 @@ class JobManager(HeartbeatMixin, EMQPService):
         params = payload[1]
 
         if 'reply-requested' in headers:
-            callback = self.worker_done_with_reply
+            callback = 'worker_done_with_reply'
         else:
-            callback = self.worker_done
+            callback = 'worker_done'
 
         timeout = get_timeout_from_headers(headers)
 
-        # kick off the job asynchronously with an appropiate callback
-        self.workers.apply_async(func=worker.run,
-                                 args=(params, msgid, timeout),
-                                 callback=callback)
+        payload = {}
+        payload['params'] = params
+        payload['timeout'] = timeout
+        payload['msgid'] = msgid
+        payload['callback'] = callback
+        logger.debug(payload)
 
-    def worker_done_with_reply(self, msgid):
-        self.send_reply(msgid)
+        self.request_queue.put(payload)
+
+    def worker_done_with_reply(self, reply, msgid):
+        self.send_reply(reply, msgid)
         self.send_ready()
 
     def worker_done(self, msgid):
@@ -198,7 +221,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         """
         sendmsg(self.outgoing, 'READY')
 
-    def send_reply(self, res):
+    def send_reply(self, reply, msgid):
         """
          Sends an REPLY response
 
@@ -207,9 +230,6 @@ class JobManager(HeartbeatMixin, EMQPService):
              recipient (str): The recipient id for the ack
              msgid: The unique id that we are acknowledging
          """
-        msgid = res[0]
-        reply = res[1]
-        reply = serializer(reply)
         sendmsg(self.outgoing, 'REPLY', [reply, msgid])
 
     def on_heartbeat(self, msgid, message):
@@ -267,14 +287,3 @@ class JobManager(HeartbeatMixin, EMQPService):
 def jobmanager_main():
     j = JobManager()
     j.jobmanager_main()
-
-
-def mp_init():
-    """
-    The instance of Context is copied when python multiprocessing fork()s the
-    worker processes, so we need to terminate that Context so a new one can be
-    rebuilt. Without doing this, messages sent from functions in those child
-    processes will never be delivered.
-    """
-    import zmq
-    zmq.Context.instance().term()
