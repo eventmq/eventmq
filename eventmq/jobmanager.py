@@ -236,6 +236,22 @@ class JobManager(HeartbeatMixin, EMQPService):
         in :meth:`self.process_message` as every message is counted as a
         HEARTBEAT
         """
+        self.check_worker_health()
+
+    def check_worker_health(self):
+        """
+        Checks for any dead processes in the pool and recreates them if necessary
+        """
+        self._workers = [w for w in self._workers if w.is_alive()]
+
+        if len(self._workers) < conf.CONCURRENT_JOBS:
+            logger.warning("{} worker process(es) may have died...recreating")\
+                  .format(conf.CONCURRENT_JOBS - len(self._workers))
+
+        for i in range(0, conf.CONCURRENT_JOBS - len(self._workers)):
+            w = Worker(self.request_queue, self.finished_queue)
+            w.start()
+            self._workers.append(w)
 
     def on_disconnect(self, msgid, msg):
         sendmsg(self.outgoing, KBYE)
@@ -278,8 +294,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         if broker_addr:
             conf.WORKER_ADDR = broker_addr
 
-        self.start(addr=conf.WORKER_ADDR,
-                   queues=conf.QUEUES)
+        self.start(addr=conf.WORKER_ADDR, queues=conf.QUEUES)
 
 
 def jobmanager_main():
