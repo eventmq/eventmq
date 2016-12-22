@@ -24,6 +24,7 @@ import zmq.error
 
 from collections import deque
 from .. import conf, constants, exceptions, poller, utils
+from ..utils.encoding import encodify
 from ..utils.messages import send_emqp_message as sendmsg
 from ..utils.timeutils import monotonic, timestamp
 
@@ -398,7 +399,7 @@ class ZMQSendMixin(object):
         else:
             headers = ('', protocol_version, )
 
-        msg = headers + message
+        msg = encodify(headers + message)
 
         if conf.SUPER_DEBUG:
             # If it's not at least 4 frames long then most likely it isn't an

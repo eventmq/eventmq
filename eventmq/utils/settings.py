@@ -16,7 +16,7 @@
 :mod:`settings` -- Settings Utilities
 =====================================
 """
-import ConfigParser
+from configparser import ConfigParser
 import json
 import logging
 import os
@@ -35,7 +35,7 @@ def import_settings(section='global'):
     Args:
        section (str): Name of the INI section to import
     """
-    config = ConfigParser.ConfigParser()
+    config = ConfigParser()
 
     if os.path.exists(conf.CONFIG_FILE):
         config.read(conf.CONFIG_FILE)

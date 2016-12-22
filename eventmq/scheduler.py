@@ -25,7 +25,7 @@ from croniter import croniter
 from six import next
 
 from . import conf, constants
-from constants import KBYE
+from .constants import KBYE
 from .sender import Sender
 from .poller import Poller, POLLIN
 from .utils.classes import EMQPService, HeartbeatMixin
@@ -473,4 +473,4 @@ def scheduler_main():
 
 
 def test_job():
-    print "hello!"
+    print("hello!")

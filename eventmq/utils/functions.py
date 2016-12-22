@@ -94,7 +94,8 @@ def name_from_callable(func):
     path = None
     # Methods also have the func_name property
     if inspect.ismethod(func):
-        path = ("{}:{}".format(func.__module__, func.im_class.__name__))
+        path = ("{}:{}".format(func.__module__,
+                               func.__self__.__class__.__name__))
         try:
             callable_name = func.func_name
         except AttributeError:
