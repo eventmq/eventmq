@@ -829,7 +829,7 @@ class Router(HeartbeatMixin):
         for queue in worker['queues']:
             name = queue[1]
             workers = self.queues[name]
-            revised_list = filter(lambda x: x[1] != worker, workers)
+            revised_list = filter(lambda x: x[1] != worker_id, workers)
             self.queues[name] = revised_list
             logger.debug('Removed worker - {} from {}'.format(worker_id, name))
 
