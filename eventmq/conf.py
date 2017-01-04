@@ -65,8 +65,8 @@ WORKER_ADDR_FAILOVER = 'tcp://127.0.0.1:47290'
 ADMINISTRATIVE_ADDR = 'tcp://127.0.0.1:47293'
 
 # PubSub
-PUBLISHER_INCOMING_ADDR = 'tcp://*:47298'
-PUBLISHER_OUTGOING_ADDR = 'tcp://*:47299'
+PUBLISHER_INCOMING_ADDR = 'tcp://127.0.0.1:47298'
+PUBLISHER_OUTGOING_ADDR = 'tcp://127.0.0.1:47299'
 
 # How many jobs should the job manager concurrently handle?
 CONCURRENT_JOBS = 4
