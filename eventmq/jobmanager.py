@@ -17,11 +17,11 @@
 ================================
 Ensures things about jobs and spawns the actual tasks
 """
-from json import loads as deserializer
-from json import dumps as serializer
+import sys
 import logging
 import signal
-import Queue
+
+from json import loads as deserializer
 
 from . import conf
 from .constants import KBYE
@@ -35,8 +35,12 @@ from .utils.functions import get_timeout_from_headers
 from .worker import MultiprocessWorker as Worker
 from eventmq.log import setup_logger
 from multiprocessing import Queue as mp_queue
-from multiprocessing import Pool
-# import Queue
+
+if sys.version[0] == '2':
+    import Queue
+else:
+    import queue as Queue
+
 
 logger = logging.getLogger(__name__)
 
