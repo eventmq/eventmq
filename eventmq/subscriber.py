@@ -1,15 +1,21 @@
 """
 derp subscriber
 """
-import eventmq
+import zmq
+import sys
 
 if __name__ == "__main__":
-    s = eventmq.Subscriber()
-    s.connect('tcp://127.0.0.1:47331')
-    s.subscribe('/topic1')
+    sockets = []
+    for i in xrange(100):
+        ctx = zmq.Context()
+        s = ctx.socket(zmq.SUB)
+        s.linger = 0
+        s.setsockopt(zmq.SUBSCRIBE, str(i))
+        s.connect('tcp://127.0.0.1:47299')
+        sockets.append(s)
 
     while True:
         # block until something comes in. normally you'd do something with
         # this in another thread or something
-        print 'r'
-        print s.receive()
+        for s in sockets:
+            print s.recv_multipart()

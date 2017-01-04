@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+"""
+Usage: ./send_msg <ipaddresss> <command> <frame w/ values space separated>
+"""
+import sys
+
+from eventmq.sender import Sender
+from eventmq.client.messages import send_publish_request
+
+if __name__ == "__main__":
+    s = Sender()
+    s.connect(sys.argv[1])
+
+    msg = ['update', '1']
+    j = 0
+    while True:
+
+        for i in xrange(10):
+            topic = str(i)
+            send_publish_request(s, topic, msg)
+
+
+        print j
+        j += 1
