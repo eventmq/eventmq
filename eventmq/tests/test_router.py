@@ -331,7 +331,7 @@ class TestCase(unittest.TestCase):
         client_id = 'c1'
         msgid = 'msg18'
         queue = 'default'
-        msg = [queue, 'hello world']
+        msg = ['red socks', 'hello world']
         worker_id = 'w1'
 
         get_worker_mock.return_value = worker_id

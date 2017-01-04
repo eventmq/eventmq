@@ -33,7 +33,7 @@ from .utils.messages import (
     fwd_emqp_router_message as fwdmsg,
     parse_router_message
 )
-from .utils import tuplify, zero_index_cmp
+from .utils import tuplify
 from .utils.settings import import_settings
 from .utils.devices import generate_device_name
 from .utils.timeutils import monotonic, timestamp
@@ -429,6 +429,7 @@ class Router(HeartbeatMixin):
             depth (int): The recusion depth in retrying when PeerGoneAwayError
                 is raised.
         """
+        import psutil
 
         try:
             queue_name = msg[0]
@@ -437,12 +438,11 @@ class Router(HeartbeatMixin):
                              "Msg: {}".format(sender, msgid, msg))
             return
 
-        # If we have no workers for the queue TODO something about it
+        # If we have no workers for the queue assign it to the default queue
         if queue_name not in self.queues:
             logger.warning("Received REQUEST with a queue I don't recognize: "
-                           "%s. Discarding message." % (queue_name,))
-            # TODO: Don't discard the message
-            return
+                           "%s. Sending to default queue." % (queue_name,))
+            queue_name = conf.DEFAULT_QUEUE_NAME
 
         self.job_latencies[msgid] = (monotonic(), queue_name)
 
@@ -452,9 +452,19 @@ class Router(HeartbeatMixin):
             logger.warning('No available workers for queue "%s". '
                            'Buffering message to send later.' % queue_name)
             if queue_name not in self.waiting_messages:
-                self.waiting_messages[queue_name] = \
-                    EMQdeque(full=conf.HWM,
-                             on_full=router_on_full)
+                # Since the default queue will pick up messages with invalid
+                # queues, it will need to be larger than other queues
+                if queue_name == conf.DEFAULT_QUEUE_NAME:
+                    total_mem = psutil.virtual_memory().total
+                    # Set queue limit to be 75% of total memory with ~100 byte
+                    # messages
+                    limit = int((total_mem / 100) * 0.75)
+                    self.waiting_messages[queue_name] = \
+                            EMQdeque(full=limit, on_full=router_on_full)
+                else:
+                    self.waiting_messages[queue_name] = \
+                        EMQdeque(full=conf.HWM,
+                                 on_full=router_on_full)
 
             if self.waiting_messages[queue_name].append(
                     ['', constants.PROTOCOL_VERSION, 'REQUEST',
@@ -819,7 +829,7 @@ class Router(HeartbeatMixin):
         for queue in worker['queues']:
             name = queue[1]
             workers = self.queues[name]
-            revised_list = filter(lambda x: x[1] != worker, workers)
+            revised_list = filter(lambda x: x[1] != worker_id, workers)
             self.queues[name] = revised_list
             logger.debug('Removed worker - {} from {}'.format(worker_id, name))
 
@@ -853,7 +863,7 @@ class Router(HeartbeatMixin):
         Returns:
             decsending order list. E.g. ((20, 'a'), (14, 'b'), (12, 'c'))
         """
-        return sorted(unprioritized_iterable, cmp=zero_index_cmp, reverse=True)
+        return sorted(unprioritized_iterable, key=lambda x: x[0], reverse=True)
 
     def get_status(self):
         """

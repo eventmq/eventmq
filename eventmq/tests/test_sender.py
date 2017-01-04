@@ -38,9 +38,9 @@ class TestCase(unittest.TestCase):
         self.assert_(socket.poll() != 0)
         msg = socket.recv_multipart()
         self.assertEqual(msg[0], self.sender.name)
-        self.assertEqual(msg[1], '')
-        self.assertEqual(msg[2], '1')
-        self.assertEqual(msg[3], 'Hello!')
+        self.assertEqual(msg[1], b'')
+        self.assertEqual(msg[2], b'1')
+        self.assertEqual(msg[3], b'Hello!')
 
     def test_send_multipart_unicode(self):
         # Test that send_multipart handles unicode safely

@@ -18,15 +18,15 @@ if __name__ == "__main__":
         s.connect(sys.argv[1])
 
         msg = ['run', {
-            'path': 'path.to.some.module:Class',
-            'callable': 'do_thing',
+            'path': 'eventmq.tests.test_jobmanager',
+            'callable': 'pretend_job',
             'class_args': ('blurp',),
             'class_kwargs': {'kwarg1': True},
-            'args': ('arg1', 'arg2'),
-            'kwargs': {'kwarg1': 'something'}
+            'args': (2, ),
+            'kwargs': {}
             }]
 
-        send_request(s, msg, guarantee=True, reply_requested=True)
+        send_request(s, msg, guarantee=True, reply_requested=True, timeout=10)
         print zmq.POLLOUT
         events = dict(poller.poll(500))
         print events

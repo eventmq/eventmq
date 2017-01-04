@@ -4,6 +4,7 @@ monotonic==0.4    # A clock who's time is not changed. used for scheduling
 croniter==0.3.10
 redis==2.10.3
 future==0.15.2
+psutil==5.0.0
 
 # Documentation
 sphinxcontrib-napoleon==0.4.3

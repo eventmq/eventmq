@@ -49,8 +49,16 @@ HEARTBEAT_TIMEOUT = 5
 # How often should a heartbeat be sent? This should be lower than
 # HEARTBEAT_TIMEOUT for the broker
 HEARTBEAT_INTERVAL = 3
+
 # Default configuration file
 CONFIG_FILE = '/etc/eventmq.conf'
+
+# Default character encoding for strings in messages See these URLs for
+# supported encodings:
+# https://docs.python.org/2/library/codecs.html#standard-encodings
+# https://docs.python.org/3/library/codecs.html#standard-encodings
+DEFAULT_ENCODING = 'utf-8'
+
 # Default addresses to localhost
 # Router:
 FRONTEND_ADDR = 'tcp://127.0.0.1:47291'

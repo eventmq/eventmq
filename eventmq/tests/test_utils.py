@@ -12,8 +12,10 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
+from imp import reload
 import io
 import random
+import sys
 import unittest
 
 import mock
@@ -39,17 +41,26 @@ class SettingsTestCase(unittest.TestCase):
 
     @mock.patch('eventmq.utils.settings.os.path.exists')
     def test_import_settings_default(self, pathexists_mock):
+        from configparser import ConfigParser
         from .. import conf
         # sometimes the tests step on each other with this module. reloading
         # ensures fresh test data
         reload(conf)
         pathexists_mock.return_value = True
 
+        _config = ConfigParser()
+
+        if sys.version_info[0] == 3:
+            _config.read_string(self.settings_ini)
+        else:
+            _config.readfp(io.BytesIO(self.settings_ini))
+
         # Global section
         # --------------
-        with mock.patch('__builtin__.open',
-                        return_value=io.BytesIO(self.settings_ini)):
-            settings.import_settings()
+        with mock.patch('eventmq.utils.settings.ConfigParser',
+                        return_value=_config):
+            with mock.patch.object(_config, 'read'):
+                settings.import_settings()
 
         # Changed. Default is false
         self.assertTrue(conf.SUPER_DEBUG, True)
@@ -68,9 +79,19 @@ class SettingsTestCase(unittest.TestCase):
 
         # Job Manager Section
         # -------------------
-        with mock.patch('__builtin__.open',
-                        return_value=io.BytesIO(self.settings_ini)):
-            settings.import_settings('jobmanager')
+        from configparser import ConfigParser
+        _config = ConfigParser()
+        if sys.version_info[0] == 3:
+            _config.read_string(self.settings_ini)
+        else:
+            _config.readfp(io.BytesIO(self.settings_ini))
+
+        # Global section
+        # --------------
+        with mock.patch('eventmq.utils.settings.ConfigParser',
+                        return_value=_config):
+            with mock.patch.object(ConfigParser, 'read'):
+                settings.import_settings('jobmanager')
 
         # Changed
         self.assertFalse(conf.SUPER_DEBUG)
@@ -86,9 +107,19 @@ class SettingsTestCase(unittest.TestCase):
         # Invalid section
         # ---------------
         # This shouldn't fail, and nothing should change
-        with mock.patch('__builtin__.open',
-                        return_value=io.BytesIO(self.settings_ini)):
-            settings.import_settings('nonexistent_section')
+        _config = ConfigParser()
+
+        if sys.version_info[0] == 3:
+            _config.read_string(self.settings_ini)
+        else:
+            _config.readfp(io.BytesIO(self.settings_ini))
+
+        # Global section
+        # --------------
+        with mock.patch('eventmq.utils.settings.ConfigParser',
+                        return_value=_config):
+            with mock.patch.object(ConfigParser, 'read'):
+                settings.import_settings('nonexistent_section')
 
         self.assertEqual(conf.CONCURRENT_JOBS, 9283)
         self.assertEqual(conf.QUEUES,
