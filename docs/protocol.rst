@@ -205,6 +205,22 @@ FRAME  Value          Description
 3      _MSGID_        A unique id for the msg
 ====== ============== ===========
 
+eMQP / Publisher
+----------------
+A **PUBLISH** frame consists of a 6-frame multipart message, formatted as follows.
+
+====== ============== ===========
+FRAME  Value          Description
+====== ============== ===========
+0      _EMPTY_        leave empty
+1      eMQP/1.0       Protocol version
+2      PUBLISH        command
+3      _MSGID_        A unique id for the msg
+4      TOPIC          A topic to publish to
+5      MSG            Message to be published
+====== ============== ===========
+
+
 Heartbeating
 ------------
  * HEARTBEAT commands are valid at any time after an INFORM command.
