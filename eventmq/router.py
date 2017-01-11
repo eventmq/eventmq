@@ -901,7 +901,8 @@ class Router(HeartbeatMixin):
         self.outgoing.unbind(conf.BACKEND_ADDR)
         import_settings()
         self.start(frontend_addr=conf.FRONTEND_ADDR,
-                   backend_addr=conf.BACKEND_ADDR)
+                   backend_addr=conf.BACKEND_ADDR,
+                   administrative_addr=conf.ADMINISTRATIVE_ADDR)
 
     def router_main(self):
         """
@@ -910,7 +911,8 @@ class Router(HeartbeatMixin):
         setup_logger('eventmq')
         import_settings()
         self.start(frontend_addr=conf.FRONTEND_ADDR,
-                   backend_addr=conf.BACKEND_ADDR)
+                   backend_addr=conf.BACKEND_ADDR,
+                   administrative_addr=conf.ADMINISTRATIVE_ADDR)
 
 
 def router_on_full():
@@ -920,4 +922,3 @@ def router_on_full():
 # Entry point for pip console scripts
 def router_main():
     r = Router()
-    r.router_main()
