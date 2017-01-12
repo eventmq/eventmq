@@ -7,15 +7,16 @@ from setuptools import setup, find_packages
 
 setup(
     name='eventmq',
-    version='0.3-rc3',
+    version='0.3-rc4',
     description='EventMQ messaging system based on ZeroMQ',
     packages=find_packages(),
     install_requires=['pyzmq==15.4.0',
                       'six==1.10.0',
                       'monotonic==0.4',
                       'croniter==0.3.10',
-                      'future==0.15.2',
                       'redis==2.10.3',
+                      'future==0.15.2',
+                      'psutil==5.0.0',
                       'python-dateutil>=2.1,<3.0.0'],
     author='EventMQ Contributors',
     url='https://github.com/enderlabs/eventmq/',
