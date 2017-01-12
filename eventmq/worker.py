@@ -52,7 +52,7 @@ class MultiprocessWorker(Process):
             msgid = payload.get('msgid', '')
 
             resp = {'msgid': msgid,
-                    'return': None}
+                    'return': 'None'}
 
             try:
                 if timeout:
