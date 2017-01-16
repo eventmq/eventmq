@@ -304,6 +304,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
         # in memory
         try:
             if (self.redis_server.get(schedule_hash)):
+                self.redis_server.delete(schedule_hash)
                 self.redis_server.lrem('interval_jobs', 0, schedule_hash)
                 self.redis_server.save()
         except redis.ConnectionError:
