@@ -180,7 +180,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
                     logger.debug("Time is: %s; Schedule is: %s - Running %s"
                                  % (ts_now, v[0], msg))
-                    logger.debug("run_count:%s" % v[4])
+
                     if v[4] != INFINITE_RUN_COUNT:
                         # If run_count was 0, we cancel the job
                         if v[4] <= 0:
