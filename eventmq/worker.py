@@ -20,15 +20,12 @@ Defines different short-lived workers that execute jobs
 from importlib import import_module
 from multiprocessing import Process
 from threading import Thread
+from . import conf
 
 import logging
 import os
 
 logger = logging.getLogger(__name__)
-
-
-# Force reset after running a certain number of jobs
-MAX_JOB_COUNT = 1024
 
 
 class MultiprocessWorker(Process):
@@ -80,7 +77,7 @@ class MultiprocessWorker(Process):
             resp['callback'] = payload['callback']
             self.output_queue.put(resp)
 
-            if self.job_count > MAX_JOB_COUNT:
+            if self.job_count > conf.MAX_JOB_COUNT:
                 break
 
         logger.debug("Worker death, PID: {}".format(os.getpid()))
