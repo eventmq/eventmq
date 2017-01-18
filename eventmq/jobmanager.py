@@ -244,13 +244,14 @@ class JobManager(HeartbeatMixin, EMQPService):
 
     def check_worker_health(self):
         """
-        Checks for any dead processes in the pool and recreates them if necessary
+        Checks for any dead processes in the pool and recreates them if
+        necessary
         """
         self._workers = [w for w in self._workers if w.is_alive()]
 
         if len(self._workers) < conf.CONCURRENT_JOBS:
-            logger.warning("{} worker process(es) may have died...recreating")\
-                  .format(conf.CONCURRENT_JOBS - len(self._workers))
+            logger.warning("{} worker process(es) may have died...recreating"
+                           .format(conf.CONCURRENT_JOBS - len(self._workers)))
 
         for i in range(0, conf.CONCURRENT_JOBS - len(self._workers)):
             w = Worker(self.request_queue, self.finished_queue)

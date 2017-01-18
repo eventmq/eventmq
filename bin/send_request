@@ -21,4 +21,5 @@ if __name__ == "__main__":
            'kwargs': {}
            }]
 
-    send_request(s, msg, guarantee=True, reply_requested=True)
+    while True:
+        send_request(s, msg, guarantee=True, reply_requested=True)
