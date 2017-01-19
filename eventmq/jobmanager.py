@@ -126,8 +126,11 @@ class JobManager(HeartbeatMixin, EMQPService):
         while True:
             # Clear any workers if it's time to shut down
             if self.received_disconnect:
-                for w in self.workers:
+                for _ in xrange(0, len(self.workers)):
+                    logger.debug('Requesting worker death...')
                     self.request_queue.put_nowait('DONE')
+                self.request_queue.close()
+                self.request_queue.join_thread()
                 break
 
             events = self.poller.poll()
