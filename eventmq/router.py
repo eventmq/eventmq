@@ -448,7 +448,8 @@ class Router(HeartbeatMixin):
 
         try:
             worker_addr = self.get_available_worker(queue_name=queue_name)
-        except exceptions.NoAvailableWorkerSlotsError:
+        except (exceptions.NoAvailableWorkerSlotsError,
+                exceptions.UnknownQueueError):
             logger.warning('No available workers for queue "%s". '
                            'Buffering message to send later.' % queue_name)
             if queue_name not in self.waiting_messages:
