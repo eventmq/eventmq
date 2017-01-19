@@ -182,49 +182,30 @@ class Scheduler(HeartbeatMixin, EMQPService):
                                  % (ts_now, v[0], msg))
 
                     if v[4] != INFINITE_RUN_COUNT:
-                        # Decrement run_count
-                        v[4] -= 1
                         # If run_count was 0, we cancel the job
                         if v[4] <= 0:
                             cancel_jobs.append(k)
-                        # Otherwise we run the job
                         else:
-                            # Send job and update next schedule time
+                            # Decrement run_count
+                            v[4] -= 1
                             self.send_request(msg, queue=queue)
                             v[0] = next(v[2])
-                            # Rename redis key and save new run_count counter
-                            try:
-                                self.redis_server.rename(k,
-                                                         self.schedule_hash(v))
-                                self.redis_server.set(self.schedule_hash(v),
-                                                      serialize(v))
-                                self.redis_server.save()
-                            except redis.ConnectionError:
-                                logger.warning("Couldn't contact redis server")
-                            except Exception as e:
-                                logger.warning(
-                                    'Unable to update key in redis '
-                                    'server: {}'.format(e.message))
                     else:
                         # Scheduled job is in running infinitely
                         # Send job and update next schedule time
                         self.send_request(msg, queue=queue)
                         v[0] = next(v[2])
-                        # Persist changes to redis
-                        try:
-                            self.redis_server.set(
-                                self.schedule_hash(v), serialize(v))
-                            self.redis_server.save()
-                        except redis.ConnectionError:
-                            logger.warning("Couldn't contact redis server")
-                        except Exception as e:
-                            logger.warning(
-                                'Unable to update key in redis '
-                                'server: {}'.format(e.message))
 
             for job in cancel_jobs:
-                message = self.interval_jobs[k][1]
-                self.unschedule_job(message)
+                try:
+                    logger.debug('Cancelling job due to run_count: {}'
+                                 .format(k))
+                    self.redis_server.delete(k)
+                    self.redis_server.lrem('interval_jobs', 0, k)
+                except Exception as e:
+                    logger.warning(
+                        'Unable to update key in redis '
+                        'server: {}'.format(e))
                 del self.interval_jobs[k]
 
             if not self.maybe_send_heartbeat(events):
@@ -244,7 +225,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
             except Exception as e:
                 logger.warning('Unable to connect to redis server: {}'.format(
-                    e.message))
+                    e))
         else:
             return self._redis_server
 
@@ -304,6 +285,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
         # in memory
         try:
             if (self.redis_server.get(schedule_hash)):
+                self.redis_server.delete(schedule_hash)
                 self.redis_server.lrem('interval_jobs', 0, schedule_hash)
                 self.redis_server.save()
         except redis.ConnectionError:
@@ -357,6 +339,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
         headers = message[1]
         interval = int(message[2])
         cron = str(message[4])
+        run_count = self.get_run_count_from_headers(headers)
 
         schedule_hash = self.schedule_hash(message)
 
@@ -378,7 +361,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
                 message[3],
                 inter_iter,
                 queue,
-                self.get_run_count_from_headers(headers)
+                run_count
             ]
 
             if schedule_hash in self.cron_jobs:
@@ -412,8 +395,12 @@ class Scheduler(HeartbeatMixin, EMQPService):
         except Exception as e:
             logger.warning(str(e))
 
+        # Send a request in haste mode, decrement run_count if valid
         if 'nohaste' not in headers:
-            self.send_request(message[3], queue=queue)
+            # Don't allow decrement past 0
+            if run_count > 0:
+                self.interval_jobs[schedule_hash][4] -= 1
+                self.send_request(message[3], queue=queue)
 
     def get_run_count_from_headers(self, headers):
         run_count = INFINITE_RUN_COUNT

@@ -20,8 +20,10 @@ Defines different short-lived workers that execute jobs
 from importlib import import_module
 from multiprocessing import Process
 from threading import Thread
+from . import conf
 
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +37,7 @@ class MultiprocessWorker(Process):
         super(MultiprocessWorker, self).__init__()
         self.input_queue = input_queue
         self.output_queue = output_queue
+        self.job_count = 0
 
     def run(self):
         """
@@ -48,6 +51,7 @@ class MultiprocessWorker(Process):
         # Pull the payload off the queue and run it
         for payload in iter(self.input_queue.get, 'DONE'):
 
+            self.job_count += 1
             timeout = payload.get("timeout", None)
             msgid = payload.get('msgid', '')
 
@@ -72,6 +76,11 @@ class MultiprocessWorker(Process):
 
             resp['callback'] = payload['callback']
             self.output_queue.put(resp)
+
+            if self.job_count > conf.MAX_JOB_COUNT:
+                break
+
+        logger.debug("Worker death, PID: {}".format(os.getpid()))
 
 
 def _run(payload):
