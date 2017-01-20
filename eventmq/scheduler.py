@@ -181,6 +181,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
                     logger.debug("Time is: %s; Schedule is: %s - Running %s"
                                  % (ts_now, v[0], msg))
 
+                    # v[4] is the current remaining run_count
                     if v[4] != INFINITE_RUN_COUNT:
                         # If run_count was 0, we cancel the job
                         if v[4] <= 0:
@@ -391,15 +392,17 @@ class Scheduler(HeartbeatMixin, EMQPService):
             self.redis_server.set(schedule_hash, serialize(message))
             self.redis_server.save()
         except redis.ConnectionError:
-            logger.warning('Could not contact redis server')
+            logger.warning('Could not contact redis server. Unable to '
+                           'guarantee persistence.')
         except Exception as e:
             logger.warning(str(e))
 
-        # Send a request in haste mode, decrement run_count if valid
+        # Send a request in haste mode, decrement run_count if needed
         if 'nohaste' not in headers:
-            # Don't allow decrement past 0
-            if run_count > 0:
-                self.interval_jobs[schedule_hash][4] -= 1
+            if run_count > 0 or run_count == INFINITE_RUN_COUNT:
+                # Don't allow run_count to decrement below 0
+                if run_count > 0:
+                    self.interval_jobs[schedule_hash][4] -= 1
                 self.send_request(message[3], queue=queue)
 
     def get_run_count_from_headers(self, headers):
