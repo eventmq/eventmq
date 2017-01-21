@@ -20,6 +20,7 @@ Ensures things about jobs and spawns the actual tasks
 import sys
 import logging
 import signal
+import zmq
 
 from json import loads as deserializer
 
@@ -133,7 +134,12 @@ class JobManager(HeartbeatMixin, EMQPService):
                 self.request_queue.join_thread()
                 break
 
-            events = self.poller.poll()
+            try:
+                events = self.poller.poll()
+            except zmq.ZMQError:
+                logger.debug('Disconnecting due to ZMQ Error while polling')
+                self.received_disconnect = True
+                continue
 
             if events.get(self.outgoing) == POLLIN:
                 msg = self.outgoing.recv_multipart()
