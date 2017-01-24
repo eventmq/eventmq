@@ -30,6 +30,9 @@
   
 
   
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="EventMQ 0 documentation" href="index.html"/>
         <link rel="up" title="Contributing to EventMQ" href="contributing.html"/>
         <link rel="prev" title="Contributing to EventMQ" href="contributing.html"/> 
@@ -60,7 +63,7 @@
             
             
               <div class="version">
-                0.2.7.1
+                0.3-rc8
               </div>
             
           
@@ -85,7 +88,7 @@
 <li class="toctree-l1"><a class="reference internal" href="using.html">Using EventMQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="contributing.html">Contributing to EventMQ</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="">EventMQ Protocol Specification</a><ul>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">EventMQ Protocol Specification</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#goals">Goals</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#license">License</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#language">Language</a></li>
@@ -96,6 +99,7 @@
 <li class="toctree-l4"><a class="reference internal" href="#emqp-client">eMQP / Client</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#emqp-scheduler">eMQP / Scheduler</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#emqp-worker">eMQP / Worker</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#emqp-publisher">eMQP / Publisher</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#heartbeating">Heartbeating</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#headers">Headers</a></li>
 </ul>
@@ -129,7 +133,7 @@
         <div class="rst-content">
           
 
-
+ 
 
 
 
@@ -143,7 +147,7 @@
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="_sources/protocol.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/protocol.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -662,6 +666,49 @@
 <tr class="row-odd"><td>3</td>
 <td>_MSGID_</td>
 <td>A unique id for the msg</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="emqp-publisher">
+<h3>eMQP / Publisher<a class="headerlink" href="#emqp-publisher" title="Permalink to this headline">¶</a></h3>
+<p>A <strong>PUBLISH</strong> frame consists of a 6-frame multipart message, formatted as follows.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="33%" />
+<col width="53%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">FRAME</th>
+<th class="head">Value</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>0</td>
+<td>_EMPTY_</td>
+<td>leave empty</td>
+</tr>
+<tr class="row-odd"><td>1</td>
+<td>eMQP/1.0</td>
+<td>Protocol version</td>
+</tr>
+<tr class="row-even"><td>2</td>
+<td>PUBLISH</td>
+<td>command</td>
+</tr>
+<tr class="row-odd"><td>3</td>
+<td>_MSGID_</td>
+<td>A unique id for the msg</td>
+</tr>
+<tr class="row-even"><td>4</td>
+<td>TOPIC</td>
+<td>A topic to publish to</td>
+</tr>
+<tr class="row-odd"><td>5</td>
+<td>MSG</td>
+<td>Message to be published</td>
 </tr>
 </tbody>
 </table>

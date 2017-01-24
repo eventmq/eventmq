@@ -30,6 +30,9 @@
   
 
   
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
     <link rel="top" title="EventMQ 0 documentation" href="../index.html"/>
         <link rel="up" title="API Documentation" href="../api.html"/>
         <link rel="next" title="classes – Utility Classes" href="classes.html"/>
@@ -61,7 +64,7 @@
             
             
               <div class="version">
-                0.2.7.1
+                0.3-rc8
               </div>
             
           
@@ -92,7 +95,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../receiver.html"><code class="docutils literal"><span class="pre">receiver</span></code> &#8211; Receiver</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../router.html"><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../sender.html"><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href=""><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</a><ul>
+<li class="toctree-l2 current"><a class="current reference internal" href="#"><code class="docutils literal"><span class="pre">utils</span></code> &#8211; Utilities</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="classes.html"><code class="docutils literal"><span class="pre">classes</span></code> &#8211; Utility Classes</a></li>
 <li class="toctree-l3"><a class="reference internal" href="devices.html"><code class="docutils literal"><span class="pre">devices</span></code> &#8211; Device Utilities</a></li>
 <li class="toctree-l3"><a class="reference internal" href="messages.html"><code class="docutils literal"><span class="pre">messages</span></code> &#8211; Message Utilities</a></li>
@@ -125,7 +128,7 @@
         <div class="rst-content">
           
 
-
+ 
 
 
 
@@ -139,7 +142,7 @@
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="../_sources/utils/index.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/utils/index.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -171,7 +174,7 @@ like creating message more simple.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">some random characters of a specified length</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/library/functions.html#str" title="(in Python v2.7)">str</a></td>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)">str</a></td>
 </tr>
 </tbody>
 </table>
@@ -185,17 +188,10 @@ like creating message more simple.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>v</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#object" title="(in Python v2.7)"><em>object</em></a>) &#8211; any value of interest</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>v</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#object" title="(in Python v2.7)"><em>object</em></a>) &#8211; any value of interest</td>
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
-<dl class="function">
-<dt id="eventmq.utils.zero_index_cmp">
-<code class="descclassname">eventmq.utils.</code><code class="descname">zero_index_cmp</code><span class="sig-paren">(</span><em>a</em>, <em>b</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.utils.zero_index_cmp" title="Permalink to this definition">¶</a></dt>
-<dd><p>same as <code class="docutils literal"><span class="pre">cmp</span></code> but using the 0-index in a list as the compare value. Used
-when sorting the values in <code class="xref py py-attr docutils literal"><span class="pre">router.Router.queues</span></code>.</p>
 </dd></dl>
 
 </div>

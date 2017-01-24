@@ -30,6 +30,9 @@
   
 
   
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="EventMQ 0 documentation" href="index.html"/>
         <link rel="up" title="API Documentation" href="api.html"/>
         <link rel="next" title="receiver – Receiver" href="receiver.html"/>
@@ -61,7 +64,7 @@
             
             
               <div class="version">
-                0.2.7.1
+                0.3-rc8
               </div>
             
           
@@ -88,7 +91,7 @@
 <li class="toctree-l2"><a class="reference internal" href="client.html"><code class="docutils literal"><span class="pre">client</span></code> &#8211; Client Utilities</a></li>
 <li class="toctree-l2"><a class="reference internal" href="exceptions.html"><code class="docutils literal"><span class="pre">exceptions</span></code> &#8211; Exceptions</a></li>
 <li class="toctree-l2"><a class="reference internal" href="jobmanager.html"><code class="docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager</a></li>
-<li class="toctree-l2 current"><a class="current reference internal" href=""><code class="docutils literal"><span class="pre">poller</span></code> &#8211; Poller</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#"><code class="docutils literal"><span class="pre">poller</span></code> &#8211; Poller</a></li>
 <li class="toctree-l2"><a class="reference internal" href="receiver.html"><code class="docutils literal"><span class="pre">receiver</span></code> &#8211; Receiver</a></li>
 <li class="toctree-l2"><a class="reference internal" href="router.html"><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</a></li>
 <li class="toctree-l2"><a class="reference internal" href="sender.html"><code class="docutils literal"><span class="pre">sender</span></code> &#8211; Sender</a></li>
@@ -118,7 +121,7 @@
         <div class="rst-content">
           
 
-
+ 
 
 
 
@@ -132,7 +135,7 @@
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="_sources/poller.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/poller.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -148,17 +151,17 @@
 <dl class="class">
 <dt id="eventmq.poller.Poller">
 <em class="property">class </em><code class="descclassname">eventmq.poller.</code><code class="descname">Poller</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.poller.Poller" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="http://pyzmq.readthedocs.org/en/v15.0.0/api/zmq.html#zmq.Poller" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Poller</span></code></a> based class.</p>
+<dd><p><a class="reference external" href="http://pyzmq.readthedocs.io/en/v15.0.0/api/zmq.html#zmq.Poller" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Poller</span></code></a> based class.</p>
 <dl class="method">
 <dt id="eventmq.poller.Poller.__init__">
 <code class="descname">__init__</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.poller.Poller.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>See <a class="reference external" href="http://pyzmq.readthedocs.org/en/v15.0.0/api/zmq.html#zmq.Poller" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Poller</span></code></a></p>
+<dd><p>See <a class="reference external" href="http://pyzmq.readthedocs.io/en/v15.0.0/api/zmq.html#zmq.Poller" title="(in PyZMQ v15.0.0)"><code class="xref py py-class docutils literal"><span class="pre">zmq.Poller</span></code></a></p>
 </dd></dl>
 
 <dl class="method">
 <dt id="eventmq.poller.Poller.poll">
 <code class="descname">poll</code><span class="sig-paren">(</span><em>timeout=1</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.poller.Poller.poll" title="Permalink to this definition">¶</a></dt>
-<dd><p>Calling <a class="reference external" href="http://pyzmq.readthedocs.org/en/v15.0.0/api/zmq.html#zmq.Poller.poll" title="(in PyZMQ v15.0.0)"><code class="xref py py-meth docutils literal"><span class="pre">zmq.Poller.poll()</span></code></a> directly returns a tuple set. This
+<dd><p>Calling <a class="reference external" href="http://pyzmq.readthedocs.io/en/v15.0.0/api/zmq.html#zmq.Poller.poll" title="(in PyZMQ v15.0.0)"><code class="xref py py-meth docutils literal"><span class="pre">zmq.Poller.poll()</span></code></a> directly returns a tuple set. This
 method typecasts to a dictionary for convience using the socket object
 as the key. If a socket doesn&#8217;t appear in the returned dictionary then
 no events happened.</p>
@@ -166,7 +169,7 @@ no events happened.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeout</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; How long should poller wait for before iterating
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>timeout</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; How long should poller wait for before iterating
 the next loop.</td>
 </tr>
 </tbody>
@@ -186,8 +189,8 @@ the next loop.</td>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; The socket object to register</li>
-<li><strong>flags</strong> (<a class="reference external" href="https://docs.python.org/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; <code class="xref py py-attr docutils literal"><span class="pre">POLLIN</span></code>, <code class="xref py py-attr docutils literal"><span class="pre">POLLOUT</span></code>, or
+<li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/2/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; The socket object to register</li>
+<li><strong>flags</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; <code class="xref py py-attr docutils literal"><span class="pre">POLLIN</span></code>, <code class="xref py py-attr docutils literal"><span class="pre">POLLOUT</span></code>, or
 <code class="xref py py-attr docutils literal"><span class="pre">POLLIN`|:attr:`POLLOUT</span></code> for both. If undefined the
 socket remains unregistered.</li>
 </ul>
@@ -205,7 +208,7 @@ socket remains unregistered.</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; The socket object to registering</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/2/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; The socket object to registering</td>
 </tr>
 </tbody>
 </table>
