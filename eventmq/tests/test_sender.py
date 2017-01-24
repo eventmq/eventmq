@@ -15,8 +15,6 @@
 import unittest
 
 import zmq
-import signal
-import os
 
 from .. import sender
 

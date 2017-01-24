@@ -17,25 +17,25 @@
 ================================
 Ensures things about jobs and spawns the actual tasks
 """
-import sys
+from json import loads as deserializer
 import logging
+from multiprocessing import Queue as mp_queue
 import signal
+import sys
+
 import zmq
 
-from json import loads as deserializer
-
+from eventmq.log import setup_logger
 from . import conf
 from .constants import KBYE
 from .poller import Poller, POLLIN
 from .sender import Sender
 from .utils.classes import EMQPService, HeartbeatMixin
-from .utils.settings import import_settings
 from .utils.devices import generate_device_name
-from .utils.messages import send_emqp_message as sendmsg
 from .utils.functions import get_timeout_from_headers
+from .utils.messages import send_emqp_message as sendmsg
+from .utils.settings import import_settings
 from .worker import MultiprocessWorker as Worker
-from eventmq.log import setup_logger
-from multiprocessing import Queue as mp_queue
 
 if sys.version[0] == '2':
     import Queue

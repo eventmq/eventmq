@@ -19,6 +19,7 @@ from testfixtures import LogCapture
 
 from ..client import jobs
 
+
 class TestCase(unittest.TestCase):
     BROKER_ADDR = 'tcp://127.0.0.1:3748'
 

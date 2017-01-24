@@ -22,9 +22,7 @@ import mock
 
 from .. import constants
 from .. import exceptions
-from ..utils import messages
-from ..utils import classes
-from ..utils import settings
+from ..utils import classes, messages, settings
 
 
 class SettingsTestCase(unittest.TestCase):

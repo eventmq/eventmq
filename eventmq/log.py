@@ -53,8 +53,8 @@ def setup_logger(base_name, formatter=FORMAT_STANDARD,
     logger.setLevel(logging.DEBUG)
 
     # remove handlers we don't want
-    #for h in logger.handlers:
-    #    logger.removeHandler(h)
+    # for h in logger.handlers:
+    #     logger.removeHandler(h)
 
     if handler == handlers.PUBLISH_HANDLER:
         _handler_sock = zmq.Context.instance().socket(zmq.PUB)

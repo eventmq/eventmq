@@ -1,7 +1,7 @@
-import json
 import hashlib
 import importlib
 import inspect
+import json
 
 from .. import log
 from ..exceptions import CallableFromPathError

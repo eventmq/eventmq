@@ -13,4 +13,4 @@ while True:
 
     if events.get(s) == zmq.POLLIN:
         msg = s.recv_multipart()
-        print msg
+        print msg  # noqa

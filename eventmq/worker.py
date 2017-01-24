@@ -18,12 +18,12 @@
 Defines different short-lived workers that execute jobs
 """
 from importlib import import_module
-from multiprocessing import Process
-from threading import Thread
-from . import conf
-
 import logging
+from multiprocessing import Process
 import os
+from threading import Thread
+
+from . import conf
 
 logger = logging.getLogger(__name__)
 
