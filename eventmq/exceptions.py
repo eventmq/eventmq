@@ -62,3 +62,9 @@ class CallableFromPathError(EventMQError):
     Raised when construction of a callable from a path and callable_name fails.
     """
     pass
+
+
+class ConnectionError(EventMQError):
+    """
+    Raised when there is an error connecting to a network service.
+    """

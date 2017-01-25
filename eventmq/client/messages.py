@@ -42,9 +42,8 @@ def schedule(socket, func, interval_secs=None, args=(), kwargs=None,
         socket (socket): eventmq socket to use for sending the message
         func (callable): the callable (or string path to calable) to be
             scheduled on a worker
-        minutes (int): minutes to wait in between executions
-        args (list): list of *args to pass to the callable
         interval_secs (int): Run job every interval_secs or None if using cron
+        args (list): list of *args to pass to the callable
         cron (string): cron formatted string used for job schedule if
             interval_secs is None, i.e. '* * * * *' (every minute)
         kwargs (dict): dict of **kwargs to pass to the callable
