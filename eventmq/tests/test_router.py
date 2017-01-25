@@ -14,7 +14,6 @@
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
 import json
 import unittest
-import uuid
 
 from freezegun import freeze_time
 import mock
@@ -344,7 +343,7 @@ class TestCase(unittest.TestCase):
             }
         }
         self.router.queues = {
-            queue: [(10, worker_id),]
+            queue: [(10, worker_id), ]
         }
 
         # Router accepts job for 1 available slot
@@ -715,7 +714,7 @@ class TestCase(unittest.TestCase):
         }
 
         self.router.process_worker_message((w2, '', constants.PROTOCOL_VERSION,
-                                         command, msgid) + msg)
+                                            command, msgid) + msg)
         self.assertNotIn(
             w2, self.router.queues[queue1_id],
             "Worker not removed from {}".format(queue1_id))
@@ -780,9 +779,9 @@ class TestCase(unittest.TestCase):
                 'job_latencies': self.router.job_latencies,
                 'executed_functions': self.router.executed_functions,
                 'waiting_message_counts': [
-                    '{}: {}'.format(q,
-                                    len(self.router.waiting_messages[q]))
-                                    for q in self.router.waiting_messages]
+                    '{}: {}'.format(
+                        q,
+                        len(self.router.waiting_messages[q])) for q in self.router.waiting_messages]  # noqa
             })),
             json.loads(self.router.get_status()))
 

@@ -2,7 +2,7 @@
 derp subscriber
 """
 import zmq
-import sys
+
 
 if __name__ == "__main__":
     sockets = []
@@ -18,4 +18,4 @@ if __name__ == "__main__":
         # block until something comes in. normally you'd do something with
         # this in another thread or something
         for s in sockets:
-            print s.recv_multipart()
+            print s.recv_multipart()  # noqa

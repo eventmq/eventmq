@@ -3,7 +3,7 @@ EventMQ setup.py file for distribution
 
 """
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 setup(
     name='eventmq',
@@ -18,6 +18,19 @@ setup(
                       'future==0.15.2',
                       'psutil==5.0.0',
                       'python-dateutil>=2.1,<3.0.0'],
+    extras_require={
+          'docs': ['Sphinx==1.5.2', ],
+          'testing': [
+              'flake8==3.2.1',
+              'flake8-import-order==0.11',
+              'flake8-print==2.0.2',
+              'nose',
+              'coverage==4.0.3',
+              'testfixtures==4.7.0',
+              'freezegun==0.3.7',
+              'tl.testing==0.5',
+              'mock==1.3.0'],
+          },
     author='EventMQ Contributors',
     url='https://github.com/enderlabs/eventmq/',
 
@@ -34,7 +47,7 @@ setup(
         'Topic :: System :: Distributed Computing',
 
         # Pick your license as you wish (should match "license" above)
-        'License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)',
+        'License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)',  # noqa
         'Operating System :: OS Independent',
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.

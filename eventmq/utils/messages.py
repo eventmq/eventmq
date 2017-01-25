@@ -18,8 +18,8 @@
 """
 import logging
 
-from .. import conf, constants, exceptions
 from . import random_characters
+from .. import conf, constants, exceptions
 
 logger = logging.getLogger(__name__)
 

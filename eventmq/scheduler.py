@@ -18,26 +18,26 @@
 Handles cron and other scheduled tasks
 """
 import json
+from json import dumps as serialize
+from json import loads as deserialize
 import logging
-import redis
 
 from croniter import croniter
+import redis
 from six import next
 
+from eventmq.log import setup_logger
+
 from . import conf, constants
+from .client.messages import send_request
 from .constants import KBYE
-from .sender import Sender
 from .poller import Poller, POLLIN
+from .sender import Sender
 from .utils.classes import EMQPService, HeartbeatMixin
-from json import loads as deserialize
-from json import dumps as serialize
 from .utils.messages import send_emqp_message as sendmsg
 from .utils.settings import import_settings
-from .utils.timeutils import IntervalIter
-from .utils.timeutils import seconds_until, timestamp, monotonic
-from .client.messages import send_request
+from .utils.timeutils import IntervalIter, monotonic, seconds_until, timestamp
 
-from eventmq.log import setup_logger
 
 logger = logging.getLogger(__name__)
 CRON_CALLER_ID = -1
@@ -463,4 +463,4 @@ def scheduler_main():
 
 
 def test_job():
-    print("hello!")
+    print("hello!")  # noqa

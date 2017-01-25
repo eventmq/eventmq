@@ -17,11 +17,11 @@
 =======================
 Publishes messages to subscribers
 """
-import zmq
 import logging
 
-from . import constants
+import zmq
 
+from . import constants
 from .utils.devices import generate_device_name
 
 logger = logging.getLogger(__name__)

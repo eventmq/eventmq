@@ -12,12 +12,9 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
-import time
 import unittest
 
-import mock
-
-from .. import conf, constants, scheduler
+from .. import constants, scheduler
 
 ADDR = 'inproc://pour_the_rice_in_the_thing'
 

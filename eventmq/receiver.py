@@ -18,6 +18,7 @@
 The receiver is responsible for receiveing messages
 """
 import logging
+
 import zmq
 
 from . import constants

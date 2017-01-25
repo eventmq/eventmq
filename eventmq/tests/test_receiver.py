@@ -15,12 +15,8 @@
 import unittest
 
 import zmq
-import signal
-import os
 
-from .. import router
-from .. import receiver
-from .. import sender
+from .. import receiver, router, sender
 
 
 class TestCase(unittest.TestCase):
