@@ -37,6 +37,7 @@ class TestCase(unittest.TestCase):
                          (b'one', 1, (b'two', 2,
                                       [b'three', 3],
                                       {'asdf': 90, 'bp': b'adam'})))
+
     def test_encodify_dict(self):
         test_dict = {
             'key1': 1,

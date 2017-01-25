@@ -89,7 +89,9 @@ class TestCase(unittest.TestCase):
     def test_on_request_with_timeout_and_reply(self):
         timeout = 3
         _msgid = 'aaa0j8-ac40jf0-04tjv'
-        _msg = ['a', 'timeout:{},reply-requested'.format(timeout), '["run", {"a": 1}]']
+        _msg = ['a',
+                'timeout:{},reply-requested'.format(timeout),
+                '["run", {"a": 1}]']
 
         jm = jobmanager.JobManager()
 

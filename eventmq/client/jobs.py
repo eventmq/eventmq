@@ -19,9 +19,9 @@
 import logging
 import os
 
+from . import messages
 from ..constants import ENV_BROKER_ADDR
 from ..sender import Sender
-from . import messages
 
 logger = logging.getLogger(__name__)
 

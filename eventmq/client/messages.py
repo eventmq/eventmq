@@ -16,13 +16,14 @@
 :mod:`messages` -- Client Messaging
 ===================================
 """
-import logging
 from json import dumps as serialize
+import logging
+
 from past.builtins import basestring
 
 from .. import conf
-from ..utils.messages import send_emqp_message
 from ..utils.functions import name_from_callable, split_callable_name
+from ..utils.messages import send_emqp_message
 
 logger = logging.getLogger(__name__)
 

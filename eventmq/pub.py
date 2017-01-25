@@ -17,17 +17,13 @@
 =======================
 Publishes messages to subscribers
 """
-import zmq
-
 import logging
 
-from . import conf, receiver, poller, publisher
-
-from .utils.classes import HeartbeatMixin
-from .utils.timeutils import monotonic, timestamp
-from .constants import (STATUS, CLIENT_TYPE, PROTOCOL_VERSION, KBYE,
-                        DISCONNECT)
 from eventmq.log import setup_logger
+
+from . import conf, poller, publisher, receiver
+from .constants import STATUS
+from .utils.classes import HeartbeatMixin
 from .utils.settings import import_settings
 
 logger = logging.getLogger(__name__)

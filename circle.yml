@@ -5,8 +5,9 @@ machine:
     - redis
 test:
   override:
-    - pip install --upgrade -r requirements_.txt
+    - pip install -e .[testing]
     - nosetests-2.7 --with-coverage --cover-inclusive --cover-package=eventmq --cover-tests
-    - pip3.5 install --upgrade -r requirements_.txt
+    - pip3.5 install -e .[testing]
     - /opt/circleci/python/3.5.2/bin/nosetests-3.4
+    - find . -name \*.py -print | xargs flake8 --show-source --statistics
     - coverage html -d "$CIRCLE_ARTIFACTS/coverage"

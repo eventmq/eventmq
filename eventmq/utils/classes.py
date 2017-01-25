@@ -17,12 +17,12 @@
 =================================
 Defines some classes to use when implementing ZMQ devices
 """
+from collections import deque
 import json
 import logging
 
 import zmq.error
 
-from collections import deque
 from .. import conf, constants, exceptions, poller, utils
 from ..utils.encoding import encodify
 from ..utils.messages import send_emqp_message as sendmsg

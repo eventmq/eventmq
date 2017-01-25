@@ -1,0 +1,6 @@
+[flake8]
+# Packages that should be considered local to the app. These need to be in the last group
+application-import-names=eventmq
+
+# Same as pep8 but enforces alphabetical ordering
+import-order-style=google

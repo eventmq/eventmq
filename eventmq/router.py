@@ -22,22 +22,22 @@ import json  # deserialize queues in on_inform. should be refactored
 import logging
 import signal
 
+from eventmq.log import setup_logger
 from . import conf, constants, exceptions, poller, receiver
 from .constants import (
-        STATUS, CLIENT_TYPE, PROTOCOL_VERSION, KBYE, DISCONNECT,
-        ROUTER_SHOW_SCHEDULERS, ROUTER_SHOW_WORKERS
-)
-from .utils.classes import EMQdeque, HeartbeatMixin
-from .utils.messages import (
-    send_emqp_router_message as sendmsg,
-    fwd_emqp_router_message as fwdmsg,
-    parse_router_message
+    CLIENT_TYPE, DISCONNECT, KBYE, PROTOCOL_VERSION, ROUTER_SHOW_SCHEDULERS,
+    ROUTER_SHOW_WORKERS, STATUS
 )
 from .utils import tuplify
-from .utils.settings import import_settings
+from .utils.classes import EMQdeque, HeartbeatMixin
 from .utils.devices import generate_device_name
+from .utils.messages import (
+    fwd_emqp_router_message as fwdmsg,
+    parse_router_message,
+    send_emqp_router_message as sendmsg,
+)
+from .utils.settings import import_settings
 from .utils.timeutils import monotonic, timestamp
-from eventmq.log import setup_logger
 
 
 logger = logging.getLogger(__name__)
@@ -111,12 +111,12 @@ class Router(HeartbeatMixin):
         self.schedulers = {}
 
         #: Latency tracking dictionary
-        #: Key: msgid of message each REQUEST received and forwarded to a worker
+        #: Key: msgid of msg each REQUEST received and forwarded to a worker
         #: Value: (timestamp, queue_name)
         self.job_latencies = {}
 
         #: Excecuted function tracking dictionary
-        #: Key: msgid of message each REQUEST received and forwarded to a worker
+        #: Key: msgid of msg each REQUEST received and forwarded to a worker
         #: Value: (function_name, queue_name)
         self.executed_functions = {}
 
@@ -186,7 +186,8 @@ class Router(HeartbeatMixin):
                 if len(msg) > 4:
                     if msg[3] == DISCONNECT:
                         logger.info('Received DISCONNECT from administrator')
-                        self.send_ack(self.administrative_socket, msg[0], msg[4])
+                        self.send_ack(
+                            self.administrative_socket, msg[0], msg[4])
                         self.on_disconnect(msg[4], msg)
                     elif msg[3] == 'STATUS':
                         sendmsg(self.administrative_socket, msg[0], 'REPLY',
@@ -334,11 +335,13 @@ class Router(HeartbeatMixin):
             sender, msgid, orig_msgid))
 
         if orig_msgid in self.job_latencies:
+            elapsed_secs = (monotonic()
+                            - self.job_latencies[orig_msgid][0]) * 1000.0
             logger.info("Completed {queue} job with msgid: {msgid} in "
-                        "{time:.2f}ms".\
-                format(queue=self.job_latencies[orig_msgid][1],
-                       msgid=orig_msgid,
-                       time=(monotonic()-self.job_latencies[orig_msgid][0])*1000.0))
+                        "{time:.2f}ms".format(
+                            queue=self.job_latencies[orig_msgid][1],
+                            msgid=orig_msgid,
+                            time=elapsed_secs))
             del self.job_latencies[orig_msgid]
 
     def on_disconnect(self, msgid, msg):
@@ -400,7 +403,8 @@ class Router(HeartbeatMixin):
                     fwdmsg(self.outgoing, sender, msg)
                     self.waiting_messages[queue_name].popleft()
                 except exceptions.PeerGoneAwayError:
-                    # Cleanup a worker that cannot be contacted, leaving the message in queue
+                    # Cleanup a workerg that cannot be contacted, leaving the
+                    # message in queue
                     self.workers[sender]['hb'] = 0
                     self.clean_up_dead_workers()
 
@@ -460,8 +464,8 @@ class Router(HeartbeatMixin):
                     # Set queue limit to be 75% of total memory with ~100 byte
                     # messages
                     limit = int((total_mem / 100) * 0.75)
-                    self.waiting_messages[queue_name] = \
-                            EMQdeque(full=limit, on_full=router_on_full)
+                    self.waiting_messages[queue_name] = EMQdeque(
+                        full=limit, on_full=router_on_full)
                 else:
                     self.waiting_messages[queue_name] = \
                         EMQdeque(full=conf.HWM,
@@ -922,4 +926,4 @@ def router_on_full():
 
 # Entry point for pip console scripts
 def router_main():
-    r = Router()
+    Router()

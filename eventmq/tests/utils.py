@@ -12,13 +12,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
-import time
 import uuid
 
 import zmq
 
 from .. import conf, constants
-from ..utils.classes import ZMQSendMixin, ZMQReceiveMixin
+from ..utils.classes import ZMQReceiveMixin, ZMQSendMixin
 from ..utils.devices import generate_device_name
 
 
