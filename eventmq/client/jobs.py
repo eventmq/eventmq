@@ -152,10 +152,10 @@ def schedule(func, broker_addr=None, interval_secs=None, args=(), kwargs=None,
     # conf.BROKER_ADDR isn't used because /etc/eventmq.conf is for the daemons.
     broker_addr = broker_addr or os.environ.get(ENV_BROKER_ADDR)
 
+    socket.connect(broker_addr)
+
     if not broker_addr:
         raise ConnectionError('unknown broker address: {}'.format(broker_addr))
-
-    socket.connect(addr=broker_addr)
 
     return messages.schedule(
         socket, func, interval_secs=interval_secs, args=args,
@@ -201,6 +201,7 @@ def unschedule(func, broker_addr=None, interval_secs=None, args=(),
     socket = Sender()
     # conf.BROKER_ADDR isn't used because /etc/eventmq.conf is for the daemons.
     broker_addr = broker_addr or os.environ.get(ENV_BROKER_ADDR)
+    socket.connect(broker_addr)
 
     if not broker_addr:
         raise ConnectionError('unknown broker address: {}'.format(broker_addr))

@@ -66,6 +66,27 @@ class TestCase(unittest.TestCase):
         f = decorate(test_func)
         self.assertEqual(f(), 12)
 
+    @mock.patch('eventmq.client.jobs.Sender')
+    @mock.patch('eventmq.client.messages.schedule')
+    def test_schedule_helper(self, sched_mock, Sender_mock):
+        jobs.schedule(test_func, broker_addr=self.BROKER_ADDR,
+                      interval_secs=20)
+
+        sched_mock.assert_called_with(
+            Sender_mock(), test_func, args=(), class_args=(),
+            class_kwargs=None, cron=None, headers=('guarantee',),
+            interval_secs=20, kwargs=None, queue='default')
+
+    @mock.patch('eventmq.client.jobs.Sender')
+    @mock.patch('eventmq.client.messages.schedule')
+    def test_unschedule_helper(self, sched_mock, Sender_mock):
+        jobs.unschedule(test_func, broker_addr=self.BROKER_ADDR)
+
+        sched_mock.assert_called_with(
+            Sender_mock(), test_func, args=(), class_args=(),
+            class_kwargs=None, cron=None, headers=('guarantee',),
+            interval_secs=None, kwargs=None, queue='default', unschedule=True)
+
 
 def test_func():
     return 12
