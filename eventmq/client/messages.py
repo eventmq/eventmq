@@ -65,11 +65,6 @@ def schedule(socket, func, interval_secs=None, args=(), kwargs=None,
     if not kwargs:
         kwargs = {}
 
-    if not len(class_args) > 0 and not cron:
-        logger.error('First `class_args` argument must be caller_id for '
-                     'scheduling interval jobs')
-        return
-
     if not unschedule and \
        ((interval_secs and cron) or (not interval_secs and not cron)):
         logger.error('You must sepcify either `interval_secs` or `cron`, '
