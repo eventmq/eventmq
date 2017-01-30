@@ -132,6 +132,10 @@ class JobManager(HeartbeatMixin, EMQPService):
                     self.request_queue.put_nowait('DONE')
                 self.request_queue.close()
                 self.request_queue.join_thread()
+
+                for w in self.workers:
+                    w.join()
+
                 break
 
             try:
