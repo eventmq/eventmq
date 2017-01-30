@@ -45,7 +45,7 @@ class TestCase(unittest.TestCase):
             None
         ]
         h1 = scheduler.Scheduler.schedule_hash(msg1)
-        self.assertEqual('-8073720944288460190', h1)
+        self.assertEqual('4658982cab9d32bf1ef9113a9d8bdec01775e2bc', h1)
 
         # Reordering the message argument shouldn't change the hash value
         msg2 = [
@@ -63,7 +63,7 @@ class TestCase(unittest.TestCase):
             None
         ]
         h2 = scheduler.Scheduler.schedule_hash(msg2)
-        self.assertEqual('-8073720944288460190', h2)
+        self.assertEqual('4658982cab9d32bf1ef9113a9d8bdec01775e2bc', h2)
 
 # EMQP Tests
     def test_reset(self):
