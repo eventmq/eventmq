@@ -17,6 +17,7 @@
 =============================
 Handles cron and other scheduled tasks
 """
+from hashlib import sha1 as emq_hash
 import json
 from json import dumps as serialize
 from json import loads as deserialize
@@ -400,10 +401,10 @@ class Scheduler(HeartbeatMixin, EMQPService):
         Returns:
             int: unique hash for the job
         """
+
         # Get the job portion of the message
         msg = deserialize(message[3])[1]
 
-        # Items to use for uniquely identifying this scheduled job
         # Use json to create the hash string, sorting the keys.
         schedule_hash_items = json.dumps(
             {'args': msg['args'],
@@ -413,10 +414,10 @@ class Scheduler(HeartbeatMixin, EMQPService):
              'path': msg['path'],
              'callable': msg['callable']},
             sort_keys=True)
-        logger.debug('Hash string: {}'.format(schedule_hash_items))
 
         # Hash the sorted, immutable set of items in our identifying dict
-        schedule_hash = str(hash(schedule_hash_items))
+        schedule_hash = emq_hash(
+            schedule_hash_items.encode('utf-8')).hexdigest()
 
         return schedule_hash
 
