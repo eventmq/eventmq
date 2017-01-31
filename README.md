@@ -13,12 +13,17 @@ EventMQ is available on PyPi:
 pip install eventmq
 ```
 
-# Documenation
+# Support
+## Documenation
 
 [Documentation](https://enderlabs.github.io/eventmq/)
 
-# Quick Usage
+## Mailing Lists
+User Support: http://lists.eventmq.io/listinfo.cgi/eventmq-users-eventmq.io
 
+Development Discussion: http://lists.eventmq.io/listinfo.cgi/eventmq-devel-eventmq.io
+
+## Quick Start
 
 my_jerbs.py
 ``` python
