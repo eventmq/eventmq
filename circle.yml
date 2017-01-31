@@ -3,11 +3,15 @@ machine:
     - pyenv global 2.7.11 3.5.2
   services:
     - redis
-test:
+dependencies:
   override:
     - pip install -e .[testing]
-    - nosetests-2.7 --with-coverage --cover-inclusive --cover-package=eventmq --cover-tests
+    - pip install python-coveralls
     - pip3.5 install -e .[testing]
+test:
+  override:
+    - nosetests-2.7 --with-coverage --cover-inclusive --cover-package=eventmq --cover-tests
     - /opt/circleci/python/3.5.2/bin/nosetests-3.4
+  post:
     - find . -name \*.py -print | xargs flake8 --show-source --statistics
-    - coverage html -d "$CIRCLE_ARTIFACTS/coverage"
+    - coveralls
