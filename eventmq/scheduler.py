@@ -242,7 +242,8 @@ class Scheduler(HeartbeatMixin, EMQPService):
             str: ID of the message
         """
         jobmsg = json.loads(jobmsg)
-        msgid = send_request(self.outgoing, jobmsg, queue=queue)
+        msgid = send_request(self.outgoing, jobmsg, queue=queue,
+                             reply_requested=True)
 
         return msgid
 
