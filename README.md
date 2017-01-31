@@ -1,6 +1,7 @@
 EventMQ
 =======
 [![Circle CI](https://circleci.com/gh/enderlabs/eventmq.svg?style=svg&circle-token=312da6ae260c2302baed268d2e052ce5e81cc71f)](https://circleci.com/gh/enderlabs/eventmq)
+[![Coverage Status](https://coveralls.io/repos/github/enderlabs/eventmq/badge.svg?branch=master)](https://coveralls.io/github/enderlabs/eventmq?branch=master)
 
 # Overview
 EventMQ is a message passing system built on [ZeroMQ](https://zeromq.org)
