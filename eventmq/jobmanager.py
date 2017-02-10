@@ -37,6 +37,8 @@ from .utils.messages import send_emqp_message as sendmsg
 from .utils.settings import import_settings
 from .worker import MultiprocessWorker as Worker
 
+from .constants import STATUS
+
 if sys.version[0] == '2':
     import Queue
 else:
@@ -124,9 +126,12 @@ class JobManager(HeartbeatMixin, EMQPService):
         for i in range(0, len(self.workers)):
             self.send_ready()
 
+        self.status = STATUS.running
+
         while True:
             # Clear any workers if it's time to shut down
             if self.received_disconnect:
+                self.status = STATUS.stopping
                 for _ in range(0, len(self.workers)):
                     logger.debug('Requesting worker death...')
                     self.request_queue.put_nowait('DONE')
@@ -253,7 +258,8 @@ class JobManager(HeartbeatMixin, EMQPService):
         in :meth:`self.process_message` as every message is counted as a
         HEARTBEAT
         """
-        self.check_worker_health()
+        if self.status == STATUS.running:
+            self.check_worker_health()
 
     def check_worker_health(self):
         """
@@ -282,10 +288,11 @@ class JobManager(HeartbeatMixin, EMQPService):
 
     def sighup_handler(self, signum, frame):
         logger.info('Caught signal %s' % signum)
-        self.outgoing.rebuild()
         import_settings()
         import_settings(section='jobmanager')
-        self.start(addr=conf.WORKER_ADDR)
+
+        self.should_reset = True
+        self.received_disconnect = True
 
     def sigterm_handler(self, signum, frame):
         logger.info('Shutting down..')

@@ -7,6 +7,7 @@ class STATUS(object):
     connected = 201
     stopping = 300
     stopped = 301
+    running = 400     # Running and accepting jobs actively
 
 
 class CLIENT_TYPE(object):
