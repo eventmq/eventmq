@@ -1,5 +1,5 @@
 __author__ = 'EventMQ Contributors'
-__version__ = '0.3-rc10'
+__version__ = '0.3'
 
 PROTOCOL_VERSION = 'eMQP/1.0'
 
