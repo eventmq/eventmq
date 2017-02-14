@@ -21,7 +21,7 @@ from importlib import import_module
 import logging
 from multiprocessing import Process
 import os
-from threading import Thread, Event
+from threading import Event, Thread
 
 from . import conf
 

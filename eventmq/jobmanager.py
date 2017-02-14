@@ -35,9 +35,9 @@ from .utils.devices import generate_device_name
 from .utils.functions import get_timeout_from_headers
 from .utils.messages import send_emqp_message as sendmsg
 from .utils.settings import import_settings
+from .constants import STATUS
 from .worker import MultiprocessWorker as Worker
 
-from .constants import STATUS
 
 if sys.version[0] == '2':
     import Queue

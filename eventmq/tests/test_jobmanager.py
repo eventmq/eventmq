@@ -179,4 +179,3 @@ def start_jm(jm, addr):
 
 def pretend_job(t):
     time.sleep(t)
-    print 'hello'

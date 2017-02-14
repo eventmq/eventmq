@@ -38,8 +38,6 @@ from .utils.messages import send_emqp_message as sendmsg
 from .utils.settings import import_settings
 from .utils.timeutils import IntervalIter, monotonic, seconds_until, timestamp
 
-import cryptography
-
 
 logger = logging.getLogger(__name__)
 CRON_CALLER_ID = -1
