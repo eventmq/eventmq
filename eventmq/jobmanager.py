@@ -27,7 +27,7 @@ import zmq
 
 from eventmq.log import setup_logger
 from . import conf
-from .constants import KBYE
+from .constants import KBYE, STATUS
 from .poller import Poller, POLLIN
 from .sender import Sender
 from .utils.classes import EMQPService, HeartbeatMixin
@@ -35,7 +35,6 @@ from .utils.devices import generate_device_name
 from .utils.functions import get_timeout_from_headers
 from .utils.messages import send_emqp_message as sendmsg
 from .utils.settings import import_settings
-from .constants import STATUS
 from .worker import MultiprocessWorker as Worker
 
 
