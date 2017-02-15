@@ -111,26 +111,17 @@ class TestCase(unittest.TestCase):
         self.assertTrue(jm.received_disconnect, "Did not receive disconnect.")
 
     # Other Tests
-    @mock.patch('eventmq.jobmanager.JobManager.start')
     @mock.patch('eventmq.jobmanager.import_settings')
-    @mock.patch('eventmq.jobmanager.Sender.rebuild')
-    def test_sighup_handler(self, rebuild_mock, import_settings_mock,
-                            start_mock):
+    def test_sighup_handler(self, import_settings_mock):
         jm = jobmanager.JobManager()
 
         jm.sighup_handler(982374, "FRAMEY the frame")
-
-        self.assertTrue(rebuild_mock.called)
 
         # called once for the default settings, once for the jobmanager
         # settings
         self.assertEqual(2, import_settings_mock.call_count)
         # check to see if the last call was called with the jobmanager section
         import_settings_mock.assert_called_with(section='jobmanager')
-
-        start_mock.assert_called_with(
-            addr=conf.WORKER_ADDR,
-        )
 
     @mock.patch('eventmq.jobmanager.sendmsg')
     def test_sigterm_handler(self, sendmsg_mock):
