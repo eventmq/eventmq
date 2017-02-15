@@ -33,13 +33,14 @@ running. Grouping similar jobs in named queues will help you tune this number.
 
 queues
 ======
-Default: (10, default)
+Default: [[10, "default"]]
 
-Semi-colon seperated list of queues to process jobs for with thier
-weights. Example: ``queues=(10, data_process); (15, email)``.  With these
+Comma seperated list of queues to process jobs for with thier weights. This list
+must be valid JSON otherwise an error will be thrown.
+Example: ``queues=[[10, "data_process"], [15, "email"]]``.  With these
 weights and the ``CONCURRENT_JOBS`` setting, you should be able to tune managers
-running jobs locally pretty efficiently. If you have a larger box with a weight
-of 50 on q1 and 8 concurrent jobs and a smaller box with a weight 30 and 4
+running jobs locally efficiently. If you have a larger server with a weight of
+50 on q1 and 8 concurrent jobs and a smaller server with a weight 30 and 4
 concurrent jobs, the q1 jobs will be sent to the large box until it is no longer
 accepting jobs. At this point jobs will start to be sent to the next highest
 number until the large box is ready to accept another q1 job.
