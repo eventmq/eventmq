@@ -119,6 +119,7 @@ class EMQPService(object):
         self.poller.register(self.outgoing, poller.POLLIN)
         self.awaiting_startup_ack = False
         self.received_disconnect = False
+        self.should_reset = False
 
         self.status = constants.STATUS.ready
 
@@ -165,7 +166,7 @@ class EMQPService(object):
 
             # When we return, soemthing has gone wrong and try to reconnect
             # unless self.received_disconnect is True
-            if not self.received_disconnect:
+            if not self.received_disconnect or self.should_reset:
                 self.reset()
 
         logger.info('Death.')

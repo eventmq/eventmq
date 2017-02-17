@@ -401,7 +401,6 @@ class Scheduler(HeartbeatMixin, EMQPService):
         Returns:
             int: unique hash for the job
         """
-
         # Get the job portion of the message
         msg = deserialize(message[3])[1]
 

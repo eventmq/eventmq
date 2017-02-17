@@ -1,7 +1,7 @@
 EventMQ
 =======
-[![Circle CI](https://circleci.com/gh/enderlabs/eventmq.svg?style=svg&circle-token=312da6ae260c2302baed268d2e052ce5e81cc71f)](https://circleci.com/gh/enderlabs/eventmq)
-[![Coverage Status](https://coveralls.io/repos/github/enderlabs/eventmq/badge.svg?branch=master)](https://coveralls.io/github/enderlabs/eventmq?branch=master)
+[![CircleCI](https://circleci.com/gh/eventmq/eventmq.svg?style=svg)](https://circleci.com/gh/eventmq/eventmq)
+[![Coverage Status](https://coveralls.io/repos/github/eventmq/eventmq/badge.svg)](https://coveralls.io/github/eventmq/eventmq)
 
 # Overview
 EventMQ is a message passing system built on [ZeroMQ](https://zeromq.org)
@@ -17,14 +17,18 @@ pip install eventmq
 # Support
 ## Documenation
 
-[Documentation](https://enderlabs.github.io/eventmq/)
+[Documentation](https://eventmq.github.io/eventmq/)
 
 ## Mailing Lists
 User Support: http://lists.eventmq.io/listinfo.cgi/eventmq-users-eventmq.io
 
 Development Discussion: http://lists.eventmq.io/listinfo.cgi/eventmq-devel-eventmq.io
 
-## Quick Start
+## IRC
+
+ #eventmq on [irc.freenode.net](https://webchat.freenode.net/?channels=#eventmq)
+
+# Quick Start
 
 my_jerbs.py
 ``` python

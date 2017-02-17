@@ -7,8 +7,8 @@ from setuptools import find_packages, setup
 
 setup(
     name='eventmq',
-    version='0.3-rc10',
-    description='EventMQ messaging system based on ZeroMQ',
+    version='0.3.1',
+    description='EventMQ job execution and messaging system based on ZeroMQ',
     packages=find_packages(),
     install_requires=['pyzmq==16.0.2',
                       'six==1.10.0',
@@ -32,7 +32,7 @@ setup(
               'mock==1.3.0'],
           },
     author='EventMQ Contributors',
-    url='https://github.com/enderlabs/eventmq/',
+    url='https://github.com/eventmq/eventmq/',
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
@@ -53,6 +53,8 @@ setup(
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
     ],
     scripts=[
         'bin/emq-cli',

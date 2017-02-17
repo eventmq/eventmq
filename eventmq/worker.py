@@ -21,11 +21,27 @@ from importlib import import_module
 import logging
 from multiprocessing import Process
 import os
-from threading import Thread
+from threading import Event, Thread
 
 from . import conf
 
 logger = logging.getLogger(__name__)
+
+
+class StoppableThread(Thread):
+    """Thread class with a stop() method. The thread itself has to check
+    regularly for the stopped() condition."""
+
+    def __init__(self, target, name=None, args=()):
+        super(StoppableThread, self).__init__(name=name, target=target,
+                                              args=args)
+        self._stop = Event()
+
+    def stop(self):
+        self._stop.set()
+
+    def stopped(self):
+        return self._stop.isSet()
 
 
 class MultiprocessWorker(Process):
@@ -60,12 +76,13 @@ class MultiprocessWorker(Process):
 
             try:
                 if timeout:
-                    worker_thread = Thread(target=_run,
-                                           args=(payload['params'], ))
+                    worker_thread = StoppableThread(target=_run,
+                                                    args=(payload['params'], ))
                     worker_thread.start()
                     worker_thread.join(timeout)
 
                     if worker_thread.isAlive():
+                        worker_thread.stop()
                         resp['return'] = 'TimeoutError'
                     else:
                         resp['return'] = 'DONE'
@@ -78,6 +95,9 @@ class MultiprocessWorker(Process):
             self.output_queue.put(resp)
 
             if self.job_count > conf.MAX_JOB_COUNT:
+                break
+
+            if resp['return'] == 'TimeoutError':
                 break
 
         logger.debug("Worker death, PID: {}".format(os.getpid()))
