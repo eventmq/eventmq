@@ -20,7 +20,9 @@ import logging
 import os
 
 from . import messages
+from .. import conf
 from ..constants import ENV_BROKER_ADDR
+from ..exceptions import ConnectionError
 from ..sender import Sender
 
 logger = logging.getLogger(__name__)
@@ -29,6 +31,10 @@ logger = logging.getLogger(__name__)
 class Job(object):
     """
     Defines a deferred EventMQ job.
+
+    .. note::
+
+       All passed class & function kwargs/args MUST be json serializable.
 
     Usage:
 
@@ -68,6 +74,8 @@ class Job(object):
                 can set this to False. This is useful for unit tests.
 
         """
+        # conf.BROKER_ADDR isn't used because /etc/eventmq.conf is for the
+        # daemons.
         self.broker_addr = broker_addr or os.environ.get(ENV_BROKER_ADDR)
         self.queue = queue
         self.async = async
@@ -104,3 +112,104 @@ def job(func, broker_addr=None, queue=None, async=True, *args, **kwargs):
         return decorator(func)
     else:
         return decorator
+
+
+def schedule(func, broker_addr=None, interval_secs=None, args=(), kwargs=None,
+             class_args=(), class_kwargs=None, headers=('guarantee',),
+             queue=conf.DEFAULT_QUEUE_NAME, cron=None):
+    """
+    Execute a task on a defined interval.
+
+    .. note::
+
+       All passed class & function kwargs/args MUST be json serializable.
+
+    Args:
+        func (callable): the callable (or string path to calable) to be
+            scheduled on a worker
+        broker_addr (str): Address of the broker to send the job to. If no
+            address is given then the value of the environment variable
+            ``EMQ_BROKER_ADDR`` will be used.
+        interval_secs (int): Run job every interval_secs or None if using cron
+        args (list): list of *args to pass to the callable
+        kwargs (dict): dict of **kwargs to pass to the callable
+        class_args (list): list of *args to pass to the class (if applicable)
+        class_kwargs (dict): dict of **kwargs to pass to the class (if
+            applicable)
+        headers (list): list of strings denoting enabled headers. Default:
+            guarantee is enabled to ensure the scheduler schedules the job.
+        queue (str): name of the queue to use when executing the job. The
+            default value is the default queue.
+        cron (string): cron formatted string used for job schedule if
+            interval_secs is None, i.e. '* * * * *' (every minute)
+    Raises:
+        TypeError: When one or more parameters are not JSON serializable.
+    Returns:
+       str: ID of the schedule message that was sent. None if there was an
+           error
+    """
+    socket = Sender()
+    # conf.BROKER_ADDR isn't used because /etc/eventmq.conf is for the daemons.
+    broker_addr = broker_addr or os.environ.get(ENV_BROKER_ADDR)
+
+    socket.connect(broker_addr)
+
+    if not broker_addr:
+        raise ConnectionError('unknown broker address: {}'.format(broker_addr))
+
+    return messages.schedule(
+        socket, func, interval_secs=interval_secs, args=args,
+        kwargs=kwargs, class_args=class_args, class_kwargs=class_kwargs,
+        headers=headers, queue=conf.DEFAULT_QUEUE_NAME, cron=cron)
+
+
+def unschedule(func, broker_addr=None, interval_secs=None, args=(),
+               kwargs=None, class_args=(), class_kwargs=None,
+               headers=('guarantee',), queue=conf.DEFAULT_QUEUE_NAME,
+               cron=None):
+    """
+    Stop periodically executing a task
+
+    .. note::
+
+       All passed class & function kwargs/args MUST be json serializable.
+
+    Args:
+        func (callable): the callable (or string path to calable) to be
+            scheduled on a worker
+        broker_addr (str): Address of the broker to send the job to. If no
+            address is given then the value of the environment variable
+            ``EMQ_BROKER_ADDR`` will be used.
+        interval_secs (int): Run job every interval_secs or None if using cron
+        args (list): list of *args to pass to the callable
+        kwargs (dict): dict of **kwargs to pass to the callable
+        class_args (list): list of *args to pass to the class (if applicable)
+        class_kwargs (dict): dict of **kwargs to pass to the class (if
+            applicable)
+        headers (list): list of strings denoting enabled headers. Default:
+            guarantee is enabled to ensure the scheduler schedules the job.
+        queue (str): name of the queue to use when executing the job. The
+            default value is the default queue.
+        cron (string): cron formatted string used for job schedule if
+            interval_secs is None, i.e. '* * * * *' (every minute)
+    Raises:
+        TypeError: When one or more parameters are not JSON serializable.
+    Returns:
+       str: ID of the schedule message that was sent. None if there was an
+           error
+    """
+    socket = Sender()
+    # conf.BROKER_ADDR isn't used because /etc/eventmq.conf is for the daemons.
+    broker_addr = broker_addr or os.environ.get(ENV_BROKER_ADDR)
+    socket.connect(broker_addr)
+
+    if not broker_addr:
+        raise ConnectionError('unknown broker address: {}'.format(broker_addr))
+
+    socket.connect(addr=broker_addr)
+
+    return messages.schedule(
+        socket, func, interval_secs=interval_secs, args=args,
+        kwargs=kwargs, class_args=class_args, class_kwargs=class_kwargs,
+        headers=headers, queue=conf.DEFAULT_QUEUE_NAME, cron=cron,
+        unschedule=True)
