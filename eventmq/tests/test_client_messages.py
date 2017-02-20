@@ -208,10 +208,6 @@ class TestCase(unittest.TestCase):
                               class_args=(123,),
                               interval_secs=23)
 
-            # error if class_args does't have an inital id. (if this test needs
-            # to be removed, also remove the class_args from the above calls)
-            messages.schedule(socket, json.dumps)
-
             # error if neither cron or interval_secs is specified
             messages.schedule(socket, json.dumps, class_args=(123,))
 
@@ -237,9 +233,6 @@ class TestCase(unittest.TestCase):
                 ('eventmq.client.messages',
                  'ERROR',
                  'Encountered invalid callable, will not proceed.'),
-                ('eventmq.client.messages',
-                 'ERROR',
-                 'First `class_args` argument must be caller_id for scheduling interval jobs'),  # noqa
                 ('eventmq.client.messages',
                  'ERROR',
                  'You must sepcify either `interval_secs` or `cron`, but not both (or neither)'),  # noqa

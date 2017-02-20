@@ -40,7 +40,6 @@ from .utils.timeutils import IntervalIter, monotonic, seconds_until, timestamp
 
 
 logger = logging.getLogger(__name__)
-CRON_CALLER_ID = -1
 INFINITE_RUN_COUNT = -1
 
 
@@ -59,9 +58,9 @@ class Scheduler(HeartbeatMixin, EMQPService):
         self.outgoing = Sender()
         self._redis_server = None
 
-        # contains dict of 4-item lists representing cron jobs
-        # key of this dictionary is a hash of caller_id, path, and callable
-        # from the message of the SCHEDULE command received
+        # contains dict of 4-item lists representing cron jobs key of this
+        # dictionary is a hash of arguments, path, and callable from the
+        # message of the SCHEDULE command received
         # IDX     Description
         # 0 = the next ts this job should be executed in
         # 1 = the function to be executed
@@ -70,7 +69,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
         self.cron_jobs = {}
 
         # contains dict of 5-item lists representing jobs based on an interval
-        # key of this dictionary is a hash of caller_id, path, and callable
+        # key of this dictionary is a hash of arguments, path, and callable
         # from the message of the SCHEDULE command received
         # values of this list follow this format:
         # IDX     Descriptions
@@ -91,38 +90,9 @@ class Scheduler(HeartbeatMixin, EMQPService):
         """
         Loads the jobs that need to be scheduled
         """
-        raw_jobs = (
-            # ('* * * * *', 'eventmq.scheduler.test_job'),
-        )
-        ts = int(timestamp())
-        for job in raw_jobs:
-            # Create the croniter iterator
-            c = croniter(job[0])
-            path = '.'.join(job[1].split('.')[:-1])
-            callable_ = job[1].split('.')[-1]
-
-            msg = ['run', {
-                'path': path,
-                'callable': callable_
-            }]
-
-            # Get the next time this job should be run
-            c_next = next(c)
-            if ts >= c_next:
-                # If the next execution time has passed move the iterator to
-                # the following time
-                c_next = next(c)
-
-            cron_hash = self.cron_hash(caller_id=CRON_CALLER_ID,
-                                       path=path,
-                                       callable_=callable_)
-
-            self.cron_jobs[cron_hash] = [c_next, json.dumps(msg), c, None]
-
         try:
-            interval_job_list = self.redis_server.lrange('interval_jobs',
-                                                         0,
-                                                         -1)
+            interval_job_list = self.redis_server.lrange(
+                'interval_jobs', 0, -1)
             if interval_job_list is not None:
                 for i in interval_job_list:
                     logger.debug('Restoring job with hash %s' % i)
@@ -377,10 +347,8 @@ class Scheduler(HeartbeatMixin, EMQPService):
                 # the following time
                 c_next = next(c)
 
-            self.cron_jobs[schedule_hash] = [c_next,
-                                             message[3],
-                                             c,
-                                             None]
+            self.cron_jobs[schedule_hash] = [
+                c_next, message[3], c, None]
 
             if schedule_hash in self.interval_jobs:
                 self.interval_jobs.pop(schedule_hash)
@@ -392,6 +360,8 @@ class Scheduler(HeartbeatMixin, EMQPService):
                 self.redis_server.lpush('interval_jobs', schedule_hash)
             self.redis_server.set(schedule_hash, serialize(message))
             self.redis_server.save()
+            logger.debug('Saved job {} with hash {} to redis'.format(
+                message, schedule_hash))
         except redis.ConnectionError:
             logger.warning('Could not contact redis server. Unable to '
                            'guarantee persistence.')
@@ -418,32 +388,35 @@ class Scheduler(HeartbeatMixin, EMQPService):
         Noop command. The logic for heartbeating is in the event loop.
         """
 
-    def cron_hash(self, caller_id, path, callable_):
-        schedule_hash_items = {'caller_id': caller_id,
-                               'path': path,
-                               'callable': callable_}
-
-        # Hash the sorted, immutable set of items in our identifying dict
-        schedule_hash = str(hash(tuple(frozenset(sorted(
-            schedule_hash_items.items())))))
-
-        return schedule_hash
-
-    def schedule_hash(self, message):
+    @classmethod
+    def schedule_hash(cls, message):
         """
         Create a unique identifier for this message for storing
         and referencing later
+
+        Args:
+            message (str): The serialized message passed to the scheduler
+
+        Returns:
+            int: unique hash for the job
         """
-        # Items to use for uniquely identifying this scheduled job
-        # TODO: Pass caller_id in a more rigid place
+        # Get the job portion of the message
         msg = deserialize(message[3])[1]
-        schedule_hash_items = {'caller_id': msg['class_args'][0],
-                               'path': msg['path'],
-                               'callable': msg['callable']}
+
+        # Items to use for uniquely identifying this scheduled job
+        # Use json to create the hash string, sorting the keys.
+        schedule_hash_items = json.dumps(
+            {'args': msg['args'],
+             'kwargs': msg['kwargs'],
+             'class_args': msg['class_args'],
+             'class_kwargs': msg['class_kwargs'],
+             'path': msg['path'],
+             'callable': msg['callable']},
+            sort_keys=True)
+        logger.debug('Hash string: {}'.format(schedule_hash_items))
 
         # Hash the sorted, immutable set of items in our identifying dict
-        schedule_hash = str(hash(tuple(frozenset(sorted(
-            schedule_hash_items.items())))))
+        schedule_hash = str(hash(schedule_hash_items))
 
         return schedule_hash
 
@@ -463,5 +436,8 @@ def scheduler_main():
     s.scheduler_main()
 
 
-def test_job():
+def test_job(*args, **kwargs):
+    """
+    Simple test job for use with the scheduler
+    """
     print("hello!")  # noqa

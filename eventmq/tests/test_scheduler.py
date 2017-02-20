@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # This file is part of eventmq.
 #
 # eventmq is free software: you can redistribute it and/or modify it under the
@@ -26,6 +27,7 @@ class TestCase(unittest.TestCase):
 
         self.assertFalse(sched.awaiting_startup_ack)
         self.assertEqual(sched.status, constants.STATUS.ready)
+
 
 # EMQP Tests
     def test_reset(self):
