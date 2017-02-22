@@ -62,7 +62,7 @@
             
             
               <div class="version">
-                0.3
+                0.3.2
               </div>
             
           
@@ -224,10 +224,10 @@
 </li>
       <li><a href="router.html#eventmq.router.Router.clean_up_dead_schedulers">clean_up_dead_schedulers() (eventmq.router.Router method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="router.html#eventmq.router.Router.clean_up_dead_workers">clean_up_dead_workers() (eventmq.router.Router method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="jobmanager.html#eventmq.jobmanager.JobManager.concurrent_jobs">concurrent_jobs (eventmq.jobmanager.JobManager attribute)</a>
 </li>
       <li><a href="receiver.html#eventmq.receiver.Receiver.connect">connect() (eventmq.receiver.Receiver method)</a>
@@ -236,6 +236,8 @@
         <li><a href="sender.html#eventmq.sender.Sender.connect">(eventmq.sender.Sender method)</a>
 </li>
       </ul></li>
+      <li><a href="exceptions.html#eventmq.exceptions.ConnectionError">ConnectionError</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -538,8 +540,12 @@
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="client/messages.html#eventmq.client.messages.schedule">schedule() (in module eventmq.client.messages)</a>
+      <li><a href="client/jobs.html#eventmq.client.jobs.schedule">schedule() (in module eventmq.client.jobs)</a>
+
+      <ul>
+        <li><a href="client/messages.html#eventmq.client.messages.schedule">(in module eventmq.client.messages)</a>
 </li>
+      </ul></li>
       <li><a href="router.html#eventmq.router.Router.scheduler_queue">scheduler_queue (eventmq.router.Router attribute)</a>
 </li>
       <li><a href="router.html#eventmq.router.Router.schedulers">schedulers (eventmq.router.Router attribute)</a>
@@ -560,10 +566,10 @@
         <li><a href="utils/classes.html#eventmq.utils.classes.HeartbeatMixin.send_heartbeat">(eventmq.utils.classes.HeartbeatMixin method)</a>
 </li>
       </ul></li>
-      <li><a href="utils/classes.html#eventmq.utils.classes.EMQPService.send_inform">send_inform() (eventmq.utils.classes.EMQPService method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="utils/classes.html#eventmq.utils.classes.EMQPService.send_inform">send_inform() (eventmq.utils.classes.EMQPService method)</a>
+</li>
       <li><a href="utils/classes.html#eventmq.utils.classes.ZMQSendMixin.send_multipart">send_multipart() (eventmq.utils.classes.ZMQSendMixin method)</a>
 </li>
       <li><a href="jobmanager.html#eventmq.jobmanager.JobManager.send_ready">send_ready() (eventmq.jobmanager.JobManager method)</a>
@@ -617,6 +623,8 @@
       <li><a href="exceptions.html#eventmq.exceptions.UnknownQueueError">UnknownQueueError</a>
 </li>
       <li><a href="poller.html#eventmq.poller.Poller.unregister">unregister() (eventmq.poller.Poller method)</a>
+</li>
+      <li><a href="client/jobs.html#eventmq.client.jobs.unschedule">unschedule() (in module eventmq.client.jobs)</a>
 </li>
   </ul></td>
 </tr></table>

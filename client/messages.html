@@ -64,7 +64,7 @@
             
             
               <div class="version">
-                0.3
+                0.3.2
               </div>
             
           
@@ -227,9 +227,8 @@ default queue name</li>
 <li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/2/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; eventmq socket to use for sending the message</li>
 <li><strong>func</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#callable" title="(in Python v2.7)"><em>callable</em></a>) &#8211; the callable (or string path to calable) to be
 scheduled on a worker</li>
-<li><strong>minutes</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; minutes to wait in between executions</li>
-<li><strong>args</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; list of <a href="#id9"><span class="problematic" id="id10">*</span></a>args to pass to the callable</li>
 <li><strong>interval_secs</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; Run job every interval_secs or None if using cron</li>
+<li><strong>args</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; list of <a href="#id9"><span class="problematic" id="id10">*</span></a>args to pass to the callable</li>
 <li><strong>cron</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; cron formatted string used for job schedule if
 interval_secs is None, i.e. &#8216;* * * * <a href="#id11"><span class="problematic" id="id12">*</span></a>&#8216; (every minute)</li>
 <li><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/2/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; dict of <a href="#id13"><span class="problematic" id="id14">**</span></a>kwargs to pass to the callable</li>
