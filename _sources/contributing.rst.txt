@@ -8,7 +8,7 @@ A few tips when working on the code
 
 .. toctree::
    :maxdepth: 1
-   
+
    protocol
-   Source Code <https://github.com/enderlabs/eventmq>
-   Issues <https://github.com/enderlabs/eventmq/issues>
+   Source Code <https://github.com/eventmq/eventmq>
+   Issues <https://github.com/eventmq/eventmq/issues>
