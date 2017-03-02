@@ -17,8 +17,9 @@
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
 import argparse
 
-from eventmq.jobmanager import JobManager
 from eventmq import conf
+from eventmq.jobmanager import JobManager
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Listen for job requests and '
