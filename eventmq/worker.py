@@ -49,11 +49,12 @@ class MultiprocessWorker(Process):
     Defines a worker that spans the job in a multiprocessing task
     """
 
-    def __init__(self, input_queue, output_queue):
+    def __init__(self, input_queue, output_queue, run_setup=True):
         super(MultiprocessWorker, self).__init__()
         self.input_queue = input_queue
         self.output_queue = output_queue
         self.job_count = 0
+        self.run_setup = run_setup
 
     def run(self):
         """
@@ -61,6 +62,15 @@ class MultiprocessWorker(Process):
 
         This is designed to run in a seperate process.
         """
+
+        if self.run_setup:
+            self.run_setup = False
+            if conf.SETUP_CALLABLE and conf.SETUP_PATH:
+                try:
+                    run_setup(conf.SETUP_PATH, conf.SETUP_CALLABLE)
+                except Exception as e:
+                    logger.warning('Unable to complete setup: ' + str(e))
+
         import zmq
         zmq.Context.instance().term()
 
@@ -104,6 +114,9 @@ class MultiprocessWorker(Process):
 
 
 def _run(payload):
+    """
+    Takes care of actually executing the code given a message payload
+    """
     if ":" in payload["path"]:
         _pkgsplit = payload["path"].split(':')
         s_package = _pkgsplit[0]
@@ -148,5 +161,26 @@ def _run(payload):
     except Exception as e:
         logger.exception(e)
         return str(e)
+
     # Signal that we're done with this job
     return 'DONE'
+
+
+def run_setup(setup_path, setup_callable):
+    logger.debug("Running setup for worker id {}".format(os.getpid()))
+    if ":" in setup_path:
+        _pkgsplit = setup_path.split(':')
+        s_setup_package = _pkgsplit[0]
+    else:
+        s_setup_package = setup_path
+
+    if setup_callable and s_setup_package:
+        setup_package = import_module(s_setup_package)
+
+        setup_callable_ = getattr(setup_package, setup_callable)
+
+        try:
+            setup_callable_()
+        except Exception as e:
+            logger.exception(e)
+            return str(e)

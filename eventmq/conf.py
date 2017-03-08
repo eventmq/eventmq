@@ -88,4 +88,8 @@ RQ_PASSWORD = ''
 
 MAX_JOB_COUNT = 1024
 
+# Path/Callable to run on start of a worker process
+SETUP_PATH = ''
+SETUP_CALLABLE = ''
+
 # }}}
