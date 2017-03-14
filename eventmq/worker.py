@@ -65,7 +65,7 @@ class MultiprocessWorker(Process):
 
         if self.run_setup:
             self.run_setup = False
-            if conf.SETUP_CALLABLE and conf.SETUP_PATH:
+            if any(conf.SETUP_CALLABLE) and any(conf.SETUP_PATH):
                 try:
                     run_setup(conf.SETUP_PATH, conf.SETUP_CALLABLE)
                 except Exception as e:

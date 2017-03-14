@@ -4,12 +4,66 @@ Server Settings (eventmq.conf)
 EventMQ uses a standard INI style config file found at ``/etc/eventmq.conf``.
 
 ******
+Global
+******
+
+super_debug
+===========
+Default: False
+
+Enable most verbose level of debug statements
+
+******
 Router
 ******
+
+frontend_addr
+=============
+Default: 'tcp://127.0.0.1:47291'
+
+The address used to listen for client and scheduler connections
+
+
+backend_addr
+============
+Default: 'tcp://127.0.0.1:47291'
+
+The address used to listen for connections from workers
 
 *********
 Scheduler
 *********
+
+scheduler_addr
+==============
+Default: 'tcp://127.0.0.1:47291'
+
+The address the scheduler will use to connect to the broker
+
+rq_host
+=======
+Default: 'localhost'
+
+The hostname of the redis server used to persist scheduled jobs.  This is
+expected to support redis' save operation which saves the contents to disk.
+
+rq_port
+=======
+Default: 6379
+
+Port of redis server to connect to.
+
+rq_db
+=====
+Default: 0
+
+Which redis database to use
+
+rq_password
+===========
+Default: ''
+
+Password to use when connecting to redis
 
 ***********
 Job Manager
@@ -35,7 +89,7 @@ queues
 ======
 Default: [[10, "default"]]
 
-Comma seperated list of queues to process jobs for with thier weights. This list
+Comma seperated list of queues to process jobs for with their weights. This list
 must be valid JSON otherwise an error will be thrown.
 Example: ``queues=[[10, "data_process"], [15, "email"]]``.  With these
 weights and the ``CONCURRENT_JOBS`` setting, you should be able to tune managers
@@ -50,3 +104,17 @@ number until the large box is ready to accept another q1 job.
    It is recommended that you have some workers listening for jobs on your
    default queue so that anything that is not explicitly assigned will still be
    run.
+
+setup_callabe/setup_path
+========================
+Default: '' (Signifies no task will be attempted)
+
+Strings containing path and callable to be run when a worker is spawned
+if applicable to that type of worker.  Currently the only supported worker is a
+MultiProcessWorker, and is useful for pulling any global state into memory.
+
+max_job_count
+=============
+Default: 1024
+
+After a worker runs this amount of jobs, it will gracefully exit and be replaced
