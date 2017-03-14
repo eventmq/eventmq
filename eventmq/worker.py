@@ -69,7 +69,9 @@ class MultiprocessWorker(Process):
                 try:
                     run_setup(conf.SETUP_PATH, conf.SETUP_CALLABLE)
                 except Exception as e:
-                    logger.warning('Unable to complete setup: ' + str(e))
+                    logger.warning('Unable to complete setup task ({}.{}): {}'
+                                   .format(conf.SETUP_PATH,
+                                           conf.SETUP_CALLABLE, str(e)))
 
         import zmq
         zmq.Context.instance().term()
@@ -167,7 +169,11 @@ def _run(payload):
 
 
 def run_setup(setup_path, setup_callable):
-    logger.debug("Running setup for worker id {}".format(os.getpid()))
+    logger.debug("Running setup ({}.{}) for worker id {}".format(
+        setup_path,
+        setup_callable,
+        os.getpid()))
+
     if ":" in setup_path:
         _pkgsplit = setup_path.split(':')
         s_setup_package = _pkgsplit[0]
