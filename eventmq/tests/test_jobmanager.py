@@ -170,3 +170,8 @@ def start_jm(jm, addr):
 
 def pretend_job(t):
     time.sleep(t)
+
+
+def test_setup():
+    import time
+    assert time
