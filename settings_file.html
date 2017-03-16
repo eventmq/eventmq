@@ -64,7 +64,7 @@
             
             
               <div class="version">
-                0.3.2
+                0.3.3
               </div>
             
           
@@ -88,11 +88,28 @@
                 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="using.html">Using EventMQ</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Server Settings (eventmq.conf)</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#router">Router</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#scheduler">Scheduler</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#global">Global</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#super-debug">super_debug</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#router">Router</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#frontend-addr">frontend_addr</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#backend-addr">backend_addr</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#scheduler">Scheduler</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#scheduler-addr">scheduler_addr</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#rq-host">rq_host</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#rq-port">rq_port</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#rq-db">rq_db</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#rq-password">rq_password</a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#job-manager">Job Manager</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#concurrent-jobs">concurrent_jobs</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#queues">queues</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setup-callabe-setup-path">setup_callabe/setup_path</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#max-job-count">max_job_count</a></li>
 </ul>
 </li>
 </ul>
@@ -151,11 +168,55 @@
   <div class="section" id="server-settings-eventmq-conf">
 <h1>Server Settings (eventmq.conf)<a class="headerlink" href="#server-settings-eventmq-conf" title="Permalink to this headline">¶</a></h1>
 <p>EventMQ uses a standard INI style config file found at <code class="docutils literal"><span class="pre">/etc/eventmq.conf</span></code>.</p>
+<div class="section" id="global">
+<h2>Global<a class="headerlink" href="#global" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="super-debug">
+<h3>super_debug<a class="headerlink" href="#super-debug" title="Permalink to this headline">¶</a></h3>
+<p>Default: False</p>
+<p>Enable most verbose level of debug statements</p>
+</div>
+</div>
 <div class="section" id="router">
 <h2>Router<a class="headerlink" href="#router" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="frontend-addr">
+<h3>frontend_addr<a class="headerlink" href="#frontend-addr" title="Permalink to this headline">¶</a></h3>
+<p>Default: &#8216;<a class="reference external" href="tcp://127.0.0.1:47291">tcp://127.0.0.1:47291</a>&#8216;</p>
+<p>The address used to listen for client and scheduler connections</p>
+</div>
+<div class="section" id="backend-addr">
+<h3>backend_addr<a class="headerlink" href="#backend-addr" title="Permalink to this headline">¶</a></h3>
+<p>Default: &#8216;<a class="reference external" href="tcp://127.0.0.1:47291">tcp://127.0.0.1:47291</a>&#8216;</p>
+<p>The address used to listen for connections from workers</p>
+</div>
 </div>
 <div class="section" id="scheduler">
 <h2>Scheduler<a class="headerlink" href="#scheduler" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="scheduler-addr">
+<h3>scheduler_addr<a class="headerlink" href="#scheduler-addr" title="Permalink to this headline">¶</a></h3>
+<p>Default: &#8216;<a class="reference external" href="tcp://127.0.0.1:47291">tcp://127.0.0.1:47291</a>&#8216;</p>
+<p>The address the scheduler will use to connect to the broker</p>
+</div>
+<div class="section" id="rq-host">
+<h3>rq_host<a class="headerlink" href="#rq-host" title="Permalink to this headline">¶</a></h3>
+<p>Default: &#8216;localhost&#8217;</p>
+<p>The hostname of the redis server used to persist scheduled jobs.  This is
+expected to support redis&#8217; save operation which saves the contents to disk.</p>
+</div>
+<div class="section" id="rq-port">
+<h3>rq_port<a class="headerlink" href="#rq-port" title="Permalink to this headline">¶</a></h3>
+<p>Default: 6379</p>
+<p>Port of redis server to connect to.</p>
+</div>
+<div class="section" id="rq-db">
+<h3>rq_db<a class="headerlink" href="#rq-db" title="Permalink to this headline">¶</a></h3>
+<p>Default: 0</p>
+<p>Which redis database to use</p>
+</div>
+<div class="section" id="rq-password">
+<h3>rq_password<a class="headerlink" href="#rq-password" title="Permalink to this headline">¶</a></h3>
+<p>Default: &#8216;&#8217;</p>
+<p>Password to use when connecting to redis</p>
+</div>
 </div>
 <div class="section" id="job-manager">
 <h2>Job Manager<a class="headerlink" href="#job-manager" title="Permalink to this headline">¶</a></h2>
@@ -176,7 +237,7 @@ running. Grouping similar jobs in named queues will help you tune this number.</
 <div class="section" id="queues">
 <h3>queues<a class="headerlink" href="#queues" title="Permalink to this headline">¶</a></h3>
 <p>Default: [[10, &#8220;default&#8221;]]</p>
-<p>Comma seperated list of queues to process jobs for with thier weights. This list
+<p>Comma seperated list of queues to process jobs for with their weights. This list
 must be valid JSON otherwise an error will be thrown.
 Example: <code class="docutils literal"><span class="pre">queues=[[10,</span> <span class="pre">&quot;data_process&quot;],</span> <span class="pre">[15,</span> <span class="pre">&quot;email&quot;]]</span></code>.  With these
 weights and the <code class="docutils literal"><span class="pre">CONCURRENT_JOBS</span></code> setting, you should be able to tune managers
@@ -191,6 +252,18 @@ number until the large box is ready to accept another q1 job.</p>
 default queue so that anything that is not explicitly assigned will still be
 run.</p>
 </div>
+</div>
+<div class="section" id="setup-callabe-setup-path">
+<h3>setup_callabe/setup_path<a class="headerlink" href="#setup-callabe-setup-path" title="Permalink to this headline">¶</a></h3>
+<p>Default: &#8216;&#8217; (Signifies no task will be attempted)</p>
+<p>Strings containing path and callable to be run when a worker is spawned
+if applicable to that type of worker.  Currently the only supported worker is a
+MultiProcessWorker, and is useful for pulling any global state into memory.</p>
+</div>
+<div class="section" id="max-job-count">
+<h3>max_job_count<a class="headerlink" href="#max-job-count" title="Permalink to this headline">¶</a></h3>
+<p>Default: 1024</p>
+<p>After a worker runs this amount of jobs, it will gracefully exit and be replaced</p>
 </div>
 </div>
 </div>
