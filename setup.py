@@ -19,7 +19,7 @@ setup(
                       'psutil==5.0.0',
                       'python-dateutil>=2.1,<3.0.0'],
     extras_require={
-          'docs': ['Sphinx==1.5.2', ],
+          'docs': ['Sphinx==1.5.3', ],
           'testing': [
               'flake8==3.2.1',
               'flake8-import-order==0.11',
