@@ -25,8 +25,7 @@ import signal
 from eventmq.log import setup_logger
 from . import conf, constants, exceptions, poller, receiver
 from .constants import (
-    CLIENT_TYPE, DISCONNECT, KBYE, PROTOCOL_VERSION, ROUTER_SHOW_SCHEDULERS,
-    ROUTER_SHOW_WORKERS, STATUS
+    CLIENT_TYPE, DISCONNECT, KBYE, PROTOCOL_VERSION, STATUS_COMMANDS, STATUS
 )
 from .utils import tuplify
 from .utils.classes import EMQdeque, HeartbeatMixin
@@ -182,25 +181,7 @@ class Router(HeartbeatMixin):
 
             if events.get(self.administrative_socket) == poller.POLLIN:
                 msg = self.administrative_socket.recv_multipart()
-                logger.debug('ADMIN: {}'.format(msg))
-                # ##############
-                # Admin Commands
-                # ##############
-                if len(msg) > 4:
-                    if msg[3] == DISCONNECT:
-                        logger.info('Received DISCONNECT from administrator')
-                        self.send_ack(
-                            self.administrative_socket, msg[0], msg[4])
-                        self.on_disconnect(msg[4], msg)
-                    elif msg[3] == 'STATUS':
-                        sendmsg(self.administrative_socket, msg[0], 'REPLY',
-                                (self.get_status(),))
-                    elif msg[3] == ROUTER_SHOW_WORKERS:
-                        sendmsg(self.administrative_socket, msg[0], 'REPLY',
-                                (self.get_workers_status(),))
-                    elif msg[3] == ROUTER_SHOW_SCHEDULERS:
-                        sendmsg(self.administrative_socket, msg[0], 'REPLY',
-                                (self.get_schedulers_status(),))
+                self.process_admin_message(msg)
 
             # TODO: Optimization: the calls to functions could be done in
             #     another thread so they don't block the loop. synchronize
@@ -825,6 +806,32 @@ class Router(HeartbeatMixin):
         if hasattr(self, "on_%s" % command.lower()):
             func = getattr(self, "on_%s" % command.lower())
             func(sender, msgid, message)
+
+    def process_admin_message(self, msg):
+        """
+        This method is called when a message comes in from the administrative
+        socket.
+
+        Args:
+            msg: The untouched admin message from zmq
+        """
+        logger.debug('ADMIN MSG: {}'.format(msg))
+        if len(msg) > 4:
+            if msg[3] == DISCONNECT:
+                logger.info('Received DISCONNECT from administrator')
+                self.send_ack(
+                    self.administrative_socket, msg[0], msg[4])
+                self.on_disconnect(msg[4], msg)
+            elif msg[3] == 'STATUS':
+                if msg[5] == STATUS_COMMANDS.show_managers:
+                    sendmsg(self.administrative_socket, msg[0], 'REPLY',
+                            (self.get_workers_status(),))
+                elif msg[5] == STATUS_COMMANDS.show_schedulers:
+                    sendmsg(self.administrative_socket, msg[0], 'REPLY',
+                            (self.get_schedulers_status(),))
+                else:
+                    sendmsg(self.administrative_socket, msg[0], 'REPLY',
+                            (self.get_status(),))
 
     def _remove_worker(self, worker_id):
         """
