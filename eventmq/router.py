@@ -55,12 +55,15 @@ class Router(HeartbeatMixin):
 
         self.poller = poller.Poller()
 
-        self.incoming = receiver.Receiver()
-        self.outgoing = receiver.Receiver()
+        #: Port clients connect on.
+        self.frontend = receiver.Receiver()
+        #: Port job managers connect on
+        self.backend = receiver.Receiver()
+        #: Port for administrative commands
         self.administrative_socket = receiver.Receiver()
 
-        self.poller.register(self.incoming, poller.POLLIN)
-        self.poller.register(self.outgoing, poller.POLLIN)
+        self.poller.register(self.frontend, poller.POLLIN)
+        self.poller.register(self.backend, poller.POLLIN)
         self.poller.register(self.administrative_socket, poller.POLLIN)
 
         self.status = STATUS.ready
@@ -147,8 +150,8 @@ class Router(HeartbeatMixin):
         """
         self.status = STATUS.starting
 
-        self.incoming.listen(frontend_addr)
-        self.outgoing.listen(backend_addr)
+        self.frontend.listen(frontend_addr)
+        self.backend.listen(backend_addr)
         self.administrative_socket.listen(administrative_addr)
 
         self.status = STATUS.listening
@@ -169,12 +172,12 @@ class Router(HeartbeatMixin):
             now = monotonic()
             events = self.poller.poll()
 
-            if events.get(self.incoming) == poller.POLLIN:
-                msg = self.incoming.recv_multipart()
+            if events.get(self.frontend) == poller.POLLIN:
+                msg = self.frontend.recv_multipart()
                 self.process_client_message(msg)
 
-            if events.get(self.outgoing) == poller.POLLIN:
-                msg = self.outgoing.recv_multipart()
+            if events.get(self.backend) == poller.POLLIN:
+                msg = self.backend.recv_multipart()
                 self.process_worker_message(msg)
 
             if events.get(self.administrative_socket) == poller.POLLIN:
@@ -275,7 +278,7 @@ class Router(HeartbeatMixin):
         self._meta['last_sent_heartbeat'] = monotonic()
 
         for worker_id in self.workers:
-            self.send_heartbeat(self.outgoing, worker_id)
+            self.send_heartbeat(self.backend, worker_id)
 
     def send_schedulers_heartbeats(self):
         """
@@ -284,7 +287,7 @@ class Router(HeartbeatMixin):
         self._meta['last_sent_scheduler_heartbeat'] = monotonic()
 
         for scheduler_id in self.schedulers:
-            self.send_heartbeat(self.incoming, scheduler_id)
+            self.send_heartbeat(self.frontend, scheduler_id)
 
     def on_heartbeat(self, sender, msgid, msg):
         """
@@ -319,10 +322,10 @@ class Router(HeartbeatMixin):
 
         if client_type == CLIENT_TYPE.worker:
             self.add_worker(sender, queues)
-            self.send_ack(self.outgoing, sender, msgid)
+            self.send_ack(self.backend, sender, msgid)
         elif client_type == CLIENT_TYPE.scheduler:
             self.add_scheduler(sender)
-            self.send_ack(self.incoming, sender, msgid)
+            self.send_ack(self.frontend, sender, msgid)
 
     def on_reply(self, sender, msgid, msg):
         """
@@ -353,10 +356,10 @@ class Router(HeartbeatMixin):
         # Remove schedulers and send them a kbye
         logger.info("Router preparing to disconnect...")
         for scheduler in self.schedulers:
-            self.send_kbye(self.incoming, scheduler)
+            self.send_kbye(self.frontend, scheduler)
 
         self.schedulers.clear()
-        self.incoming.unbind(conf.FRONTEND_ADDR)
+        self.frontend.unbind(conf.FRONTEND_ADDR)
 
         if len(self.waiting_messages) > 0:
             logger.info("Router processing messages in queue.")
@@ -366,10 +369,10 @@ class Router(HeartbeatMixin):
                     self.process_worker_message(msg)
 
         for worker in self.workers.keys():
-            self.send_kbye(self.outgoing, worker)
+            self.send_kbye(self.backend, worker)
 
         self.workers.clear()
-        self.outgoing.unbind(conf.BACKEND_ADDR)
+        self.backend.unbind(conf.BACKEND_ADDR)
 
         # Loops event loops should check for this and break out
         self.received_disconnect = True
@@ -400,7 +403,7 @@ class Router(HeartbeatMixin):
                 msg = self.waiting_messages[queue_name].peekleft()
 
                 try:
-                    fwdmsg(self.outgoing, sender, msg)
+                    fwdmsg(self.backend, sender, msg)
                     self.waiting_messages[queue_name].popleft()
                 except exceptions.PeerGoneAwayError:
                     # Cleanup a workerg that cannot be contacted, leaving the
@@ -494,12 +497,12 @@ class Router(HeartbeatMixin):
 
             # Rebuild the message to be sent to the worker. fwdmsg will
             # properly address the message.
-            fwdmsg(self.outgoing, worker_addr, ['', constants.PROTOCOL_VERSION,
-                                                'REQUEST', msgid, ] + msg)
+            fwdmsg(self.backend, worker_addr, ['', constants.PROTOCOL_VERSION,
+                                               'REQUEST', msgid, ] + msg)
 
             self.workers[worker_addr]['available_slots'] -= 1
             # Acknowledgment of the request being submitted to the client
-            sendmsg(self.incoming, sender, 'REPLY',
+            sendmsg(self.frontend, sender, 'REPLY',
                     (msgid,))
         except exceptions.PeerGoneAwayError:
             logger.debug(
@@ -760,7 +763,7 @@ class Router(HeartbeatMixin):
             try:
                 # Strips off the client id before forwarding because the
                 # scheduler isn't expecting it.
-                fwdmsg(self.incoming, scheduler_addr, original_msg[1:])
+                fwdmsg(self.frontend, scheduler_addr, original_msg[1:])
 
             except exceptions.PeerGoneAwayError:
                 logger.debug("Scheduler {} has unexpectedly gone away. Trying "
@@ -777,7 +780,7 @@ class Router(HeartbeatMixin):
                 try:
                     # Strips off the client id before forwarding because the
                     # scheduler isn't expecting it.
-                    fwdmsg(self.incoming, scheduler_addr, original_msg[1:])
+                    fwdmsg(self.frontend, scheduler_addr, original_msg[1:])
 
                 except exceptions.PeerGoneAwayError:
                     logger.debug("Scheduler {} has unexpectedly gone away."
@@ -902,8 +905,8 @@ class Router(HeartbeatMixin):
         process receives a SIGHUP from the system.
         """
         logger.info('Caught signame %s' % signum)
-        self.incoming.unbind(conf.FRONTEND_ADDR)
-        self.outgoing.unbind(conf.BACKEND_ADDR)
+        self.frontend.unbind(conf.FRONTEND_ADDR)
+        self.backend.unbind(conf.BACKEND_ADDR)
         import_settings()
         self.start(frontend_addr=conf.FRONTEND_ADDR,
                    backend_addr=conf.BACKEND_ADDR,

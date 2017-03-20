@@ -29,16 +29,16 @@ class TestCase(unittest.TestCase):
     def setUp(self):
         self.router = router.Router(skip_signal=True)
         self.router.zcontext = mock.Mock(spec=zmq.Context)
-        self.router.incoming = mock.Mock(spec=receiver.Receiver)
-        self.router.outgoing = mock.Mock(spec=receiver.Receiver)
+        self.router.frontend = mock.Mock(spec=receiver.Receiver)
+        self.router.backend = mock.Mock(spec=receiver.Receiver)
 
     @mock.patch('eventmq.receiver.zmq.Socket.bind')
     @mock.patch('eventmq.router.Router._start_event_loop')
     def test_start(self, event_loop_mock, zsocket_bind_mock):
         # Test default args
         self.router.start()
-        self.router.incoming.listen.assert_called_with(conf.FRONTEND_ADDR)
-        self.router.outgoing.listen.assert_called_with(conf.BACKEND_ADDR)
+        self.router.frontend.listen.assert_called_with(conf.FRONTEND_ADDR)
+        self.router.backend.listen.assert_called_with(conf.BACKEND_ADDR)
         self.assertEqual(self.router.status, constants.STATUS.listening)
 
         # Test invalid args
@@ -55,7 +55,7 @@ class TestCase(unittest.TestCase):
             sender_id, inform_msgid, [queues, 'worker'])
 
         self.router.send_ack.assert_called_with(
-            self.router.outgoing, sender_id, inform_msgid)
+            self.router.backend, sender_id, inform_msgid)
 
         self.router.add_worker.assert_called_with(
             sender_id, [(32, 'top'), (23, 'drop'), (12, 'shop')])
@@ -75,7 +75,7 @@ class TestCase(unittest.TestCase):
             sender_id, inform_msgid, [queues, constants.CLIENT_TYPE.worker])
 
         self.router.send_ack.assert_called_with(
-            self.router.outgoing, sender_id, inform_msgid)
+            self.router.backend, sender_id, inform_msgid)
         self.router.add_worker.assert_called_with(
             sender_id, [(10, 'default'), ])
 
@@ -146,10 +146,10 @@ class TestCase(unittest.TestCase):
 
         generate_msgid_mock.return_value = ack_msgid
 
-        self.router.send_ack(self.router.outgoing, sender_id, orig_msgid)
+        self.router.send_ack(self.router.backend, sender_id, orig_msgid)
 
         # Verify that an ACK was sent for the INFORM
-        self.router.outgoing.send_multipart.assert_called_with(
+        self.router.backend.send_multipart.assert_called_with(
             ('ACK', ack_msgid, orig_msgid),
             constants.PROTOCOL_VERSION, _recipient_id=sender_id)
 
@@ -168,9 +168,9 @@ class TestCase(unittest.TestCase):
 
         generate_msgid_mock.return_value = msgid
 
-        self.router.send_heartbeat(self.router.incoming, recipient_id)
+        self.router.send_heartbeat(self.router.frontend, recipient_id)
 
-        self.router.incoming.send_multipart.assert_called_with(
+        self.router.frontend.send_multipart.assert_called_with(
             ('HEARTBEAT', msgid, str(ts)), constants.PROTOCOL_VERSION,
             _recipient_id=recipient_id)
 
@@ -197,8 +197,8 @@ class TestCase(unittest.TestCase):
         self.assertGreater(self.router._meta['last_sent_heartbeat'], 0)
 
         send_heartbeat_mock.assert_has_calls(
-            [mock.call(self.router.outgoing, 'w1'),
-             mock.call(self.router.outgoing, 'w2')], any_order=True)
+            [mock.call(self.router.backend, 'w1'),
+             mock.call(self.router.backend, 'w2')], any_order=True)
 
     @mock.patch('eventmq.router.Router.send_heartbeat')
     def test_send_schedulers_heartbeats(self, send_hb_mock):
@@ -215,7 +215,7 @@ class TestCase(unittest.TestCase):
 
         self.assertGreater(
             self.router._meta['last_sent_scheduler_heartbeat'], 0)
-        send_hb_mock.assert_called_with(self.router.incoming, scheduler_id)
+        send_hb_mock.assert_called_with(self.router.frontend, scheduler_id)
 
     def test_on_disconnect(self):
         self.assertFalse(self.router.received_disconnect)
@@ -245,7 +245,7 @@ class TestCase(unittest.TestCase):
 
         self.router.on_ready(worker_id, msgid, msg)
 
-        fwdmsg_mock.assert_called_with(self.router.outgoing, worker_id,
+        fwdmsg_mock.assert_called_with(self.router.backend, worker_id,
                                        waiting_msg)
 
         self.router.on_ready(worker_id, msgid + 'a', msg)
@@ -296,19 +296,19 @@ class TestCase(unittest.TestCase):
         # Forward waiting_msg1
         ready_msgid1 = 'ready23'
         self.router.on_ready(worker1_id, ready_msgid1, ['READY', ready_msgid1])
-        fwdmsg_mock.assert_called_with(self.router.outgoing, worker1_id,
+        fwdmsg_mock.assert_called_with(self.router.backend, worker1_id,
                                        waiting_msg1)
 
         # Forward waiting_msg3 -- blu is a higher priority for worker2
         ready_msgid3 = 'ready19'
         self.router.on_ready(worker2_id, ready_msgid3, ['READY', ready_msgid3])
-        fwdmsg_mock.assert_called_with(self.router.outgoing, worker2_id,
+        fwdmsg_mock.assert_called_with(self.router.backend, worker2_id,
                                        waiting_msg3)
 
         # Forward waiting_msg2
         ready_msgid2 = 'ready5'
         self.router.on_ready(worker2_id, ready_msgid2, ['READY', ready_msgid2])
-        fwdmsg_mock.assert_called_with(self.router.outgoing, worker2_id,
+        fwdmsg_mock.assert_called_with(self.router.backend, worker2_id,
                                        waiting_msg2)
 
         # There should be no keys because the code checks for their existence
@@ -348,7 +348,7 @@ class TestCase(unittest.TestCase):
 
         # Router accepts job for 1 available slot
         self.router.on_request(client_id, msgid, msg)
-        fwdmsg_mock.assert_called_with(self.router.outgoing, worker_id,
+        fwdmsg_mock.assert_called_with(self.router.backend, worker_id,
                                        ['', constants.PROTOCOL_VERSION,
                                         'REQUEST', msgid, ] + msg)
         self.assertEqual(self.router.workers[worker_id]['available_slots'], 0)

@@ -42,10 +42,10 @@ class EMQPService(object):
     Also implements utlitiy methods for managing long-running processes.
 
     To use you must define:
-     - `self.outgoing` - socket where messages can be sent to the Router
+     - `self.frontend` - socket where messages can be sent to the Router
      - `self.SERVICE_TYPE` - defines the service type for INFORM. See
        :meth:`send_inform` for more information.
-     - `self.poller` - the poller that `self.outgoing` will be using.
+     - `self.poller` - the poller that `self.frontend` will be using.
        Usually: `self.poller = eventmq.poller.Poller()`
 
     When messages are received from the router, they are processed in
@@ -99,7 +99,7 @@ class EMQPService(object):
         else:
             queues = ''
 
-        msgid = sendmsg(self.outgoing, 'INFORM', [
+        msgid = sendmsg(self.frontend, 'INFORM', [
             queues,
             self.SERVICE_TYPE
         ])
@@ -116,7 +116,7 @@ class EMQPService(object):
         also run on a reset are here.
         """
         # Look for incoming events
-        self.poller.register(self.outgoing, poller.POLLIN)
+        self.poller.register(self.frontend, poller.POLLIN)
         self.awaiting_startup_ack = False
         self.received_disconnect = False
         self.should_reset = False
@@ -132,7 +132,7 @@ class EMQPService(object):
         """
         while not self.received_disconnect:
             self.status = constants.STATUS.connecting
-            self.outgoing.connect(addr)
+            self.frontend.connect(addr)
 
             # Setting this to false is how the loop is broken and the
             # _event_loop is started.
@@ -149,8 +149,8 @@ class EMQPService(object):
                 # multiplied by 1000 to get seconds
                 events = self.poller.poll(conf.RECONNECT_TIMEOUT * 1000)
 
-                if self.outgoing in events:  # A message from the Router!
-                    msg = self.outgoing.recv_multipart()
+                if self.frontend in events:  # A message from the Router!
+                    msg = self.frontend.recv_multipart()
                     # TODO This will silently drop messages that aren't
                     # ACK/DISCONNECT
                     if msg[2] == "ACK" or msg[2] == "DISCONNECT":
@@ -176,10 +176,10 @@ class EMQPService(object):
         Resets the current connection by closing and reopening the socket
         """
         # Unregister the old socket from the poller
-        self.poller.unregister(self.outgoing)
+        self.poller.unregister(self.frontend)
 
         # Polish up a new socket to use
-        self.outgoing.rebuild()
+        self.frontend.rebuild()
 
         # Prepare the device to connect again
         self._setup()
@@ -323,7 +323,7 @@ class HeartbeatMixin(object):
             # Send a HEARTBEAT if necessary
             if now - self._meta['last_sent_heartbeat'] >= \
                conf.HEARTBEAT_INTERVAL:
-                self.send_heartbeat(self.outgoing)
+                self.send_heartbeat(self.frontend)
 
             # Do something about any missed HEARTBEAT, if we have nothing
             # waiting on the socket

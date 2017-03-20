@@ -42,7 +42,7 @@ class TestCase(unittest.TestCase):
         jm = jobmanager.JobManager()
         jm.send_ready()
 
-        sndmsg_mock.assert_called_with(jm.outgoing, 'READY')
+        sndmsg_mock.assert_called_with(jm.frontend, 'READY')
 
     @mock.patch('multiprocessing.pool.Pool.close')
     @mock.patch('eventmq.jobmanager.JobManager.process_message')
@@ -55,7 +55,7 @@ class TestCase(unittest.TestCase):
                                pool_close_mock):
         jm = jobmanager.JobManager()
         maybe_send_hb_mock.return_value = False
-        poll_mock.return_value = {jm.outgoing: jobmanager.POLLIN}
+        poll_mock.return_value = {jm.frontend: jobmanager.POLLIN}
         sender_mock.return_value = [1, 2, 3]
 
         jm._start_event_loop()
@@ -106,7 +106,7 @@ class TestCase(unittest.TestCase):
         socket_mock.return_value = True
 
         jm = jobmanager.JobManager()
-        jm.outgoing.status = constants.STATUS.listening
+        jm.frontend.status = constants.STATUS.listening
         jm.on_disconnect(msgid, msg)
         self.assertTrue(jm.received_disconnect, "Did not receive disconnect.")
 
@@ -129,7 +129,7 @@ class TestCase(unittest.TestCase):
 
         jm.sigterm_handler(13231, "FRAMEY the evil frame")
 
-        sendmsg_mock.assert_called_with(jm.outgoing, constants.KBYE)
+        sendmsg_mock.assert_called_with(jm.frontend, constants.KBYE)
         self.assertFalse(jm.awaiting_startup_ack)
         self.assertTrue(jm.received_disconnect)
 

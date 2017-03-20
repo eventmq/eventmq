@@ -32,26 +32,26 @@ logger = logging.getLogger(__name__)
 class Pub(HeartbeatMixin):
     def __init__(self):
         self.poller = poller.Poller()
-        self.incoming = receiver.Receiver()
-        self.outgoing = publisher.Publisher()
+        self.frontend = receiver.Receiver()
+        self.backend = publisher.Publisher()
 
         self.received_disconnect = False
 
-        self.poller.register(self.incoming, poller.POLLIN)
+        self.poller.register(self.frontend, poller.POLLIN)
         return
 
     def start(self,
-              incoming_addr=conf.PUBLISHER_INCOMING_ADDR,
-              outgoing_addr=conf.PUBLISHER_OUTGOING_ADDR):
+              frontend_addr=conf.PUBLISHER_FRONTEND_ADDR,
+              backend_addr=conf.PUBLISHER_BACKEND_ADDR):
 
         self.status = STATUS.starting
 
-        self.incoming.listen(incoming_addr)
-        self.outgoing.listen(outgoing_addr)
+        self.frontend.listen(frontend_addr)
+        self.backend.listen(backend_addr)
 
         logger.info('Listening for publish requests on {}'.format(
-            incoming_addr))
-        logger.info('Listening for subscribers on {}'.format(outgoing_addr))
+            frontend_addr))
+        logger.info('Listening for subscribers on {}'.format(backend_addr))
 
         self._start_event_loop()
 
@@ -63,8 +63,8 @@ class Pub(HeartbeatMixin):
 
             events = self.poller.poll()
 
-            if events.get(self.incoming) == poller.POLLIN:
-                msg = self.incoming.recv_multipart()
+            if events.get(self.frontend) == poller.POLLIN:
+                msg = self.frontend.recv_multipart()
                 self.process_client_message(msg)
 
     def process_client_message(self, msg):
@@ -77,7 +77,7 @@ class Pub(HeartbeatMixin):
             logger.debug('Got Publish command')
             topic = msg[5]
             sub_message = msg[6]
-            logger.debug(self.outgoing.publish(topic, sub_message))
+            logger.debug(self.backend.publish(topic, sub_message))
 
         return
 
@@ -87,8 +87,8 @@ class Pub(HeartbeatMixin):
         """
         setup_logger('eventmq')
         import_settings(section='publisher')
-        self.start(incoming_addr=conf.PUBLISHER_INCOMING_ADDR,
-                   outgoing_addr=conf.PUBLISHER_OUTGOING_ADDR)
+        self.start(frontend_addr=conf.PUBLISHER_FRONTEND_ADDR,
+                   backend_addr=conf.PUBLISHER_BACKEND_ADDR)
 
 
 # Entry point for pip console scripts
