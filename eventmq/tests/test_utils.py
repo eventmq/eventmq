@@ -12,117 +12,14 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
-from imp import reload
-import io
 import random
-import sys
 import unittest
 
 import mock
 
 from .. import constants
 from .. import exceptions
-from ..utils import classes, messages, settings
-
-
-class SettingsTestCase(unittest.TestCase):
-    settings_ini = "\n".join(
-        ("[global]",
-         "super_debug=TRuE",
-         "frontend_addr=tcp://0.0.0.0:47291",
-         "",
-         "[jobmanager]",
-         "super_debug=FalSe",
-         'queues=[[50,"google"], [40,"pushes"], [10,"default"]]',
-         "worker_addr=tcp://160.254.23.88:47290",
-         "concurrent_jobs=9283",))
-
-    @mock.patch('eventmq.utils.settings.os.path.exists')
-    def test_import_settings_default(self, pathexists_mock):
-        from configparser import ConfigParser
-        from .. import conf
-        # sometimes the tests step on each other with this module. reloading
-        # ensures fresh test data
-        reload(conf)
-        pathexists_mock.return_value = True
-
-        _config = ConfigParser()
-
-        if sys.version_info[0] == 3:
-            _config.read_string(self.settings_ini)
-        else:
-            _config.readfp(io.BytesIO(self.settings_ini))
-
-        # Global section
-        # --------------
-        with mock.patch('eventmq.utils.settings.ConfigParser',
-                        return_value=_config):
-            with mock.patch.object(_config, 'read'):
-                settings.import_settings()
-
-        # Changed. Default is false
-        self.assertTrue(conf.SUPER_DEBUG, True)
-
-        # Default True
-        self.assertTrue(conf.HIDE_HEARTBEAT_LOGS)
-
-        # Default is 4
-        self.assertEqual(conf.CONCURRENT_JOBS, 4)
-
-        # Changed. Default is 127.0.0.1:47291
-        self.assertEqual(conf.FRONTEND_ADDR, 'tcp://0.0.0.0:47291')
-
-        # Default is (10, 'default')
-        self.assertEqual(conf.QUEUES, [(10, conf.DEFAULT_QUEUE_NAME), ])
-
-        # Job Manager Section
-        # -------------------
-        from configparser import ConfigParser
-        _config = ConfigParser()
-        if sys.version_info[0] == 3:
-            _config.read_string(self.settings_ini)
-        else:
-            _config.readfp(io.BytesIO(self.settings_ini))
-
-        # Global section
-        # --------------
-        with mock.patch('eventmq.utils.settings.ConfigParser',
-                        return_value=_config):
-            with mock.patch.object(ConfigParser, 'read'):
-                settings.import_settings('jobmanager')
-
-        # Changed
-        self.assertFalse(conf.SUPER_DEBUG)
-        # Changed
-        self.assertEqual(conf.CONCURRENT_JOBS, 9283)
-
-        # Changed
-        self.assertEqual(conf.QUEUES,
-                         [(50, 'google'), (40, 'pushes'), (10, 'default')])
-
-        self.assertEqual(conf.WORKER_ADDR, 'tcp://160.254.23.88:47290')
-
-        # Invalid section
-        # ---------------
-        # This shouldn't fail, and nothing should change
-        _config = ConfigParser()
-
-        if sys.version_info[0] == 3:
-            _config.read_string(self.settings_ini)
-        else:
-            _config.readfp(io.BytesIO(self.settings_ini))
-
-        # Global section
-        # --------------
-        with mock.patch('eventmq.utils.settings.ConfigParser',
-                        return_value=_config):
-            with mock.patch.object(ConfigParser, 'read'):
-                settings.import_settings('nonexistent_section')
-
-        self.assertEqual(conf.CONCURRENT_JOBS, 9283)
-        self.assertEqual(conf.QUEUES,
-                         [(50, 'google'), (40, 'pushes'), (10, 'default')])
-        self.assertEqual(conf.WORKER_ADDR, 'tcp://160.254.23.88:47290')
+from ..utils import classes, messages
 
 
 class EMQPServiceTestCase(unittest.TestCase):
