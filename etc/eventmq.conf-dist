@@ -23,5 +23,5 @@ queues=[[50,"google"], [40,"pushes"], [10,"default"]]
 concurrent_jobs=2
 
 [publisher]
-publisher_incoming_addr=tcp://0.0.0.0:47298
-publisher_outgoing_addr=tcp://0.0.0.0:47299
+publisher_frontend_addr=tcp://0.0.0.0:47298
+publisher_backend_addr=tcp://0.0.0.0:47299

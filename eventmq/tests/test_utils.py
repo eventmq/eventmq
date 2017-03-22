@@ -128,13 +128,13 @@ class SettingsTestCase(unittest.TestCase):
 class EMQPServiceTestCase(unittest.TestCase):
 
     # pretend to be an emq socket
-    outgoing = 'some-outgoing-socket'
+    frontend = 'some-frontend-socket'
 
     def get_worker(self):
         """return an EMQPService mimicking a worker"""
         obj = classes.EMQPService()
         obj.SERVICE_TYPE = constants.CLIENT_TYPE.worker
-        obj.outgoing = self.outgoing
+        obj.frontend = self.frontend
         obj._meta = {
             'last_sent_heartbeat': 0
         }
@@ -145,7 +145,7 @@ class EMQPServiceTestCase(unittest.TestCase):
         """return an EMQPService mimicking a scheduler"""
         obj = classes.EMQPService()
         obj.SERVICE_TYPE = constants.CLIENT_TYPE.scheduler
-        obj.outgoing = self.outgoing
+        obj.frontend = self.frontend
         obj._meta = {
             'last_sent_heartbeat': 0
         }
@@ -168,7 +168,7 @@ class EMQPServiceTestCase(unittest.TestCase):
         obj.send_inform()
 
         sendmsg_mock.assert_called_with(
-            self.outgoing, 'INFORM',
+            self.frontend, 'INFORM',
             ['', constants.CLIENT_TYPE.worker])
 
     @mock.patch('eventmq.utils.classes.sendmsg')
@@ -178,7 +178,7 @@ class EMQPServiceTestCase(unittest.TestCase):
         obj.send_inform(queues="this shouldn't matter")
 
         sendmsg_mock.assert_called_with(
-            self.outgoing, 'INFORM',
+            self.frontend, 'INFORM',
             ['', constants.CLIENT_TYPE.scheduler]
         )
 
@@ -189,7 +189,7 @@ class EMQPServiceTestCase(unittest.TestCase):
         obj.send_inform(queues=([10, 'push'], [7, 'email'],
                                 [3, 'default']))
         sendmsg_mock.asert_called_with(
-            'some-outgoing-socket', 'INFORM',
+            'some-frontend-socket', 'INFORM',
             ['[10, "push"],[7, "email"],[3, "default"]',
              constants.CLIENT_TYPE.worker]
         )

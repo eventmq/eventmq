@@ -56,7 +56,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
         logger.info('Initializing Scheduler...')
         import_settings()
         super(Scheduler, self).__init__(*args, **kwargs)
-        self.outgoing = Sender()
+        self.frontend = Sender()
         self._redis_server = None
 
         # contains dict of 4-item lists representing cron jobs key of this
@@ -120,8 +120,8 @@ class Scheduler(HeartbeatMixin, EMQPService):
             m_now = monotonic()
             events = self.poller.poll()
 
-            if events.get(self.outgoing) == POLLIN:
-                msg = self.outgoing.recv_multipart()
+            if events.get(self.frontend) == POLLIN:
+                msg = self.frontend.recv_multipart()
                 self.process_message(msg)
 
             # TODO: distribute me!
@@ -213,7 +213,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
             str: ID of the message
         """
         jobmsg = json.loads(jobmsg)
-        msgid = send_request(self.outgoing, jobmsg, queue=queue,
+        msgid = send_request(self.frontend, jobmsg, queue=queue,
                              reply_requested=True)
 
         return msgid
@@ -221,8 +221,8 @@ class Scheduler(HeartbeatMixin, EMQPService):
     def on_disconnect(self, msgid, message):
         logger.info("Received DISCONNECT request: {}".format(message))
         self._redis_server.connection_pool.disconnect()
-        sendmsg(self.outgoing, KBYE)
-        self.outgoing.unbind(conf.SCHEDULER_ADDR)
+        sendmsg(self.frontend, KBYE)
+        self.frontend.unbind(conf.SCHEDULER_ADDR)
         super(Scheduler, self).on_disconnect(msgid, message)
 
     def on_kbye(self, msgid, msg):

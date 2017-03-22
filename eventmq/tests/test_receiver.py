@@ -24,7 +24,7 @@ class TestCase(unittest.TestCase):
         self.zcontext = zmq.Context.instance()
 
         self.router = router.Router()
-        self.receiver = self.router.incoming
+        self.receiver = self.router.frontend
         self.sender = sender.Sender()
 
     def test_send_multipart_unicode(self):

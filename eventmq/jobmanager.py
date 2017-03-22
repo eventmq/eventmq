@@ -95,7 +95,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         #: then telling the router that it is READY. The reply will be the unit
         #: of work.
         # Despite the name, jobs are received on this socket
-        self.outgoing = Sender(name=self.name)
+        self.frontend = Sender(name=self.name)
 
         self.poller = Poller()
 
@@ -149,8 +149,8 @@ class JobManager(HeartbeatMixin, EMQPService):
                 self.received_disconnect = True
                 continue
 
-            if events.get(self.outgoing) == POLLIN:
-                msg = self.outgoing.recv_multipart()
+            if events.get(self.frontend) == POLLIN:
+                msg = self.frontend.recv_multipart()
                 self.process_message(msg)
 
             # Call appropiate callbacks for each finished job
@@ -238,7 +238,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         send the READY command upstream to indicate that JobManager is ready
         for another REQUEST message.
         """
-        sendmsg(self.outgoing, 'READY')
+        sendmsg(self.frontend, 'READY')
 
     def send_reply(self, reply, msgid):
         """
@@ -249,7 +249,7 @@ class JobManager(HeartbeatMixin, EMQPService):
              recipient (str): The recipient id for the ack
              msgid: The unique id that we are acknowledging
          """
-        sendmsg(self.outgoing, 'REPLY', [reply, msgid])
+        sendmsg(self.frontend, 'REPLY', [reply, msgid])
 
     def on_heartbeat(self, msgid, message):
         """
@@ -277,8 +277,8 @@ class JobManager(HeartbeatMixin, EMQPService):
             self._workers.append(w)
 
     def on_disconnect(self, msgid, msg):
-        sendmsg(self.outgoing, KBYE)
-        self.outgoing.unbind(conf.WORKER_ADDR)
+        sendmsg(self.frontend, KBYE)
+        self.frontend.unbind(conf.WORKER_ADDR)
         super(JobManager, self).on_disconnect(msgid, msg)
 
     def on_kbye(self, msgid, msg):
@@ -295,7 +295,7 @@ class JobManager(HeartbeatMixin, EMQPService):
 
     def sigterm_handler(self, signum, frame):
         logger.info('Shutting down..')
-        sendmsg(self.outgoing, KBYE)
+        sendmsg(self.frontend, KBYE)
 
         self.awaiting_startup_ack = False
         self.received_disconnect = True
