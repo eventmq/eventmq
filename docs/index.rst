@@ -8,7 +8,7 @@ EventMQ Documentation
    using
    api
    contributing
-
+   changelog_link
 
 Indices and tables
 ==================

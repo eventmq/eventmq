@@ -37,8 +37,9 @@ class TestCase(unittest.TestCase):
     def test_start(self, event_loop_mock, zsocket_bind_mock):
         # Test default args
         self.router.start()
-        self.router.frontend.listen.assert_called_with(conf.FRONTEND_ADDR)
-        self.router.backend.listen.assert_called_with(conf.BACKEND_ADDR)
+        self.router.frontend.listen.assert_called_with(
+            conf.FRONTEND_LISTEN_ADDR)
+        self.router.backend.listen.assert_called_with(conf.BACKEND_LISTEN_ADDR)
         self.assertEqual(self.router.status, constants.STATUS.listening)
 
         # Test invalid args

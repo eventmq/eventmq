@@ -119,7 +119,7 @@ class TestCase(unittest.TestCase):
 
         # called once for the default settings, once for the jobmanager
         # settings
-        self.assertEqual(2, import_settings_mock.call_count)
+        self.assertEqual(1, import_settings_mock.call_count)
         # check to see if the last call was called with the jobmanager section
         import_settings_mock.assert_called_with(section='jobmanager')
 
@@ -140,18 +140,18 @@ class TestCase(unittest.TestCase):
 
         jm.jobmanager_main()
 
-        self.assertEqual(2, import_settings_mock.call_count)
+        self.assertEqual(1, import_settings_mock.call_count)
         # Assert that the last call to import settings was for the jobmanager
         # section
         import_settings_mock.assert_called_with(section='jobmanager')
 
-        start_mock.assert_called_with(addr=conf.WORKER_ADDR,
+        start_mock.assert_called_with(addr=conf.CONNECT_ADDR,
                                       queues=conf.QUEUES)
 
         jm.queues = ((10, 'derp'), (0, 'blurp'))
         jm.jobmanager_main()
 
-        start_mock.assert_called_with(addr=conf.WORKER_ADDR,
+        start_mock.assert_called_with(addr=conf.CONNECT_ADDR,
                                       queues=jm.queues)
 
     def cleanup(self):

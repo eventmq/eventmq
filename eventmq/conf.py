@@ -17,6 +17,12 @@
 ===================================
 """
 
+# Settings that should not be honored if they are defined in the global
+# section. These must be lowercase.
+_AMBIGUOUS_SETTINGS = ('frontend_listen_addr', 'backend_listen_addr',
+                       'administrative_listen_addr', 'connect_addr',
+                       'reconnect_timeout')
+
 #: SUPER_DEBUG basically enables more debugging logs. Specifically the messages
 #: at different levels in the application.
 #: Default: False
@@ -30,11 +36,10 @@ HIDE_HEARTBEAT_LOGS = True
 # would be a good idea to have a handful of workers listening on this queue
 # unless you're positive that everything specifies a queue with workers.
 DEFAULT_QUEUE_NAME = 'default'
-DEFAULT_QUEUE_WEIGHT = 10
 
 # Default queues for the Job Manager to listen on. The values here should match
 # the values defined on the router.
-QUEUES = [(DEFAULT_QUEUE_WEIGHT, DEFAULT_QUEUE_NAME), ]
+QUEUES = [(10, DEFAULT_QUEUE_NAME), ]
 
 # {{{Job Manager
 # How long should we wait before retrying to connect to a broker?
@@ -59,32 +64,30 @@ CONFIG_FILE = '/etc/eventmq.conf'
 # https://docs.python.org/3/library/codecs.html#standard-encodings
 DEFAULT_ENCODING = 'utf-8'
 
-# Default addresses to localhost
-# Router:
-FRONTEND_ADDR = 'tcp://127.0.0.1:47291'
-BACKEND_ADDR = 'tcp://127.0.0.1:47290'
-# Where the Scheduler should connect.
-SCHEDULER_ADDR = 'tcp://127.0.0.1:47291'
-# Where the worker should connect
-WORKER_ADDR = 'tcp://127.0.0.1:47290'
-WORKER_ADDR_DEFAULT = 'tcp://127.0.0.1:47290'
-WORKER_ADDR_FAILOVER = 'tcp://127.0.0.1:47290'
-# Used to monitor and manage the devices
-ADMINISTRATIVE_ADDR = 'tcp://127.0.0.1:47293'
 
-# PubSub
-PUBLISHER_FRONTEND_ADDR = 'tcp://127.0.0.1:47298'
-PUBLISHER_BACKEND_ADDR = 'tcp://127.0.0.1:47299'
+# Default addresses to localhost
+FRONTEND_LISTEN_ADDR = 'tcp://127.0.0.1:47291'
+BACKEND_LISTEN_ADDR = 'tcp://127.0.0.1:47290'
+# Used to monitor and manage the devices
+ADMINISTRATIVE_LISTEN_ADDR = 'tcp://127.0.0.1:47293'
+
+# Where the router is located
+CONNECT_ADDR = None
+
+# # Where the Scheduler should connect.
+CONNECT_ADDR_DEFAULT = 'tcp://127.0.0.1:47290'
+CONNECT_ADDR_FAILOVER = 'tcp://127.0.0.1:47290'
+
 
 # How many jobs should the job manager concurrently handle?
 CONCURRENT_JOBS = 4
 HWM = 10000
 
 # Redis settings
-RQ_HOST = 'localhost'
-RQ_PORT = 6379
-RQ_DB = 0
-RQ_PASSWORD = ''
+REDIS_HOST = 'localhost'
+REDIS_PORT = 6379
+REDIS_DB = 0
+REDIS_PASSWORD = ''
 
 MAX_JOB_COUNT = 1024
 

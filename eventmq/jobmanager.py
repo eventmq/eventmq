@@ -170,10 +170,10 @@ class JobManager(HeartbeatMixin, EMQPService):
             #       False, so it should stay at the bottom of the loop.
             if not self.maybe_send_heartbeat(events):
                 # Toggle default and failover worker_addr
-                if (conf.WORKER_ADDR == conf.WORKER_ADDR_DEFAULT):
-                    conf.WORKER_ADDR = conf.WORKER_ADDR_FAILOVER
+                if (conf.CONNECT_ADDR == conf.CONNECT_ADDR_DEFAULT):
+                    conf.CONNECT_ADDR = conf.CONNECT_ADDR_FAILOVER
                 else:
-                    conf.WORKER_ADDR = conf.WORKER_ADDR_DEFAULT
+                    conf.CONNECT_ADDR = conf.CONNECT_ADDR_DEFAULT
 
                 break
 
@@ -278,7 +278,7 @@ class JobManager(HeartbeatMixin, EMQPService):
 
     def on_disconnect(self, msgid, msg):
         sendmsg(self.frontend, KBYE)
-        self.frontend.unbind(conf.WORKER_ADDR)
+        self.frontend.unbind(conf.CONNECT_ADDR)
         super(JobManager, self).on_disconnect(msgid, msg)
 
     def on_kbye(self, msgid, msg):
@@ -287,7 +287,6 @@ class JobManager(HeartbeatMixin, EMQPService):
 
     def sighup_handler(self, signum, frame):
         logger.info('Caught signal %s' % signum)
-        import_settings()
         import_settings(section='jobmanager')
 
         self.should_reset = True
@@ -308,7 +307,6 @@ class JobManager(HeartbeatMixin, EMQPService):
             broker_addr (str): The address of the broker to connect to.
         """
         setup_logger('')
-        import_settings()
         import_settings(section='jobmanager')
 
         # If this manager was passed explicit options, favor those
@@ -316,9 +314,9 @@ class JobManager(HeartbeatMixin, EMQPService):
             conf.QUEUES = self.queues
 
         if broker_addr:
-            conf.WORKER_ADDR = broker_addr
+            conf.CONNECT_ADDR = broker_addr
 
-        self.start(addr=conf.WORKER_ADDR, queues=conf.QUEUES)
+        self.start(addr=conf.CONNECT_ADDR, queues=conf.QUEUES)
 
 
 def jobmanager_main():

@@ -25,59 +25,73 @@ from ..utils import settings
 class TestCase(unittest.TestCase):
     settings_ini = "\n".join(
         ("[global]",
-         "super_debug=TRuE",
-         "frontend_addr=tcp://0.0.0.0:47291",
+         "super_debug=FaLsE",
+         "hide_heartbeat_logs=false",
+         "frontend_listen_addr=tcp://1.2.3.4:1234",
          "",
          "[jobmanager]",
-         "super_debug=FalSe",
+         "hide_heartbeat_logs=true",
+         "listen_addr=tcp://160.254.23.88:47290",
          'queues=[[50,"google"], [40,"pushes"], [10,"default"]]',
-         "worker_addr=tcp://160.254.23.88:47290",
-         "concurrent_jobs=9283",))
+         "concurrent_jobs=9283",
+         "",
+         "[router]",
+         "# Listen addresses",
+         "frontend_listen_addr=tcp://123.211.1.1:47291",
+         "backend_listen_addr=tcp://123.211.1.1:47290",
+         "# Log all messages",
+         "super_dEbug=TrUe",
+         ""))
 
     def test_import_settings_default(self):
-        # sometimes the tests step on each other with this module. reloading
-        # ensures fresh test data
-        reload(conf)
+        # Test loading the global section only
+        with LogCapture() as log_checker:
+            with utils.mock_config_file(self.settings_ini):
+                settings.import_settings()
 
-        # Global section
-        # --------------
-        with utils.mock_config_file(self.settings_ini):
-            settings.import_settings()
+            log_checker.check(
+                ('eventmq.utils.settings',
+                  'DEBUG',
+                  'Setting conf.SUPER_DEBUG to False'),
+                 ('eventmq.utils.settings',
+                  'DEBUG',
+                  'Setting conf.HIDE_HEARTBEAT_LOGS to False'),
+                 ('eventmq.utils.settings',
+                  'WARNING',
+                  'Ignoring ambiguous setting defined in global section: '
+                  'frontend_listen_addr=tcp://1.2.3.4:1234'))
 
-        # Changed. Default is 127.0.0.1:47291
-        self.assertEqual(conf.FRONTEND_ADDR, 'tcp://0.0.0.0:47291')
+        # Defined in the global section
+        self.assertFalse(conf.SUPER_DEBUG)
+        self.assertFalse(conf.HIDE_HEARTBEAT_LOGS)
 
-        # Changed. Default is false
-        self.assertTrue(conf.SUPER_DEBUG, True)
-
-        # Default True
-        self.assertTrue(conf.HIDE_HEARTBEAT_LOGS)
-
-        # Default is 4
+        # Defaults defefined in conf.py
         self.assertEqual(conf.CONCURRENT_JOBS, 4)
-
-        # Default is (10, 'default')
-        self.assertEqual(conf.QUEUES, [(10, conf.DEFAULT_QUEUE_NAME), ])
+        self.assertEqual(conf.QUEUES, [(10, 'default'), ])
 
     def test_read_section(self):
+        # Test reading the router section
         with utils.mock_config_file(self.settings_ini):
-            settings.import_settings('jobmanager')
+            settings.import_settings('router')
 
-        # Changed
-        self.assertFalse(conf.SUPER_DEBUG)
-        # Changed
-        self.assertEqual(conf.CONCURRENT_JOBS, 9283)
+        # Changed in global section
+        self.assertFalse(conf.HIDE_HEARTBEAT_LOGS)
 
-        # Changed
-        self.assertEqual(conf.QUEUES,
-                         [(50, 'google'), (40, 'pushes'), (10, 'default')])
+        # Changed in router section
+        self.assertEqual(conf.FRONTEND_LISTEN_ADDR, 'tcp://123.211.1.1:47291')
+        self.assertEqual(conf.BACKEND_LISTEN_ADDR, 'tcp://123.211.1.1:47290')
+        self.assertTrue(conf.SUPER_DEBUG)
 
-        self.assertEqual(conf.WORKER_ADDR, 'tcp://160.254.23.88:47290')
+        # # Changed
+        # self.assertEqual(conf.QUEUES,
+        #                  [(50, 'google'), (40, 'pushes'), (10, 'default')])
+
+        # self.assertEqual(conf.CONNECT_ADDR, 'tcp://160.254.23.88:47290')
 
     def test_invalid_section(self):
         conf.CONCURRENT_JOBS = 1234
         conf.QUEUES = [(50, 'google'), (40, 'pushes'), (10, 'default')]
-        conf.WORKER_ADDR = 'tcp://160.254.23.88:47290'
+        conf.CONNECT_ADDR = 'tcp://160.254.23.88:47290'
 
         # Invalid section
         with utils.mock_config_file(self.settings_ini):
@@ -87,7 +101,7 @@ class TestCase(unittest.TestCase):
         self.assertEqual(conf.CONCURRENT_JOBS, 1234)
         self.assertEqual(conf.QUEUES,
                          [(50, 'google'), (40, 'pushes'), (10, 'default')])
-        self.assertEqual(conf.WORKER_ADDR, 'tcp://160.254.23.88:47290')
+        self.assertEqual(conf.CONNECT_ADDR, 'tcp://160.254.23.88:47290')
         # Default value
         self.assertEqual(conf.DEFAULT_QUEUE_NAME, 'default')
 
@@ -109,7 +123,7 @@ class TestCase(unittest.TestCase):
             self.assertRaises(ValueError,
                               settings.import_settings, 'jobmanager')
 
-    def test_parse_array(self):
+    def test_parse_string_array(self):
         # Tests parsing a non-nested array (nested are tested via QUEUES
         # setting) via FAKE_VALUE
         settings_ini = "\n".join(
@@ -123,6 +137,20 @@ class TestCase(unittest.TestCase):
             settings.import_settings('jobmanager')
 
         self.assertEqual(conf.FAKE_VALUE, [u'asdf', u'asdf2'])
+
+    def test_parse_dict_array(self):
+        # Tests parsing an array of dictionaries
+        settings_ini = '\n'.join(
+            ("[jobmanager]",
+             'fake_value=[{"key1": "value1"}, {"key2": "value2"}]')
+        )
+        reload(conf)
+        conf.FAKE_VALUE = [{'default': 1}]
+        with utils.mock_config_file(settings_ini):
+            settings.import_settings('jobmanager')
+
+        self.assertEqual(conf.FAKE_VALUE,
+                         [{u"key1": u"value1"}, {u"key2": u"value2"}])
 
     def test_invalid_setting(self):
         settings_ini = "\n".join(
@@ -138,4 +166,5 @@ class TestCase(unittest.TestCase):
             log_checker.check(
                 ('eventmq.utils.settings',
                  'WARNING',
-                 'Tried to set invalid setting: nonexistent_setting'))
+                 'Tried to set invalid setting: nonexistent_setting=rabbit '
+                 'blood'))

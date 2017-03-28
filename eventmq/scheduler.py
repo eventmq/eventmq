@@ -52,9 +52,10 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
     def __init__(self, *args, **kwargs):
         self.name = kwargs.get('name', None)
-
         logger.info('Initializing Scheduler...')
-        import_settings()
+
+        import_settings('scheduler')
+
         super(Scheduler, self).__init__(*args, **kwargs)
         self.frontend = Sender()
         self._redis_server = None
@@ -82,7 +83,6 @@ class Scheduler(HeartbeatMixin, EMQPService):
         self.interval_jobs = {}
 
         self.poller = Poller()
-
         self.load_jobs()
 
         self._setup()
@@ -189,10 +189,10 @@ class Scheduler(HeartbeatMixin, EMQPService):
         if self._redis_server is None:
             try:
                 self._redis_server = \
-                    redis.StrictRedis(host=conf.RQ_HOST,
-                                      port=conf.RQ_PORT,
-                                      db=conf.RQ_DB,
-                                      password=conf.RQ_PASSWORD)
+                    redis.StrictRedis(host=conf.REDIS_HOST,
+                                      port=conf.REDIS_PORT,
+                                      db=conf.REDIS_DB,
+                                      password=conf.REDIS_PASSWORD)
                 return self._redis_server
 
             except Exception as e:
@@ -222,7 +222,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
         logger.info("Received DISCONNECT request: {}".format(message))
         self._redis_server.connection_pool.disconnect()
         sendmsg(self.frontend, KBYE)
-        self.frontend.unbind(conf.SCHEDULER_ADDR)
+        self.frontend.unbind(conf.CONNECT_ADDR)
         super(Scheduler, self).on_disconnect(msgid, message)
 
     def on_kbye(self, msgid, msg):
@@ -425,9 +425,9 @@ class Scheduler(HeartbeatMixin, EMQPService):
         Kick off scheduler with logging and settings import
         """
         setup_logger("eventmq")
-        import_settings()
+        import_settings('scheduler')
         self.__init__()
-        self.start(addr=conf.SCHEDULER_ADDR)
+        self.start(addr=conf.CONNECT_ADDR)
 
 
 # Entry point for pip console scripts

@@ -136,9 +136,9 @@ class Router(HeartbeatMixin):
         pdb.Pdb().set_trace(frame)
 
     def start(self,
-              frontend_addr=conf.FRONTEND_ADDR,
-              backend_addr=conf.BACKEND_ADDR,
-              administrative_addr=conf.ADMINISTRATIVE_ADDR):
+              frontend_addr=conf.FRONTEND_LISTEN_ADDR,
+              backend_addr=conf.BACKEND_LISTEN_ADDR,
+              administrative_addr=conf.ADMINISTRATIVE_LISTEN_ADDR):
         """
         Begin listening for connections on the provided connection strings
 
@@ -359,7 +359,7 @@ class Router(HeartbeatMixin):
             self.send_kbye(self.frontend, scheduler)
 
         self.schedulers.clear()
-        self.frontend.unbind(conf.FRONTEND_ADDR)
+        self.frontend.unbind(conf.FRONTEND_LISTEN_ADDR)
 
         if len(self.waiting_messages) > 0:
             logger.info("Router processing messages in queue.")
@@ -372,7 +372,7 @@ class Router(HeartbeatMixin):
             self.send_kbye(self.backend, worker)
 
         self.workers.clear()
-        self.backend.unbind(conf.BACKEND_ADDR)
+        self.backend.unbind(conf.BACKEND_LISTEN_ADDR)
 
         # Loops event loops should check for this and break out
         self.received_disconnect = True
@@ -905,22 +905,22 @@ class Router(HeartbeatMixin):
         process receives a SIGHUP from the system.
         """
         logger.info('Caught signame %s' % signum)
-        self.frontend.unbind(conf.FRONTEND_ADDR)
-        self.backend.unbind(conf.BACKEND_ADDR)
-        import_settings()
-        self.start(frontend_addr=conf.FRONTEND_ADDR,
-                   backend_addr=conf.BACKEND_ADDR,
-                   administrative_addr=conf.ADMINISTRATIVE_ADDR)
+        self.frontend.unbind(conf.FRONTEND_LISTEN_ADDR)
+        self.backend.unbind(conf.BACKEND_LISTEN_ADDR)
+        import_settings('router')
+        self.start(frontend_addr=conf.FRONTEND_LISTEN_ADDR,
+                   backend_addr=conf.BACKEND_LISTEN_ADDR,
+                   administrative_addr=conf.ADMINISTRATIVE_LISTEN_ADDR)
 
     def router_main(self):
         """
         Kick off router with logging and settings import
         """
         setup_logger('eventmq')
-        import_settings()
-        self.start(frontend_addr=conf.FRONTEND_ADDR,
-                   backend_addr=conf.BACKEND_ADDR,
-                   administrative_addr=conf.ADMINISTRATIVE_ADDR)
+        import_settings('router')
+        self.start(frontend_addr=conf.FRONTEND_LISTEN_ADDR,
+                   backend_addr=conf.BACKEND_LISTEN_ADDR,
+                   administrative_addr=conf.ADMINISTRATIVE_LISTEN_ADDR)
 
 
 def router_on_full():

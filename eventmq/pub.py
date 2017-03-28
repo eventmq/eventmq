@@ -41,8 +41,8 @@ class Pub(HeartbeatMixin):
         return
 
     def start(self,
-              frontend_addr=conf.PUBLISHER_FRONTEND_ADDR,
-              backend_addr=conf.PUBLISHER_BACKEND_ADDR):
+              frontend_addr=conf.FRONTEND_LISTEN_ADDR,
+              backend_addr=conf.BACKEND_LISTEN_ADDR):
 
         self.status = STATUS.starting
 
@@ -87,8 +87,8 @@ class Pub(HeartbeatMixin):
         """
         setup_logger('eventmq')
         import_settings(section='publisher')
-        self.start(frontend_addr=conf.PUBLISHER_FRONTEND_ADDR,
-                   backend_addr=conf.PUBLISHER_BACKEND_ADDR)
+        self.start(frontend_addr=conf.FRONTEND_LISTEN_ADDR,
+                   backend_addr=conf.BACKEND_LISTEN_ADDR)
 
 
 # Entry point for pip console scripts

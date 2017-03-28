@@ -18,8 +18,6 @@ import unittest
 
 from .. import constants, scheduler
 
-ADDR = 'inproc://pour_the_rice_in_the_thing'
-
 
 class TestCase(unittest.TestCase):
     def test__setup(self):
