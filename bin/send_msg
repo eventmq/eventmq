@@ -22,15 +22,15 @@ if __name__ == "__main__":
             'callable': 'pretend_job',
             'class_args': ('blurp',),
             'class_kwargs': {'kwarg1': True},
-            'args': (2, ),
+            'args': (1, ),
             'kwargs': {}
             }]
 
         send_request(s, msg, guarantee=True, reply_requested=True, timeout=10)
-        print zmq.POLLOUT
-        events = dict(poller.poll(500))
-        print events
-        if events[s.zsocket] == zmq.POLLIN:
-            msg = s.recv_multipart()
+        # print zmq.POLLOUT
+        # events = dict(poller.poll(500))
+        # print events
+        # if events[s.zsocket] == zmq.POLLIN:
+        #     msg = s.recv_multipart()
 
-            print msg
+        #     print msg

@@ -21,7 +21,14 @@ from importlib import import_module
 import logging
 from multiprocessing import Process
 import os
+import sys
 from threading import Event, Thread
+import time
+
+if sys.version[0] == '2':
+    import Queue
+else:
+    import queue as Queue
 
 from . import conf
 
@@ -55,6 +62,9 @@ class MultiprocessWorker(Process):
         self.output_queue = output_queue
         self.job_count = 0
         self.run_setup = run_setup
+        self.running_job = False
+        self.ppid = os.getppid()
+        self.last_job_rcvd = None
 
     def run(self):
         """
@@ -62,7 +72,6 @@ class MultiprocessWorker(Process):
 
         This is designed to run in a seperate process.
         """
-
         if self.run_setup:
             self.run_setup = False
             if any(conf.SETUP_CALLABLE) and any(conf.SETUP_PATH):
@@ -76,17 +85,28 @@ class MultiprocessWorker(Process):
         import zmq
         zmq.Context.instance().term()
 
-        # Pull the payload off the queue and run it
-        for payload in iter(self.input_queue.get, 'DONE'):
-
-            self.job_count += 1
-            timeout = payload.get("timeout", None)
-            msgid = payload.get('msgid', '')
-
-            resp = {'msgid': msgid,
-                    'return': 'None'}
+        while True:
+            try:
+                payload = self.input_queue.get_nowait()
+                if payload == 'DONE':
+                    break
+            except Queue.Empty:
+                continue
+            except Exception as e:
+                    break
+            finally:
+                self.last_job_rcvd = time.now()
 
             try:
+                self.running_job = True
+                self.job_count += 1
+                timeout = payload.get("timeout", None)
+                msgid = payload.get('msgid', '')
+
+                resp = {'msgid': msgid,
+                        'return': 'None',
+                        'callback': payload['callback']}
+
                 if timeout:
                     worker_thread = StoppableThread(target=_run,
                                                     args=(payload['params'], ))
@@ -103,8 +123,8 @@ class MultiprocessWorker(Process):
             except Exception as e:
                 resp['return'] = str(e)
 
-            resp['callback'] = payload['callback']
-            self.output_queue.put(resp)
+            self.running_job = False
+            self.output_queue.put_nowait(resp)
 
             if self.job_count > conf.MAX_JOB_COUNT:
                 break
