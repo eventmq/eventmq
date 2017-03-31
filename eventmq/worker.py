@@ -62,7 +62,6 @@ class MultiprocessWorker(Process):
         self.output_queue = output_queue
         self.job_count = 0
         self.run_setup = run_setup
-        self.running_job = False
         self.ppid = os.getppid()
         self.last_job_rcvd = None
 
@@ -85,6 +84,11 @@ class MultiprocessWorker(Process):
         import zmq
         zmq.Context.instance().term()
 
+        resp = {'msgid': None,
+                'return': 'None',
+                'pid': os.getpid(),
+                'callback': 'premature_death'}
+
         while True:
             try:
                 payload = self.input_queue.get_nowait()
@@ -95,8 +99,10 @@ class MultiprocessWorker(Process):
             except Exception as e:
                     break
             finally:
-                self.last_job_rcvd = time.now()
+                if os.getppid() == 1:
+                    break
 
+            logger.debug("Worker got request")
             try:
                 self.running_job = True
                 self.job_count += 1
@@ -105,6 +111,7 @@ class MultiprocessWorker(Process):
 
                 resp = {'msgid': msgid,
                         'return': 'None',
+                        'pid': os.getpid(),
                         'callback': payload['callback']}
 
                 if timeout:
@@ -123,15 +130,21 @@ class MultiprocessWorker(Process):
             except Exception as e:
                 resp['return'] = str(e)
 
-            self.running_job = False
-            self.output_queue.put_nowait(resp)
-
-            if self.job_count > conf.MAX_JOB_COUNT:
+            if self.job_count >= conf.MAX_JOB_COUNT or resp['return'] == 'TimeoutError':
+                resp['callback'] = 'worker_death_with_reply' \
+                                if 'reply' in resp['callback'] else \
+                                   'worker_death'
                 break
 
-            if resp['return'] == 'TimeoutError':
-                break
+            else:
+                self.output_queue.put(resp)
 
+        resp['return'] = 'DEATH'
+
+        if not resp['callback']:
+            resp['callback'] = 'worker_death'
+
+        self.output_queue.put_nowait(resp)
         logger.debug("Worker death, PID: {}".format(os.getpid()))
 
 

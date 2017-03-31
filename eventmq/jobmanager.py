@@ -23,6 +23,7 @@ from multiprocessing import Queue as mp_queue
 import signal
 import sys
 import os
+import time
 
 import zmq
 
@@ -36,6 +37,7 @@ from .utils.devices import generate_device_name
 from .utils.functions import get_timeout_from_headers
 from .utils.messages import send_emqp_message as sendmsg
 from .utils.settings import import_settings
+from .utils.timeutils import monotonic
 from .worker import MultiprocessWorker as Worker
 
 
@@ -114,7 +116,7 @@ class JobManager(HeartbeatMixin, EMQPService):
                 w.start()
                 self._workers[w.pid] = w
 
-        return self._workers.values
+        return self._workers.values()
 
     def _start_event_loop(self):
         """
@@ -131,55 +133,73 @@ class JobManager(HeartbeatMixin, EMQPService):
         try:
             while True:
                 # Clear any workers if it's time to shut down
-                if self.received_disconnect:
+                if self.received_disconnect and self.status != STATUS.stopping:
                     self.status = STATUS.stopping
-                    for _ in range(0, len(self.workers)):
-                        logger.debug('Requesting worker death...')
+                    for _ in range(len(self.workers)):
+                        logger.debug('Requesting worker death')
                         self.request_queue.put_nowait('DONE')
-                    self.request_queue.close()
-                    self.request_queue.join_thread()
 
-                    for w in self.workers:
-                        w.join()
+                    self.disconnect_time = monotonic()
+                else:
+                    # Call appropiate callbacks for each finished job
+                    while True:
+                        try:
+                            resp = self.finished_queue.get_nowait()
+                        except Queue.Empty:
+                            break
+                        else:
+                            self.handle_response(resp)
 
-                    break
-
-                try:
-                    events = self.poller.poll()
-                except zmq.ZMQError:
-                    logger.debug('Disconnecting due to ZMQ Error while polling')
-                    self.received_disconnect = True
-                    continue
-
-                if events.get(self.outgoing) == POLLIN:
-                    msg = self.outgoing.recv_multipart()
-                    self.process_message(msg)
-
-                # Call appropiate callbacks for each finished job
-                while True:
-                    try:
-                        resp = self.finished_queue.get_nowait()
-                    except Queue.Empty:
-                        break
+                    if self.status == STATUS.stopping and \
+                       not self.should_reset:
+                        if len(self._workers) > 0:
+                            time.sleep(0.1)
+                        elif len(self._workers) == 0:
+                            sys.exit(0)
+                        elif monotonic() - self.disconnect_time > 500:
+                            for pid in self._workers.keys():
+                                self.kill_worker(pid, signal.SIGKILL)
+                            sys.ext(0)
                     else:
-                        if resp['callback'] == 'worker_done':
-                            self.worker_done(resp['msgid'])
-                        elif resp['callback'] == 'worker_done_with_reply':
-                            self.worker_done_with_reply(resp['return'],
-                                                        resp['msgid'])
+                        try:
+                            events = self.poller.poll()
+                        except zmq.ZMQError:
+                            logger.debug('Disconnecting due to ZMQError while'
+                                         'polling')
+                            sendmsg(self.outgoing, KBYE)
+                            self.received_disconnect = True
+                            continue
 
-                # Note: `maybe_send_heartbeat` is mocked by the tests to return
-                #       False, so it should stay at the bottom of the loop.
-                if not self.maybe_send_heartbeat(events):
-                    # Toggle default and failover worker_addr
-                    if (conf.WORKER_ADDR == conf.WORKER_ADDR_DEFAULT):
-                        conf.WORKER_ADDR = conf.WORKER_ADDR_FAILOVER
-                    else:
-                        conf.WORKER_ADDR = conf.WORKER_ADDR_DEFAULT
+                        if events.get(self.outgoing) == POLLIN:
+                            msg = self.outgoing.recv_multipart()
+                            self.process_message(msg)
 
-                    break
+                        # Note: `maybe_send_heartbeat` is mocked by the tests
+                        # to return False, so it should stay at the bottom of
+                        # the loop
+                        if not self.maybe_send_heartbeat(events):
+                            # Toggle default and failover worker_addr
+                            if (conf.WORKER_ADDR == conf.WORKER_ADDR_DEFAULT):
+                                conf.WORKER_ADDR = conf.WORKER_ADDR_FAILOVER
+                            else:
+                                conf.WORKER_ADDR = conf.WORKER_ADDR_DEFAULT
+
+                            break
+
         except Exception:
             logger.exception("Unhandled exception in main jobmanager loop")
+
+    def handle_response(self, resp):
+
+        logger.debug(resp)
+        pid = resp['pid']
+
+        callback = getattr(self, resp['callback'])
+        callback(resp['return'], resp['msgid'])
+
+        if resp['return'] == 'DEATH':
+            if pid in self._workers.keys():
+                del self._workers[pid]
 
     def on_request(self, msgid, msg):
         """
@@ -230,6 +250,16 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         self.request_queue.put(payload)
 
+    def premature_death(self, reply, msgid):
+        return
+
+    def worker_death(self, reply, msgid):
+        return
+
+    def worker_death_with_reply(self, reply, msgid):
+        self.send_reply(reply, msgid)
+        self.send_ready()
+
     def worker_done_with_reply(self, reply, msgid):
         self.send_reply(reply, msgid)
         self.send_ready()
@@ -249,8 +279,7 @@ class JobManager(HeartbeatMixin, EMQPService):
          Sends an REPLY response
 
          Args:
-             socket (socket): The socket to use for this ack
-             recipient (str): The recipient id for the ack
+             reply: Message to send as the reply
              msgid: The unique id that we are acknowledging
          """
         sendmsg(self.outgoing, 'REPLY', [reply, msgid])
@@ -269,24 +298,32 @@ class JobManager(HeartbeatMixin, EMQPService):
         Checks for any dead processes in the pool and recreates them if
         necessary
         """
-        self._workers = [w[1] for w in self._workers if w.is_alive()]
+        # Kill workers that aren't alive
+        try:
+            [self.kill_worker(w.pid, signal.SIGKILL) for w in self.workers
+             if not w.is_alive]
+        except Exception as e:
+            logger.warning(str(e))
+
+        self._workers = {w.pid: w for w in self.workers
+                         if w.is_alive()}
 
         if len(self._workers) < conf.CONCURRENT_JOBS:
             logger.warning("{} worker process(es) may have died...recreating"
-                           .format(conf.CONCURRENT_JOBS - len(self._workers)))
+                           .format(conf.CONCURRENT_JOBS - len(self.workers)))
 
-        for i in range(0, conf.CONCURRENT_JOBS - len(self._workers)):
+        for i in range(0, conf.CONCURRENT_JOBS - len(self.workers)):
             w = Worker(self.request_queue, self.finished_queue)
             w.start()
             self._workers[w.pid] = w
 
-    def kill_worker(self, worker, signal):
+    def kill_worker(self, pid, signal):
         try:
-            os.kill(worker.pid, signal)
+            os.kill(pid, signal)
         except Exception as e:
             logger.excpetion(
                 "Encountered exception trying to send {} to worker {}: {}"
-                .format(signal, worker.pid, str(e)))
+                .format(signal, pid, str(e)))
 
     def on_disconnect(self, msgid, msg):
         sendmsg(self.outgoing, KBYE)
