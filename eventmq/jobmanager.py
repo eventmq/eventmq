@@ -113,7 +113,8 @@ class JobManager(HeartbeatMixin, EMQPService):
         if not hasattr(self, '_workers'):
             self._workers = {}
             for i in range(0, conf.CONCURRENT_JOBS):
-                w = Worker(self.request_queue, self.finished_queue)
+                w = Worker(self.request_queue, self.finished_queue,
+                           os.getpid())
                 w.start()
                 self._workers[w.pid] = w
 
@@ -155,18 +156,21 @@ class JobManager(HeartbeatMixin, EMQPService):
                        not self.should_reset:
                         if len(self._workers) > 0:
                             time.sleep(0.1)
-                        elif len(self._workers) == 0:
+                        else:
                             sys.exit(0)
-                        elif monotonic() - self.disconnect_time > 500:
+
+                        if monotonic() > self.disconnect_time + \
+                           conf.KILL_GRACE_PERIOD:
+                            logger.debug("Killing unresponsive workers")
                             for pid in self._workers.keys():
                                 self.kill_worker(pid, signal.SIGKILL)
-                            sys.ext(0)
+                            sys.exit(0)
                     else:
                         try:
-                            events = self.poller.poll()
+                            events = self.poller.poll(10)
                         except zmq.ZMQError:
                             logger.debug('Disconnecting due to ZMQError while'
-                                         'polling')
+                                         ' polling')
                             sendmsg(self.outgoing, KBYE)
                             self.received_disconnect = True
                             continue
@@ -191,6 +195,32 @@ class JobManager(HeartbeatMixin, EMQPService):
             logger.exception("Unhandled exception in main jobmanager loop")
 
     def handle_response(self, resp):
+        """
+        Handles a response from a worker process to the jobmanager
+
+        Args:
+          resp (dict): Must contain a key 'callback' with the desired callback
+        function as a string, i.e. 'worker_done' which is then called
+
+        Sample Input
+        resp = {
+            'callback': 'worker_done', (str)
+            'msgid': 'some_uuid', (str)
+            'return': 'return value', (dict)
+            'pid': 'pid_of_worker_process' (int)
+        }
+
+        return_value must be a dictionary that can be json serialized and
+        formatted like:
+
+        {
+            "value": 'return value of job goes here'
+        }
+
+        if the 'return' value of resp is 'DEATH', the worker died so we clean
+        that up as well
+
+        """
 
         logger.debug(resp)
         pid = resp['pid']
@@ -257,11 +287,6 @@ class JobManager(HeartbeatMixin, EMQPService):
     def worker_death(self, reply, msgid):
         return
 
-    def worker_death_with_reply(self, reply, msgid):
-        reply = serializer(reply)
-        self.send_reply(reply, msgid)
-        self.send_ready()
-
     def worker_done_with_reply(self, reply, msgid):
         reply = serializer(reply)
         self.send_reply(reply, msgid)
@@ -316,7 +341,7 @@ class JobManager(HeartbeatMixin, EMQPService):
                            .format(conf.CONCURRENT_JOBS - len(self.workers)))
 
         for i in range(0, conf.CONCURRENT_JOBS - len(self.workers)):
-            w = Worker(self.request_queue, self.finished_queue)
+            w = Worker(self.request_queue, self.finished_queue, os.getpid())
             w.start()
             self._workers[w.pid] = w
 

@@ -174,6 +174,17 @@ def pretend_job(t):
     return "I slept for {} seconds".format(t)
 
 
+def work_job(t):
+    import time
+
+    begin_time = time.time()
+
+    while time.time() < begin_time + t:
+        a = 1+1
+
+    return a
+
+
 def test_setup():
     import time
     assert time

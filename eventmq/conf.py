@@ -92,4 +92,8 @@ MAX_JOB_COUNT = 1024
 SETUP_PATH = ''
 SETUP_CALLABLE = ''
 
+# Time to wait after receiving SIGTERM to kill the workers in the jobmanager
+# forecfully
+KILL_GRACE_PERIOD = 300
+
 # }}}
