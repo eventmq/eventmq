@@ -17,12 +17,13 @@
 ================================
 Ensures things about jobs and spawns the actual tasks
 """
-from json import loads as deserializer
+from json import dumps as serializer, loads as deserializer
+
 import logging
 from multiprocessing import Queue as mp_queue
+import os
 import signal
 import sys
-import os
 import time
 
 import zmq
@@ -257,10 +258,12 @@ class JobManager(HeartbeatMixin, EMQPService):
         return
 
     def worker_death_with_reply(self, reply, msgid):
+        reply = serializer(reply)
         self.send_reply(reply, msgid)
         self.send_ready()
 
     def worker_done_with_reply(self, reply, msgid):
+        reply = serializer(reply)
         self.send_reply(reply, msgid)
         self.send_ready()
 
@@ -343,11 +346,12 @@ class JobManager(HeartbeatMixin, EMQPService):
         self.received_disconnect = True
 
     def sigterm_handler(self, signum, frame):
-        logger.info('Shutting down..')
-        sendmsg(self.outgoing, KBYE)
+        if not self.received_disconnect:
+            logger.info('Shutting down..')
+            sendmsg(self.outgoing, KBYE)
 
-        self.awaiting_startup_ack = False
-        self.received_disconnect = True
+            self.awaiting_startup_ack = False
+            self.received_disconnect = True
 
     def jobmanager_main(self, broker_addr=None):
         """

@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 from multiprocessing import Pool
 import time
 
@@ -38,7 +39,7 @@ def test_run_with_timeout():
         'args': [2]
     }
 
-    msgid = worker._run(payload)
+    msgid = worker._run(payload, logging.getLogger())
 
     assert msgid
 
