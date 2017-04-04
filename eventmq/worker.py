@@ -18,14 +18,22 @@
 Defines different short-lived workers that execute jobs
 """
 from importlib import import_module
+
 import logging
+
 from multiprocessing import Process
+
 import os
+import sys
+
 from threading import Event, Thread
 
 from . import conf
 
-logger = logging.getLogger(__name__)
+if sys.version[0] == '2':
+    import Queue
+else:
+    import queue as Queue
 
 
 class StoppableThread(Thread):
@@ -35,6 +43,7 @@ class StoppableThread(Thread):
     def __init__(self, target, name=None, args=()):
         super(StoppableThread, self).__init__(name=name, target=target,
                                               args=args)
+        self._return = None
         self._stop = Event()
 
     def stop(self):
@@ -43,18 +52,36 @@ class StoppableThread(Thread):
     def stopped(self):
         return self._stop.isSet()
 
+    def run(self):
+        """
+        Overrides default run to have a side effect of saving the result
+        in self._return that will be accessible when the job completes,
+        or remain None after a timeout
+        """
+        if self._Thread__target is not None:
+            self._return = self._Thread__target(*self._Thread__args,
+                                                **self._Thread__kwargs)
+
 
 class MultiprocessWorker(Process):
     """
     Defines a worker that spans the job in a multiprocessing task
     """
 
-    def __init__(self, input_queue, output_queue, run_setup=True):
+    def __init__(self, input_queue, output_queue, ppid, run_setup=True):
         super(MultiprocessWorker, self).__init__()
         self.input_queue = input_queue
         self.output_queue = output_queue
         self.job_count = 0
         self.run_setup = run_setup
+        self.ppid = ppid
+
+    @property
+    def logger(self):
+        if not hasattr(self, '_logger'):
+            self._logger = logging.getLogger(__name__ + '.' + str(os.getpid()))
+
+        return self._logger
 
     def run(self):
         """
@@ -62,118 +89,153 @@ class MultiprocessWorker(Process):
 
         This is designed to run in a seperate process.
         """
-
         if self.run_setup:
             self.run_setup = False
             if any(conf.SETUP_CALLABLE) and any(conf.SETUP_PATH):
                 try:
+                    self.logger.debug("Running setup ({}.{}) for worker id {}"
+                                      .format(
+                                          conf.SETUP_PATH,
+                                          conf.SETUP_CALLABLE,
+                                          os.getpid()))
                     run_setup(conf.SETUP_PATH, conf.SETUP_CALLABLE)
                 except Exception as e:
-                    logger.warning('Unable to complete setup task ({}.{}): {}'
-                                   .format(conf.SETUP_PATH,
-                                           conf.SETUP_CALLABLE, str(e)))
+                    self.logger.warning('Unable to do setup task ({}.{}): {}'
+                                        .format(conf.SETUP_PATH,
+                                                conf.SETUP_CALLABLE, str(e)))
 
         import zmq
         zmq.Context.instance().term()
 
-        # Pull the payload off the queue and run it
-        for payload in iter(self.input_queue.get, 'DONE'):
-
-            self.job_count += 1
-            timeout = payload.get("timeout", None)
-            msgid = payload.get('msgid', '')
-
-            resp = {'msgid': msgid,
-                    'return': 'None'}
+        # Main execution loop, only break in cases that we can't recover from
+        # or we reach job count limit
+        while True:
+            try:
+                payload = self.input_queue.get(block=False, timeout=1000)
+                if payload == 'DONE':
+                    break
+            except Queue.Empty:
+                if os.getppid() != self.ppid:
+                    break
+                continue
+            except Exception as e:
+                break
+            finally:
+                if os.getppid() != self.ppid:
+                    break
 
             try:
-                if timeout:
-                    worker_thread = StoppableThread(target=_run,
-                                                    args=(payload['params'], ))
-                    worker_thread.start()
-                    worker_thread.join(timeout)
+                return_val = 'None'
+                self.job_count += 1
+                timeout = payload.get("timeout", None)
+                msgid = payload.get('msgid', '')
+                callback = payload.get('callback', '')
 
-                    if worker_thread.isAlive():
-                        worker_thread.stop()
-                        resp['return'] = 'TimeoutError'
-                    else:
-                        resp['return'] = 'DONE'
-                else:
-                    resp['reutrn'] = _run(payload['params'])
+                worker_thread = StoppableThread(target=_run,
+                                                args=(payload['params'],
+                                                      self.logger))
+                worker_thread.start()
+                worker_thread.join(timeout)
+                return_val = {"value": worker_thread._return}
+
+                if worker_thread.isAlive():
+                    worker_thread.stop()
+                    return_val = 'TimeoutError'
+
+                try:
+                    self.output_queue.put_nowait(
+                        {'msgid': msgid,
+                         'return': return_val,
+                         'pid': os.getpid(),
+                         'callback': callback}
+                    )
+                except Exception:
+                    break
+
             except Exception as e:
-                resp['return'] = str(e)
+                return_val = str(e)
 
-            resp['callback'] = payload['callback']
-            self.output_queue.put(resp)
-
-            if self.job_count > conf.MAX_JOB_COUNT:
+            if self.job_count >= conf.MAX_JOB_COUNT:
                 break
 
-            if resp['return'] == 'TimeoutError':
-                break
+        self.output_queue.put(
+            {'msgid': None,
+             'return': 'DEATH',
+             'pid': os.getpid(),
+             'callback': 'worker_death'}
+            )
+        self.logger.debug("Worker death")
 
-        logger.debug("Worker death, PID: {}".format(os.getpid()))
 
-
-def _run(payload):
+def _run(payload, logger):
     """
     Takes care of actually executing the code given a message payload
+
+    Example payload:
+    {
+        "path": "path_to_callable",
+        "callable": "name_of_callable",
+        "args": (1, 2),
+        "kwargs": {"value": 1},
+        "class_args": (3, 4),
+        "class_kwargs": {"value": 2}
+    }
     """
-    if ":" in payload["path"]:
-        _pkgsplit = payload["path"].split(':')
-        s_package = _pkgsplit[0]
-        s_cls = _pkgsplit[1]
-    else:
-        s_package = payload["path"]
-        s_cls = None
-
-    s_callable = payload["callable"]
-
-    package = import_module(s_package)
-    if s_cls:
-        cls = getattr(package, s_cls)
-
-        if "class_args" in payload:
-            class_args = payload["class_args"]
-        else:
-            class_args = ()
-
-        if "class_kwargs" in payload:
-            class_kwargs = payload["class_kwargs"]
-        else:
-            class_kwargs = {}
-
-        obj = cls(*class_args, **class_kwargs)
-        callable_ = getattr(obj, s_callable)
-    else:
-        callable_ = getattr(package, s_callable)
-
-    if "args" in payload:
-        args = payload["args"]
-    else:
-        args = ()
-
-    if "kwargs" in payload:
-        kwargs = payload["kwargs"]
-    else:
-        kwargs = {}
-
     try:
-        callable_(*args, **kwargs)
+        if ":" in payload["path"]:
+            _pkgsplit = payload["path"].split(':')
+            s_package = _pkgsplit[0]
+            s_cls = _pkgsplit[1]
+        else:
+            s_package = payload["path"]
+            s_cls = None
+
+        s_callable = payload["callable"]
+
+        package = import_module(s_package)
+        if s_cls:
+            cls = getattr(package, s_cls)
+
+            if "class_args" in payload:
+                class_args = payload["class_args"]
+            else:
+                class_args = ()
+
+            if "class_kwargs" in payload:
+                class_kwargs = payload["class_kwargs"]
+            else:
+                class_kwargs = {}
+
+            obj = cls(*class_args, **class_kwargs)
+            callable_ = getattr(obj, s_callable)
+        else:
+            callable_ = getattr(package, s_callable)
+
+        if "args" in payload:
+            args = payload["args"]
+        else:
+            args = ()
+
+        if "kwargs" in payload:
+            kwargs = payload["kwargs"]
+        else:
+            kwargs = {}
+
+        return_val = callable_(*args, **kwargs)
     except Exception as e:
         logger.exception(e)
         return str(e)
 
     # Signal that we're done with this job
-    return 'DONE'
+    return return_val
 
 
 def run_setup(setup_path, setup_callable):
-    logger.debug("Running setup ({}.{}) for worker id {}".format(
-        setup_path,
-        setup_callable,
-        os.getpid()))
-
+    """
+    Runs the initial setup code of a given worker process by executing the code
+    at setup_path.setup_callable().  Note only functions are supported, no
+    class methods
+    """
     if ":" in setup_path:
         _pkgsplit = setup_path.split(':')
         s_setup_package = _pkgsplit[0]
@@ -185,8 +247,4 @@ def run_setup(setup_path, setup_callable):
 
         setup_callable_ = getattr(setup_package, setup_callable)
 
-        try:
-            setup_callable_()
-        except Exception as e:
-            logger.exception(e)
-            return str(e)
+        setup_callable_()

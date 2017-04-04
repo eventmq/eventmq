@@ -67,6 +67,7 @@ class TestCase(unittest.TestCase):
             sender_mock.return_value)
 
         jm.received_disconnect = True
+        jm.should_reset = True
         jm._start_event_loop()
 
     def test_on_request(self):
@@ -170,6 +171,18 @@ def start_jm(jm, addr):
 
 def pretend_job(t):
     time.sleep(t)
+    return "I slept for {} seconds".format(t)
+
+
+def work_job(t):
+    import time
+
+    begin_time = time.time()
+
+    while time.time() < begin_time + t:
+        a = 1+1
+
+    return a
 
 
 def test_setup():
