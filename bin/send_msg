@@ -19,18 +19,23 @@ if __name__ == "__main__":
 
         msg = ['run', {
             'path': 'eventmq.tests.test_jobmanager',
-            'callable': 'pretend_job',
+            'callable': 'work_job',
             'class_args': ('blurp',),
             'class_kwargs': {'kwarg1': True},
-            'args': (2, ),
+            'args': (50, ),
             'kwargs': {}
             }]
 
-        send_request(s, msg, guarantee=True, reply_requested=True, timeout=1)
-        print zmq.POLLOUT
-        events = dict(poller.poll(500))
-        print events
-        if events[s.zsocket] == zmq.POLLIN:
-            msg = s.recv_multipart()
+        msgid = send_request(s, msg, guarantee=True, reply_requested=True, timeout=10)
+        msgid = send_request(s, msg, guarantee=True, reply_requested=True)
+        # print 'Sent message, use msgid={} to track responses'.format(msgid)
+        # events = dict(poller.poll(500))
+        # if events[s.zsocket] == zmq.POLLIN:
+        #     msg = s.recv_multipart()
+        #     print msg
 
-            print msg
+        # # Wait for job reply
+        # events = dict(poller.poll(50000))
+        # if events[s.zsocket] == zmq.POLLIN:
+        #     msg = s.recv_multipart()
+        #     print msg

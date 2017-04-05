@@ -20,9 +20,9 @@ pip install eventmq
 [Documentation](https://eventmq.github.io/eventmq/)
 
 ## Mailing Lists
-User Support: http://lists.eventmq.io/listinfo.cgi/eventmq-users-eventmq.io
+User Support: http://lists.eventmq.io/mailman/listinfo/eventmq-users_lists.eventmq.io
 
-Development Discussion: http://lists.eventmq.io/listinfo.cgi/eventmq-devel-eventmq.io
+Development Discussion: http://lists.eventmq.io/mailman/listinfo/eventmq-devel_lists.eventmq.io
 
 ## IRC
 

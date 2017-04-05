@@ -159,6 +159,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
             cancel_jobs = []
             for k, v in self.interval_jobs.iteritems():
+                # TODO: Refactor this entire loop to be readable by humankind
                 # The schedule time has elapsed
                 if v[0] <= m_now:
                     msg = v[1]
@@ -175,6 +176,23 @@ class Scheduler(HeartbeatMixin, EMQPService):
                         else:
                             # Decrement run_count
                             v[4] -= 1
+                            # Persist the change to redis
+                            try:
+                                message = deserialize(self.redis_server.get(k))
+                                new_headers = []
+                                for header in message[1].split(','):
+                                    if 'run_count:' in header:
+                                        new_headers.append(
+                                            'run_count:{}'.format(v[4]))
+                                    else:
+                                        new_headers.append(header)
+                                message[1] = ",".join(new_headers)
+                                self.redis_server.set(k, serialize(message))
+                            except Exception as e:
+                                logger.warning(
+                                    'Unable to update key in redis '
+                                    'server: {}'.format(e))
+                            # Perform the request since run_count still > 0
                             self.send_request(msg, queue=queue)
                             v[0] = next(v[2])
                     else:
@@ -416,6 +434,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
         Returns:
             int: unique hash for the job
         """
+
         # Get the job portion of the message
         msg = deserialize(message[3])[1]
 

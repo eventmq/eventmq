@@ -101,7 +101,8 @@ class Job(object):
         return f
 
 
-def job(func, broker_addr=None, queue=None, async=True, *args, **kwargs):
+def job(func, broker_addr=None, queue=None, async=True, *args,
+        **kwargs):
     """
     Functional decorator helper for creating a deferred eventmq job. See
     :class:`Job` for more information.

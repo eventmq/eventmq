@@ -191,6 +191,25 @@ _CONFIG_DEFS = {
             'short-arg': '-J',
             'type': int,
             'help': 'Number of concurrent jobs to execute.'
+        },
+        'SETUP_PATH': {
+            'default': '',
+            'long-arg': '--setup-path',
+            'type': str,
+            'help': 'Module path to SETUP_CALLABLE'
+        },
+        'SETUP_CALLABLE': {
+            'default': '',
+            'long-arg': '--setup-callable',
+            'type': str,
+            'help': 'Callable name found at SETUP_PATH',
+        },
+        'KILL_GRACE_PERIOD': {
+            'default': 300,
+            'long-arg': '--kill-grace-period',
+            'type': int,
+            'help': 'Seconds to wait before forefully killing worker '
+                    'processes after receiving a SIGTERM'
         }
     },
     'scheduler': {
