@@ -13,41 +13,68 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
 """
-:mod:`publisher` -- Publisher
-=======================
+:mod:`pub` -- Publisher Node
+============================
 Publishes messages to subscribers
 """
 import logging
 
-from eventmq.log import setup_logger
-
-from . import conf, poller, publisher, receiver
+from . import exceptions, poller, publisher, receiver
 from .constants import STATUS
+from .settings import conf, reload_settings
 from .utils.classes import HeartbeatMixin
-from .utils.settings import import_settings
 
 logger = logging.getLogger(__name__)
 
 
 class Pub(HeartbeatMixin):
-    def __init__(self):
+    def __init__(self, override_settings=None, skip_signal=False, *args,
+                 **kwargs):
+        """
+        Initalize the publisher. Loads settings, creates sockets, loads them
+        into a poller and prepares the publisher for a ``start()`` call.
+
+        Args:
+           override_settings (dict): Dictionary containing settings that will
+               override the defaults and anything loaded from a config file.
+               The key should match the upper case conf setting name. See
+               :func:`eventmq.settings.load_settings_from_dict`
+           skip_signal (bool): Don't register the signal handclers. Useful for
+               testing.
+        """
+        self.override_settings = override_settings
+        reload_settings('publisher', self.override_settings)
+
+        super(Pub, self).__init__(*args, **kwargs)  # creates _meta
         self.poller = poller.Poller()
-        self.frontend = receiver.Receiver()
-        self.backend = publisher.Publisher()
+        self.incoming = receiver.Receiver()
+        self.outgoing = publisher.Publisher()
 
         self.received_disconnect = False
 
-        self.poller.register(self.frontend, poller.POLLIN)
+        self.poller.register(self.incoming, poller.POLLIN)
         return
 
-    def start(self,
-              frontend_addr=conf.PUBLISHER_FRONTEND_ADDR,
-              backend_addr=conf.PUBLISHER_BACKEND_ADDR):
+    def start(self):
+        frontend_addr = conf.FRONTEND_LISTEN_ADDR
+        backend_addr = conf.BACKEND_LISTEN_ADDR
+
+        undefined_addresses = []
+
+        if not frontend_addr:
+            undefined_addresses.append('FRONTEND_LISTEN_ADDR')
+        if not backend_addr:
+            undefined_addresses.append('BACKEND_LISTEN_ADDR')
+
+        if undefined_addresses:
+            raise exceptions.ConnectionError(
+                '{} must be defined before starting'.format(
+                    ', '.join(undefined_addresses)))
 
         self.status = STATUS.starting
 
-        self.frontend.listen(frontend_addr)
-        self.backend.listen(backend_addr)
+        self.incoming.listen(frontend_addr)
+        self.outgoing.listen(backend_addr)
 
         logger.info('Listening for publish requests on {}'.format(
             frontend_addr))
@@ -63,8 +90,8 @@ class Pub(HeartbeatMixin):
 
             events = self.poller.poll()
 
-            if events.get(self.frontend) == poller.POLLIN:
-                msg = self.frontend.recv_multipart()
+            if events.get(self.incoming) == poller.POLLIN:
+                msg = self.incoming.recv_multipart()
                 self.process_client_message(msg)
 
     def process_client_message(self, msg):
@@ -77,18 +104,9 @@ class Pub(HeartbeatMixin):
             logger.debug('Got Publish command')
             topic = msg[5]
             sub_message = msg[6]
-            logger.debug(self.backend.publish(topic, sub_message))
+            logger.debug(self.outgoing.publish(topic, sub_message))
 
         return
-
-    def pub_main(self):
-        """
-        Kick off PubSub with logging and settings import
-        """
-        setup_logger('eventmq')
-        import_settings(section='publisher')
-        self.start(frontend_addr=conf.PUBLISHER_FRONTEND_ADDR,
-                   backend_addr=conf.PUBLISHER_BACKEND_ADDR)
 
 
 # Entry point for pip console scripts

@@ -44,7 +44,7 @@ Terminal 1:
 
 ```
 % emq-router
-eventmq.utils.settings  WARNING - Config file at /etc/eventmq.conf not found. Continuing with defaults.
+eventmq.settings  WARNING - Config file at /etc/eventmq.conf not found. Continuing with defaults.
 eventmq.receiver  INFO - Receiver 83cdb797-8f99-4b06-862c-06f6b6f5f6f6: Listening on tcp://127.0.0.1:47291
 eventmq.receiver  INFO - Receiver 8e9b3b83-711c-4736-8efc-2a870e800245: Listening on tcp://127.0.0.1:47290
 eventmq.receiver  INFO - Receiver f67d673f-c44a-4380-b289-d88e264af5cd: Listening on tcp://127.0.0.1:47293
@@ -57,8 +57,8 @@ Terminal 2
 
 ```
 % emq-jobmanager
-eventmq.utils.settings  WARNING - Config file at /etc/eventmq.conf not found. Continuing with defaults.
-eventmq.utils.settings  WARNING - Config file at /etc/eventmq.conf not found. Continuing with defaults.
+eventmq.settings  WARNING - Config file at /etc/eventmq.conf not found. Continuing with defaults.
+eventmq.settings  WARNING - Config file at /etc/eventmq.conf not found. Continuing with defaults.
 eventmq.sender  DEBUG - Connecting to tcp://127.0.0.1:47290
 eventmq.utils.classes  INFO - Received ACK for router (or client) 9c7c3d5f-80f6-454a-b308-3231d1ce93b2
 eventmq.utils.classes  INFO - Starting event loop...

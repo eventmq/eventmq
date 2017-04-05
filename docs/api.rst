@@ -12,4 +12,5 @@ API Documentation
    receiver
    router
    sender
+   settings
    utils/index

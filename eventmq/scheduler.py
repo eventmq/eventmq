@@ -27,16 +27,15 @@ from croniter import croniter
 import redis
 from six import next
 
-from eventmq.log import setup_logger
-
-from . import conf, constants
+from . import constants
 from .client.messages import send_request
 from .constants import KBYE
 from .poller import Poller, POLLIN
 from .sender import Sender
+from .settings import conf, reload_settings
 from .utils.classes import EMQPService, HeartbeatMixin
+from .utils.devices import generate_device_name
 from .utils.messages import send_emqp_message as sendmsg
-from .utils.settings import import_settings
 from .utils.timeutils import IntervalIter, monotonic, seconds_until, timestamp
 
 
@@ -50,12 +49,29 @@ class Scheduler(HeartbeatMixin, EMQPService):
     """
     SERVICE_TYPE = constants.CLIENT_TYPE.scheduler
 
-    def __init__(self, *args, **kwargs):
-        self.name = kwargs.get('name', None)
+    def __init__(self, override_settings=None, skip_signal=False, *args,
+                 **kwargs):
+        """
+        Initalize the scheduler. Loads settings, creates sockets, loads them
+        into a poller, loads any saved schedules from redis  and generally
+        prepares the service for a ``start()`` call.
+
+        Args:
+            override_settings (dict): Dictionary containing settings that will
+                override defaults and anything loaded from the config file. The
+                key should match the uper case conf setting name.
+                See: :func:`eventmq.settings.load_settings_from_dict`
+            skip_signal (bool): Don't register the signal handlers. Useful for
+                testing.
+        """
+        self.override_settings = override_settings
+
+        reload_settings('scheduler', self.override_settings)
 
         logger.info('Initializing Scheduler...')
-        import_settings()
+
         super(Scheduler, self).__init__(*args, **kwargs)
+        self.name = conf.NAME or generate_device_name()
         self.frontend = Sender()
         self._redis_server = None
 
@@ -82,7 +98,6 @@ class Scheduler(HeartbeatMixin, EMQPService):
         self.interval_jobs = {}
 
         self.poller = Poller()
-
         self.load_jobs()
 
         self._setup()
@@ -189,10 +204,10 @@ class Scheduler(HeartbeatMixin, EMQPService):
         if self._redis_server is None:
             try:
                 self._redis_server = \
-                    redis.StrictRedis(host=conf.RQ_HOST,
-                                      port=conf.RQ_PORT,
-                                      db=conf.RQ_DB,
-                                      password=conf.RQ_PASSWORD)
+                    redis.StrictRedis(host=conf.REDIS_HOST,
+                                      port=conf.REDIS_PORT,
+                                      db=conf.REDIS_DB,
+                                      password=conf.REDIS_PASSWORD)
                 return self._redis_server
 
             except Exception as e:
@@ -222,7 +237,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
         logger.info("Received DISCONNECT request: {}".format(message))
         self._redis_server.connection_pool.disconnect()
         sendmsg(self.frontend, KBYE)
-        self.frontend.unbind(conf.SCHEDULER_ADDR)
+        self.frontend.unbind(conf.CONNECT_ADDR)
         super(Scheduler, self).on_disconnect(msgid, message)
 
     def on_kbye(self, msgid, msg):
@@ -419,21 +434,6 @@ class Scheduler(HeartbeatMixin, EMQPService):
             schedule_hash_items.encode('utf-8')).hexdigest()
 
         return schedule_hash
-
-    def scheduler_main(self):
-        """
-        Kick off scheduler with logging and settings import
-        """
-        setup_logger("eventmq")
-        import_settings()
-        self.__init__()
-        self.start(addr=conf.SCHEDULER_ADDR)
-
-
-# Entry point for pip console scripts
-def scheduler_main():
-    s = Scheduler()
-    s.scheduler_main()
 
 
 def test_job(*args, **kwargs):

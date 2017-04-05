@@ -12,11 +12,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
+from configparser import ConfigParser
+from contextlib import contextmanager
+import io
+import sys
 import uuid
 
+import mock
 import zmq
 
-from .. import conf, constants
+from .. import constants
+from ..settings import conf
 from ..utils.classes import ZMQReceiveMixin, ZMQSendMixin
 from ..utils.devices import generate_device_name
 
@@ -80,3 +86,47 @@ def send_raw_READY(sock):
     tracker.wait(1)
 
     return msgid
+
+
+@contextmanager
+def mock_config_file(settings_ini):
+    """
+    Mocks reading eventmq configuration file from the provided ``config``
+    string.
+
+    .. code:: python
+
+       from eventmq.settings import load_settings_from_file
+       from eventmq.tests.utils import mock_config_file
+
+       settings_ini = "\n".join(
+           ("[global]",
+            "super_debug=TRuE",
+            "frontend_addr=tcp://0.0.0.0:47291",
+            "",
+            "[jobmanager]",
+            "super_debug=FalSe",
+            'queues=[[50,"google"], [40,"pushes"], [10,"default"]]',
+            "worker_addr=tcp://160.254.23.88:47290",
+            "concurrent_jobs=9283",))
+
+       with mock_config_file(settings_ini):
+           load_settings_from_file('jobmanager')
+
+    Args:
+        settings_ini (str): INI-style config provided as a string
+    """
+    _config = ConfigParser()
+
+    if sys.version_info[0] == 3:
+        _config.read_string(settings_ini)
+    else:
+        _config.readfp(io.BytesIO(settings_ini))
+
+    with\
+        mock.patch('eventmq.settings.ConfigParser',
+                    return_value=_config), \
+        mock.patch('eventmq.settings.os.path.exists',
+                   return_value=True), \
+        mock.patch.object(_config, 'read'):  # noqa
+        yield

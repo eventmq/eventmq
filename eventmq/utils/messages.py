@@ -19,7 +19,8 @@
 import logging
 
 from . import random_characters
-from .. import conf, constants, exceptions
+from .. import constants, exceptions
+from ..settings import conf
 
 logger = logging.getLogger(__name__)
 

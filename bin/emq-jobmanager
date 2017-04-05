@@ -16,39 +16,47 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
 import argparse
+import sys
 
-from eventmq import conf
+from future.utils import iteritems
+
+from eventmq import exceptions
 from eventmq.jobmanager import JobManager
+from eventmq.log import setup_logger
+from eventmq.settings import build_parser_arguments
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Listen for job requests and '
-                                     'manage their execution')
-    parser.add_argument('--broker-addr', '-B', type=str, nargs='?',
-                        help='manually specify the broker address to connect '
-                        'to in order to receive jobs')
-    parser.add_argument('--config', '-C', type=str, nargs='?',
-                        help='manually specify the location of eventmq.conf')
-    parser.add_argument('--queues', '-Q', type=str, nargs='+',
-                        help='space separated list of queue names to listen '
-                             'on')
-    parser.add_argument('--jobs', '-J', type=int, nargs='?',
-                        help='the max number of concurrent jobs to manage at '
-                        'a time')
+    logger = setup_logger('')
+    parser = argparse.ArgumentParser(
+        description='Listen for job requests and manage their execution')
 
-    args = parser.parse_args()
+    build_parser_arguments(parser, 'jobmanager')
 
-    # Overwrite the default config location with the one passed to the app
-    if args.config:
-        conf.CONFIG_FILE = args.config
+    cli_args = vars(parser.parse_args())
 
-    # args.queues is a list of queues or None
-    queues = args.queues
-    if queues:
-        queues = ','.join(queues)
+    # queues come in as a crazy list of lists of characters. this little loop
+    # cleans them up.
+    if 'queues' in cli_args:
+        queues = []
+        for q in cli_args['queues']:
+            try:
+                weight, name = ''.join(q).split(',')
+                queues.append([int(weight), name])
+            except ValueError:
+                logger.error('Invalid weight,queue pair {}'.format(
+                    ''.join(q)))
+                sys.exit(1)
+        cli_args['queues'] = queues
 
-    broker_addr = args.broker_addr
-    concurrent_jobs = args.jobs
-
-    j = JobManager(queues=queues, concurrent_jobs=concurrent_jobs)
-    j.jobmanager_main(broker_addr=broker_addr)
+    # convert cli arg key names to upper case so they override the correct
+    # settings during initialization.
+    cli_args = {k.upper(): v for k, v in iteritems(cli_args)}
+    j = JobManager(override_settings=cli_args)
+    try:
+        j.start()
+    except exceptions.ConnectionError as e:
+        logger.error(e.message)
+        sys.exit(1)
+    except KeyboardInterrupt:
+        sys.exit(0)

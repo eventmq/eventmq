@@ -20,7 +20,8 @@ import mock
 from testfixtures import LogCapture
 import zmq
 
-from eventmq import conf, constants, exceptions, receiver, router
+from eventmq import constants, exceptions, receiver, router
+from eventmq.settings import conf
 from eventmq.utils.classes import EMQdeque
 from eventmq.utils.timeutils import monotonic
 
@@ -37,8 +38,9 @@ class TestCase(unittest.TestCase):
     def test_start(self, event_loop_mock, zsocket_bind_mock):
         # Test default args
         self.router.start()
-        self.router.frontend.listen.assert_called_with(conf.FRONTEND_ADDR)
-        self.router.backend.listen.assert_called_with(conf.BACKEND_ADDR)
+        self.router.frontend.listen.assert_called_with(
+            conf.FRONTEND_LISTEN_ADDR)
+        self.router.backend.listen.assert_called_with(conf.BACKEND_LISTEN_ADDR)
         self.assertEqual(self.router.status, constants.STATUS.listening)
 
         # Test invalid args
@@ -60,24 +62,23 @@ class TestCase(unittest.TestCase):
         self.router.add_worker.assert_called_with(
             sender_id, [(32, 'top'), (23, 'drop'), (12, 'shop')])
 
-    @mock.patch('eventmq.router.Router.send_ack')
-    @mock.patch('eventmq.router.Router.add_worker')
-    def test_on_inform_worker_default_queue(self, add_worker_mock,
-                                            send_ack_mock):
+    def test_on_inform_worker_no_queue(self):
         # Test on_inform when no queue is specified
         sender_id = 'omgsender18'
         queues = ''
         inform_msgid = 'msg29'
 
-        conf.QUEUES = [(10, 'default'), ]
+        msg = [queues, constants.CLIENT_TYPE.worker]
 
-        self.router.on_inform(
-            sender_id, inform_msgid, [queues, constants.CLIENT_TYPE.worker])
+        with LogCapture() as log_checker:
+            self.router.on_inform(sender_id, inform_msgid, msg)
 
-        self.router.send_ack.assert_called_with(
-            self.router.backend, sender_id, inform_msgid)
-        self.router.add_worker.assert_called_with(
-            sender_id, [(10, 'default'), ])
+            log_checker.check(
+                ('eventmq.router',
+                 'ERROR',
+                 'Recieved INFORM message with no defined queues. Message '
+                 'was: {}'.format(msg))
+            )
 
     def test_on_inform_invalid_queues(self):
         # https://github.com/enderlabs/eventmq/issues/33

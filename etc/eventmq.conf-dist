@@ -1,27 +1,61 @@
+# -*- mode: conf; encoding: utf-8 -*-
 [global]
-# Enable message output at different stages in the app.
-super_debug = true
-
-# Hide the heartbeat logs when super_debug is enabled. Showing them will generate a lot of messages.
-hide_heartbeat_logs = True
-
-# Port to listen on for administrative commands sent via emq-cli
-administrative_addr=tcp://0.0.0.0:47293
-
-frontend_addr=tcp://0.0.0.0:47291
-backend_addr=tcp://0.0.0.0:47290
-worker_addr=tcp://eventmq:47290
-scheduler_addr=tcp://eventmq:47291
+# Don't bother with HEARTBEATS, both sending and paying attention to them
+disable_heartbeats=False
+# Assume the peer is dead after this many missed heartbeats
+heartbeat_liveness=3
+# Assume a missed heartbeat after this many seconds
+heartbeat_timeout=5
+# How often should a heartbeat be sent in seconds. This should be lower than
+# HEARTBEAT_TIMEOUT
+heartbeat_interval = 3
+# Enable raw message output at different stages in the app.
+super_debug=true
+# Hide the heartbeat logs when super_debug is enabled. Showing them will
+# generate a lot of messages.
+hide_heartbeat_logs=true
+# Default character encoding for strings in messages See these URLs for
+# supported encodings:
+# https://docs.python.org/2/library/codecs.html#standard-encodings
+# https://docs.python.org/3/library/codecs.html#standard-encodings
+default_encoding=utf-8
 
 [router]
+# Listen for clients and schedulers on this address
+frontend_listen_addr=tcp://127.0.0.1:47291
+# Listen for jobmanagers on this address
+backend_listen_addr=tcp://127.0.0.1:47290
+# Listen for administrative status and management commands on this address
+admnistrative_listen_addr=tcp://127.0.0.1:47293
 
 [scheduler]
+# The address of the router's frontend_listen_addr to connect to
+connect_addr=tcp://127.0.0.1:47291
+# Scheduled jobs are saved and loaded from Redis
+redis_host=localhost
+redis_port=6379
+redis_db=0
+# Leave password blank if there is no password
+redis_password=
 
 [jobmanager]
-worker_addr=tcp://127.0.0.1:47290
-queues=[[50,"google"], [40,"pushes"], [10,"default"]]
-concurrent_jobs=2
+# The address of the router's backend_listen_addr to connect to
+connect_addr=tcp://127.0.0.1:47290
+# When no named queue is specified for a job use this queue
+default_queue_name=default
+# JSON Array of weights and named queues. We recommend you keep the default
+# queue unless your 100% positive every job will specify a queue
+queues=[[10, "default"]]
+# Number of concurrent jobs to run
+concurrent_jobs=4
+# Number of messages to cache in RAM before discarding messages
+hwm=10000
+# Number of jobs to execute before restarting the Multiprocessing workers to
+# free up any leaked memory.
+max_job_count=1024
 
 [publisher]
-publisher_frontend_addr=tcp://0.0.0.0:47298
-publisher_backend_addr=tcp://0.0.0.0:47299
+# Listen for publish messages on this address
+frontend_listen_addr=tcp://127.0.0.1:47298
+# Listen for subscribers on this address
+backend_listen_addr=tcp://127.0.0.1:47299

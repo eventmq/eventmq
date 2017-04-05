@@ -24,7 +24,6 @@ like creating message more simple.
    classes
    devices
    messages
-   settings
    timeutils
 """
 

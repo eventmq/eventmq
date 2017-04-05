@@ -18,8 +18,8 @@ import unittest
 import mock
 from testfixtures import LogCapture
 
-from .. import conf
 from ..client import messages
+from ..settings import conf
 
 
 class TestClass(object):
