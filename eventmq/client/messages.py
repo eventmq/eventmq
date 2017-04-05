@@ -43,12 +43,13 @@ def schedule(socket, func, interval_secs=None, args=(), kwargs=None,
         func (callable): the callable (or string path to calable) to be
             scheduled on a worker
         interval_secs (int): Run job every interval_secs or None if using cron
-        args (list): list of *args to pass to the callable
+        args (list): list of ``*args`` to pass to the callable
         cron (string): cron formatted string used for job schedule if
-            interval_secs is None, i.e. '* * * * *' (every minute)
-        kwargs (dict): dict of **kwargs to pass to the callable
-        class_args (list): list of *args to pass to the class (if applicable)
-        class_kwargs (dict): dict of **kwargs to pass to the class (if
+            interval_secs is None, i.e. ``'* * * * *'`` (every minute)
+        kwargs (dict): dict of ``**kwargs`` to pass to the callable
+        class_args (list): list of ``*args`` to pass to the class (if
+            applicable)
+        class_kwargs (dict): dict of ``**kwargs`` to pass to the class (if
             applicable)
         headers (list): list of strings denoting enabled headers. Default:
             guarantee is enabled to ensure the scheduler schedules the job.
@@ -110,8 +111,7 @@ def schedule(socket, func, interval_secs=None, args=(), kwargs=None,
 def defer_job(
         socket, func, wrapper=None, args=(), kwargs=None, class_args=(),
         class_kwargs=None, reply_requested=False, guarantee=False,
-        retry_count=0, timeout=0, debounce_secs=False,
-        queue=conf.DEFAULT_QUEUE_NAME):
+        retry_count=0, timeout=0, queue=conf.DEFAULT_QUEUE_NAME):
     """
     Used to send a job to a worker to execute via `socket`.
 
@@ -128,11 +128,11 @@ def defer_job(
             deferred to a worker
         wrapper (callable): optional wrapper for the call to func to be
              wrapped with
-        args (list): list of *args for the callable
-        kwargs (dict): dict of **kwargs for the callable
-        class_args (list): list of *args to pass to the the class when
+        args (list): list of ``*args`` for the callable
+        kwargs (dict): dict of ``**kwargs`` for the callable
+        class_args (list): list of ``*args`` to pass to the the class when
             initializing (if applicable).
-        class_kwargs (dict): dict of **kwargs to pass to the class when
+        class_kwargs (dict): dict of ``**kwargs`` to pass to the class when
             initializing (if applicable).
         reply_requested (bool): request the return value of func as a reply
         retry_count (int): How many times should be retried when encountering
@@ -140,8 +140,6 @@ def defer_job(
             or immediately fail)
         timeout (int): How many seconds should we wait before killing the job
             default: 0 which means infinite timeout
-        debounce_secs (secs): Number of seconds to debounce the job.   See
-            `debounce_deferred_job` for more information.
         queue (str): Name of queue to use when executing the job. If this value
             evaluates to False, the default is used. Default: is configured
             default queue name
@@ -218,24 +216,26 @@ def send_request(socket, message, reply_requested=False, guarantee=False,
     the headers then they have been enabled.
 
     To execute a task, the message should be formatted as follows:
-    {subcommand(str), {
-        # dot path location where callable can be imported. If callable is a
-        # method on a class, the class should always come last, and be
-        # seperated with a colon. (So we know to instantiate on the receiving
-        # end)
-        'path': path(str),
-        # function or method name to run
-        'callable': callable(str),
-        # Optional args for callable
-        'args': (arg, arg),
-        # Optional kwargs for callable
-        'kwargs': {'kwarg': kwarg},
-        # Optional class args, kwargs
-        'class_args': (arg2, arg3),
-        'class_kwargs': {'kwarg2': kwarg}
+    .. code::
 
-        }
-    }
+       {subcommand(str), {
+           # dot path location where callable can be imported. If callable is a
+           # method on a class, the class should always come last, and be
+           # seperated with a colon. (So we know to instantiate on the
+           # receiving end)
+           'path': path(str),
+           # function or method name to run
+           'callable': callable(str),
+           # Optional args for callable
+           'args': (arg, arg),
+           # Optional kwargs for callable
+           'kwargs': {'kwarg': kwarg},
+           # Optional class args, kwargs
+           'class_args': (arg2, arg3),
+           'class_kwargs': {'kwarg2': kwarg}
+         }
+       }
+
     Args:
         socket (socket): Socket to use when sending `message`
         message: message to send to `socket`

@@ -119,13 +119,19 @@ class Router(HeartbeatMixin):
         #: Queue for schedulers to use:
         self.scheduler_queue = []
 
-        #: Scheduler clients. Clients are able to send SCHEDULE commands that
-        #: need to be routed to a scheduler, which will keep track of time and
-        #: run the job.
+        #: Scheduler Clients
+        #:
         #: Contains dictionaries:
-        #:     self.schedulers[<scheduler_zmq_id>] = {
-        #:       'hb': <last_recv_heartbeat>,
-        #:     }
+        #:
+        #: .. code:: python
+        #:
+        #:    self.schedulers[<scheduler_zmq_id>] = {
+        #:        'hb': <last_recv_heartbeat>,
+        #:    }
+        #:
+        #: Clients are able to send SCHEDULE commands need to be routed to a
+        #: scheduler, which will keep track of time and run the job.
+        #:
         self.schedulers = {}
 
         #: Latency tracking dictionary
@@ -212,7 +218,7 @@ class Router(HeartbeatMixin):
 
     def reset_heartbeat_counters(self):
         """
-        Reset all the counters for heartbeats back to 0
+        Reset all the counters for heartbeats back to zero.
         """
         super(Router, self).reset_heartbeat_counters()
 
@@ -226,10 +232,10 @@ class Router(HeartbeatMixin):
         Args:
             socket (socket): The socket to use for this ack
             recipient (str): The recipient id for the ack
-            msgid: The unique id that we are acknowledging
+            msgid (str): The unique id that we are acknowledging
 
         Returns:
-            msgid: The ID of the ACK message
+            (str) The message id of the ACK message
         """
         logger.info('Sending ACK to %s' % recipient)
         logger.info('Queue information %s' % self.queues)

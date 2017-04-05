@@ -38,7 +38,8 @@ class EMQPService(object):
 
     Implements utility methods for sending EMQP messages for the following
     EMQP commands.
-     - INFORM
+
+    - INFORM
 
     Also implements utlitiy methods for managing long-running processes.
 
