@@ -5,7 +5,7 @@ EventMQ Documentation
 .. toctree::
    :maxdepth: 2
 
-   using
+   using/index
    api
    contributing
    changelog_link

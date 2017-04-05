@@ -131,17 +131,18 @@ def schedule(func, broker_addr=None, interval_secs=None, args=(), kwargs=None,
             address is given then the value of the environment variable
             ``EMQ_BROKER_ADDR`` will be used.
         interval_secs (int): Run job every interval_secs or None if using cron
-        args (list): list of *args to pass to the callable
-        kwargs (dict): dict of **kwargs to pass to the callable
-        class_args (list): list of *args to pass to the class (if applicable)
-        class_kwargs (dict): dict of **kwargs to pass to the class (if
+        args (list): list of ``*args`` to pass to the callable
+        kwargs (dict): dict of ``**kwargs`` to pass to the callable
+        class_args (list): list of ``*args`` to pass to the class (if
+            applicable)
+        class_kwargs (dict): dict of ``**kwargs`` to pass to the class (if
             applicable)
         headers (list): list of strings denoting enabled headers. Default:
             guarantee is enabled to ensure the scheduler schedules the job.
         queue (str): name of the queue to use when executing the job. The
             default value is the default queue.
         cron (string): cron formatted string used for job schedule if
-            interval_secs is None, i.e. '* * * * *' (every minute)
+            interval_secs is None, i.e. ``'* * * * *'`` (every minute)
     Raises:
         TypeError: When one or more parameters are not JSON serializable.
     Returns:
@@ -181,17 +182,18 @@ def unschedule(func, broker_addr=None, interval_secs=None, args=(),
             address is given then the value of the environment variable
             ``EMQ_BROKER_ADDR`` will be used.
         interval_secs (int): Run job every interval_secs or None if using cron
-        args (list): list of *args to pass to the callable
-        kwargs (dict): dict of **kwargs to pass to the callable
-        class_args (list): list of *args to pass to the class (if applicable)
-        class_kwargs (dict): dict of **kwargs to pass to the class (if
+        args (list): list of ``*args`` to pass to the callable
+        kwargs (dict): dict of ``**kwargs`` to pass to the callable
+        class_args (list): list of ``*args`` to pass to the class (if
+            applicable)
+        class_kwargs (dict): dict of ``**kwargs`` to pass to the class (if
             applicable)
         headers (list): list of strings denoting enabled headers. Default:
             guarantee is enabled to ensure the scheduler schedules the job.
         queue (str): name of the queue to use when executing the job. The
             default value is the default queue.
         cron (string): cron formatted string used for job schedule if
-            interval_secs is None, i.e. '* * * * *' (every minute)
+            interval_secs is None, i.e. ``'* * * * *'`` (every minute)
     Raises:
         TypeError: When one or more parameters are not JSON serializable.
     Returns:
