@@ -48,7 +48,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'EventMQ'
-copyright = u'2016, EventMQ Contributors'
+copyright = u'2016-2017, EventMQ Contributors'
 author = u'EventMQ Contributors'
 
 # The version info for the project you're documenting, acts as replacement for
