@@ -28,7 +28,7 @@ import zmq
 from .constants import KBYE, STATUS
 from .poller import Poller, POLLIN
 from .sender import Sender
-from .settings import conf, load_settings_from_dict, load_settings_from_file
+from .settings import conf, reload_settings
 from .utils.classes import EMQPService, HeartbeatMixin
 from .utils.devices import generate_device_name
 from .utils.functions import get_timeout_from_headers
@@ -71,7 +71,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         """
         self.override_settings = override_settings
 
-        self.load_settings()
+        reload_settings('jobmanager', self.override_settings)
 
         super(JobManager, self).__init__(*args, **kwargs)
 
@@ -283,7 +283,7 @@ class JobManager(HeartbeatMixin, EMQPService):
 
     def sighup_handler(self, signum, frame):
         logger.info('Caught signal %s' % signum)
-        self.load_settings()
+        reload_settings('jobmanager', self.override_settings)
 
         self.should_reset = True
         self.received_disconnect = True
@@ -294,12 +294,3 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         self.awaiting_startup_ack = False
         self.received_disconnect = True
-
-    def load_settings(self):
-        """
-        Reload settings by resetting to defaults, reading the config, and
-        setting any overridden settings.
-        """
-        conf.reload()
-        load_settings_from_file('jobmanager')
-        load_settings_from_dict(self.override_settings, 'jobmanager')

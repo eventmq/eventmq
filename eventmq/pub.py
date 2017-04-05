@@ -21,7 +21,7 @@ import logging
 
 from . import exceptions, poller, publisher, receiver
 from .constants import STATUS
-from .settings import conf, load_settings_from_dict, load_settings_from_file
+from .settings import conf, reload_settings
 from .utils.classes import HeartbeatMixin
 
 logger = logging.getLogger(__name__)
@@ -43,7 +43,7 @@ class Pub(HeartbeatMixin):
                testing.
         """
         self.override_settings = override_settings
-        self.load_settings()
+        reload_settings('publisher', self.override_settings)
 
         super(Pub, self).__init__(*args, **kwargs)  # creates _meta
         self.poller = poller.Poller()
@@ -107,15 +107,6 @@ class Pub(HeartbeatMixin):
             logger.debug(self.outgoing.publish(topic, sub_message))
 
         return
-
-    def load_settings(self):
-        """
-        Reload settings by resetting to defaults, reading the config file, and
-        setting any overriden settings.
-        """
-        conf.reload()
-        load_settings_from_file(section='publisher')
-        load_settings_from_dict(self.override_settings, 'publisher')
 
 
 # Entry point for pip console scripts

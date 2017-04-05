@@ -117,7 +117,7 @@ class TestCase(unittest.TestCase):
         self.assertTrue(jm.received_disconnect, "Did not receive disconnect.")
 
     # Other Tests
-    @mock.patch('eventmq.jobmanager.load_settings_from_file')
+    @mock.patch('eventmq.jobmanager.reload_settings')
     def test_sighup_handler(self, load_settings_mock):
         jm = jobmanager.JobManager()
 
@@ -126,7 +126,7 @@ class TestCase(unittest.TestCase):
         # called once on init, and once for the sighup handler
         self.assertEqual(2, load_settings_mock.call_count)
         # check to see if the last call was called with the jobmanager section
-        load_settings_mock.assert_called_with('jobmanager')
+        load_settings_mock.assert_called_with('jobmanager', None)
 
     @mock.patch('eventmq.jobmanager.sendmsg')
     def test_sigterm_handler(self, sendmsg_mock):

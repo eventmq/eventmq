@@ -257,6 +257,39 @@ _CONFIG_DEFS = {
 }
 
 
+def reload_settings(section, override_settings=None):
+    """
+    Reload settings by resetting ``conf`` to defaults, loading settings from a
+    file and overwriting any additional settings with what's defined in the
+    ``override_settings`` dict
+
+    Args:
+        section (str): The section of interest. See ``_CONFIG_DEFS``
+        override_settings (dict): Dictionary containing any additional settings
+           to override. The key should be the upper case config name.
+           See: :func:`load_settings_from_dict` for more information.
+    """
+    if section not in _CONFIG_DEFS:
+        raise ValueError(
+            'Unable to reload settings using unknown section: {} - Valid '
+            'options are: {}'.format(section, _CONFIG_DEFS.keys()))
+
+    config_file = None
+
+    conf.reload()
+
+    if override_settings:
+        if 'CONFIG' in override_settings:
+            config_file = override_settings['CONFIG']
+        elif 'CONFIG_FILE' in override_settings:
+            config_file = override_settings['CONFIG_FILE']
+
+    load_settings_from_file(section, file_path=config_file)
+    load_settings_from_dict(override_settings, section)
+
+    conf.section = section
+
+
 def load_settings_from_dict(settings_dict, section):
     """
     Load settings into conf from the provided dictionary. Generally this would

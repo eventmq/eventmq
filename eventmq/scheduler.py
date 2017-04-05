@@ -32,7 +32,7 @@ from .client.messages import send_request
 from .constants import KBYE
 from .poller import Poller, POLLIN
 from .sender import Sender
-from .settings import conf, load_settings_from_dict, load_settings_from_file
+from .settings import conf, reload_settings
 from .utils.classes import EMQPService, HeartbeatMixin
 from .utils.devices import generate_device_name
 from .utils.messages import send_emqp_message as sendmsg
@@ -66,7 +66,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
         """
         self.override_settings = override_settings
 
-        self.load_settings()
+        reload_settings('scheduler', self.override_settings)
 
         logger.info('Initializing Scheduler...')
 
@@ -434,15 +434,6 @@ class Scheduler(HeartbeatMixin, EMQPService):
             schedule_hash_items.encode('utf-8')).hexdigest()
 
         return schedule_hash
-
-    def load_settings(self):
-        """
-        Reload settings by resetting to defaults, reading config file, and
-        setting any overriden settings.
-        """
-        conf.reload()
-        load_settings_from_file('scheduler')
-        load_settings_from_dict(self.override_settings, 'scheduler')
 
 
 def test_job(*args, **kwargs):

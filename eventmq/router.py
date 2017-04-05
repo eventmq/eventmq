@@ -27,7 +27,7 @@ from .constants import (
     CLIENT_TYPE, DISCONNECT, KBYE, PROTOCOL_VERSION, ROUTER_SHOW_SCHEDULERS,
     ROUTER_SHOW_WORKERS, STATUS
 )
-from .settings import conf, load_settings_from_dict, load_settings_from_file
+from .settings import conf, reload_settings
 from .utils import tuplify
 from .utils.classes import EMQdeque, HeartbeatMixin
 from .utils.devices import generate_device_name
@@ -61,7 +61,7 @@ class Router(HeartbeatMixin):
                testing.
         """
         self.override_settings = override_settings
-        self.load_settings()
+        reload_settings('router', override_settings)
 
         super(Router, self).__init__(*args, **kwargs)  # Creates _meta
 
@@ -943,18 +943,9 @@ class Router(HeartbeatMixin):
         self.backend.unbind(conf.BACKEND_LISTEN_ADDR)
         self.administrative_socket.unbind(conf.ADMINISTRATIVE_LISTEN_ADDR)
 
-        self.load_settings()
+        reload_settings('router', self.override_settings)
 
         self.start()
-
-    def load_settings(self):
-        """
-        Reload settings by resetting to defaults, reading the config file, and
-        setting any overriden settings.
-        """
-        conf.reload()
-        load_settings_from_file('router')
-        load_settings_from_dict(self.override_settings, 'router')
 
 
 def router_on_full():
