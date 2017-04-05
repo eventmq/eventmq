@@ -64,9 +64,12 @@ class TestCase(unittest.TestCase):
         self.assertFalse(conf.SUPER_DEBUG)
         self.assertFalse(conf.HIDE_HEARTBEAT_LOGS)
 
-        # Defaults defefined in conf.py
-        self.assertEqual(conf.CONCURRENT_JOBS, 4)
-        self.assertEqual(conf.QUEUES, [[10, 'default'], ])
+        # Other settings shouldn't be defined
+        with self.assertRaises(AttributeError):
+            conf.CONCURRENT_JOBS
+
+        with self.assertRaises(AttributeError):
+            conf.frontend_listen_addr
 
     def test_read_section(self):
         # Test reading the router section
@@ -94,15 +97,9 @@ class TestCase(unittest.TestCase):
 
         # Invalid section
         with utils.mock_config_file(self.settings_ini):
-            settings.load_settings_from_file('nonexistent_section')
-
-        # Overwritten values
-        self.assertEqual(conf.CONCURRENT_JOBS, 1234)
-        self.assertEqual(conf.QUEUES,
-                         [(50, 'google'), (40, 'pushes'), (10, 'default')])
-        self.assertEqual(conf.CONNECT_ADDR, 'tcp://160.254.23.88:47290')
-        # Default value
-        self.assertEqual(conf.DEFAULT_QUEUE_NAME, 'default')
+            self.assertRaises(
+                ValueError,
+                settings.load_settings_from_file, 'nonexistent_section')
 
     def test_invalid_json(self):
         settings_ini = "\n".join(

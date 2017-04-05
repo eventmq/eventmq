@@ -50,7 +50,7 @@ class Router(HeartbeatMixin):
                  **kwargs):
         """
         Initialize the router. Loads settings, creates sockets, loads them into
-        a poller and preparse the router for a ``start()`` call.
+        a poller and prepares the router for a ``start()`` call.
 
         Args:
            override_settings (dict): Dictionary containing settings that will
@@ -953,7 +953,6 @@ class Router(HeartbeatMixin):
         setting any overriden settings.
         """
         conf.reload()
-        conf.section = 'router'
         load_settings_from_file('router')
         load_settings_from_dict(self.override_settings, 'router')
 

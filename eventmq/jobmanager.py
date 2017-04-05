@@ -80,14 +80,6 @@ class JobManager(HeartbeatMixin, EMQPService):
         self.name = conf.NAME or generate_device_name()
         logger.info('Initializing JobManager {}...'.format(self.name))
 
-        # #: keep track of workers
-        # concurrent_jobs = kwargs.pop('concurrent_jobs', None)
-        # if concurrent_jobs is not None:
-        #     conf.CONCURRENT_JOBS = concurrent_jobs
-
-        # #: List of queues that this job manager is listening on
-        # self.queues = kwargs.pop('queues', None)
-
         if skip_signal:
             # handle any sighups by reloading config
             signal.signal(signal.SIGHUP, self.sighup_handler)
@@ -309,6 +301,5 @@ class JobManager(HeartbeatMixin, EMQPService):
         setting any overridden settings.
         """
         conf.reload()
-        conf.section = 'jobmanager'
         load_settings_from_file('jobmanager')
         load_settings_from_dict(self.override_settings, 'jobmanager')

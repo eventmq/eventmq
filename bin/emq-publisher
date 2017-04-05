@@ -37,10 +37,12 @@ if __name__ == "__main__":
     # settings during initialization.
     cli_args = {k.upper(): v for k, v in iteritems(cli_args)}
 
-    p = Publisher(override_settings=cli_args)
+    p = Pub(override_settings=cli_args)
 
     try:
         p.start()
     except exceptions.ConnectionError as e:
         logger.error(e.message)
         sys.exit(1)
+    except KeyboardInterrupt:
+        sys.exit(0)

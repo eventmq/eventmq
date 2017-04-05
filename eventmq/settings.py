@@ -280,16 +280,17 @@ def load_settings_from_dict(settings_dict, section):
         section (str): The name of the config section these settings should be
             validated against.
     """
-    if not settings_dict:
-        return
-
     if section not in _CONFIG_DEFS:
-        logger.warning('Unable to load_settings_from_dict using unknown '
-                       'section: {}'.format(section))
-        return
+        raise ValueError('Unable to load_settings_from_dict using unknown '
+                         'section: {} - Valid options are: {}'.format(
+                             section, _CONFIG_DEFS.keys()))
 
     # Define the conf section based on what we're about to load
     conf.section = section
+
+    if settings_dict is None:
+        return
+
     for k, v in iteritems(settings_dict):
         # Use the CLI argument alias if that exists
         if k in _CLI_ARG_ALIASES:
@@ -316,6 +317,14 @@ def load_settings_from_file(section='global', file_path=None):
        section (str): Name of the INI section to import
        file_path (str): Full filesystem path of the config file to load.
     """
+    if section not in _CONFIG_DEFS:
+        raise ValueError('Unable to load_settings_from_file using unknown '
+                         'section: {} - Valid options are: {}'.format(
+                             section, _CONFIG_DEFS.keys()))
+
+    # Define the conf section based on what we're about to load
+    conf.section = section
+
     config = ConfigParser()
 
     if file_path:
@@ -340,8 +349,6 @@ def load_settings_from_file(section='global', file_path=None):
             'Tried to read nonexistent section {}'.format(section))
         return
 
-    # Define the conf section based on what we're about to load
-    conf.section = section
     _load_section(config, section)
 
 

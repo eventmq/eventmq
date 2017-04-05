@@ -441,7 +441,6 @@ class Scheduler(HeartbeatMixin, EMQPService):
         setting any overriden settings.
         """
         conf.reload()
-        conf.section = 'scheduler'
         load_settings_from_file('scheduler')
         load_settings_from_dict(self.override_settings, 'scheduler')
 

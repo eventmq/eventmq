@@ -326,7 +326,8 @@ class HeartbeatMixin(object):
         Sends a heartbeat if heartbeating is enabled.
 
         Returns:
-            (bool):
+            (bool): False if the connection is dead, True if the heartbeat was
+                successfully sent, and None if heartbeating is disabled.
         """
         # TODO: Optimization: Move the method calls into another thread so
         # they don't block the event loop

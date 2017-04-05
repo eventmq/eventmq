@@ -43,3 +43,5 @@ if __name__ == "__main__":
     except exceptions.ConnectionError as e:
         logger.error(e.message)
         sys.exit(1)
+    except KeyboardInterrupt:
+        sys.exit(0)
