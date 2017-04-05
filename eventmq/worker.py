@@ -23,7 +23,7 @@ from multiprocessing import Process
 import os
 from threading import Event, Thread
 
-from . import conf
+from .settings import conf
 
 logger = logging.getLogger(__name__)
 

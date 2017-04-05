@@ -14,8 +14,32 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
+import argparse
+import sys
+
+from future.utils import iteritems
+
+from eventmq import exceptions
+from eventmq.log import setup_logger
 from eventmq.router import Router
+from eventmq.settings import build_parser_arguments
 
 if __name__ == "__main__":
-    r = Router()
-    r.router_main()
+    logger = setup_logger('')
+    parser = argparse.ArgumentParser(
+        description='Route client REQUESTs to available job managers')
+
+    build_parser_arguments(parser, 'router')
+
+    cli_args = vars(parser.parse_args())
+
+    # convert cli arg key names to upper case so they override the correct
+    # settings during initialization.
+    cli_args = {k.upper(): v for k, v in iteritems(cli_args)}
+    r = Router(override_settings=cli_args)
+
+    try:
+        r.start()
+    except exceptions.ConnectionError as e:
+        logger.error(e.message)
+        sys.exit(1)

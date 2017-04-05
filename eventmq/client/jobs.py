@@ -20,10 +20,10 @@ import logging
 import os
 
 from . import messages
-from .. import conf
 from ..constants import ENV_BROKER_ADDR
 from ..exceptions import ConnectionError
 from ..sender import Sender
+from ..settings import conf
 
 logger = logging.getLogger(__name__)
 

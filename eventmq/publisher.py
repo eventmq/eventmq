@@ -27,7 +27,7 @@ from .utils.devices import generate_device_name
 logger = logging.getLogger(__name__)
 
 
-class Publisher():
+class Publisher(object):
     """
         name (str): Name of this socket
         zcontext (:class:`zmq.Context`): socket context

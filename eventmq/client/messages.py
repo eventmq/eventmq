@@ -21,7 +21,7 @@ import logging
 
 from past.builtins import basestring
 
-from .. import conf
+from ..settings import conf
 from ..utils.functions import name_from_callable, split_callable_name
 from ..utils.messages import send_emqp_message
 

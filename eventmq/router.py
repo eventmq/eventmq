@@ -22,12 +22,12 @@ import json  # deserialize queues in on_inform. should be refactored
 import logging
 import signal
 
-from eventmq.log import setup_logger
-from . import conf, constants, exceptions, poller, receiver
+from . import constants, exceptions, poller, receiver
 from .constants import (
     CLIENT_TYPE, DISCONNECT, KBYE, PROTOCOL_VERSION, ROUTER_SHOW_SCHEDULERS,
     ROUTER_SHOW_WORKERS, STATUS
 )
+from .settings import conf, load_settings_from_dict, load_settings_from_file
 from .utils import tuplify
 from .utils.classes import EMQdeque, HeartbeatMixin
 from .utils.devices import generate_device_name
@@ -36,7 +36,6 @@ from .utils.messages import (
     parse_router_message,
     send_emqp_router_message as sendmsg,
 )
-from .utils.settings import import_settings
 from .utils.timeutils import monotonic, timestamp
 
 
@@ -47,10 +46,26 @@ class Router(HeartbeatMixin):
     """
     A simple router of messages
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, override_settings=None, skip_signal=False, *args,
+                 **kwargs):
+        """
+        Initialize the router. Loads settings, creates sockets, loads them into
+        a poller and preparse the router for a ``start()`` call.
+
+        Args:
+           override_settings (dict): Dictionary containing settings that will
+               override the defaults and anything loaded from a config file.
+               The key should match the upper case conf setting name. See
+               :func:`eventmq.settings.load_settings_from_dict`
+           skip_signal (bool): Don't register the signal handclers. Useful for
+               testing.
+        """
+        self.override_settings = override_settings
+        self.load_settings()
+
         super(Router, self).__init__(*args, **kwargs)  # Creates _meta
 
-        self.name = generate_device_name()
+        self.name = conf.NAME or generate_device_name()
         logger.info('Initializing Router %s...' % self.name)
 
         self.poller = poller.Poller()
@@ -134,33 +149,6 @@ class Router(HeartbeatMixin):
     def handle_pdb(self, sig, frame):
         import pdb
         pdb.Pdb().set_trace(frame)
-
-    def start(self,
-              frontend_addr=conf.FRONTEND_LISTEN_ADDR,
-              backend_addr=conf.BACKEND_LISTEN_ADDR,
-              administrative_addr=conf.ADMINISTRATIVE_LISTEN_ADDR):
-        """
-        Begin listening for connections on the provided connection strings
-
-        Args:
-            frontend_addr (str): connection string to listen for requests
-            backend_addr (str): connection string to listen for workers
-            administrative_addr (str): connection string to listen for emq-cli
-                commands on.
-        """
-        self.status = STATUS.starting
-
-        self.frontend.listen(frontend_addr)
-        self.backend.listen(backend_addr)
-        self.administrative_socket.listen(administrative_addr)
-
-        self.status = STATUS.listening
-        logger.info('Listening for requests on {}'.format(frontend_addr))
-        logger.info('Listening for workers on {}'.format(backend_addr))
-        logger.info('Listening for administrative commands on {}'.format(
-            administrative_addr))
-
-        self._start_event_loop()
 
     def _start_event_loop(self):
         """
@@ -305,17 +293,19 @@ class Router(HeartbeatMixin):
         client_type = msg[1]
 
         if not queue_names:  # Ideally, this matches some workers
-            queues = conf.QUEUES
-        else:
-            try:
-                queues = list(map(tuplify, json.loads(queue_names)))
-            except ValueError:
-                # this was invalid json
-                logger.error(
-                    'Received invalid queue names in INFORM. names:{} from:{} '
-                    'type:{}'.format(
-                        queue_names, sender, client_type))
-                return
+            logger.error('Recieved INFORM message with no defined '
+                         'queues. Message was: {}'.format(msg))
+            return
+
+        try:
+            queues = list(map(tuplify, json.loads(queue_names)))
+        except ValueError:
+            # this was invalid json
+            logger.error(
+                'Received invalid queue names in INFORM. names:{} from:{} '
+                'type:{}'.format(
+                    queue_names, sender, client_type))
+            return
 
         logger.info('Received INFORM request from {} (type: {})'.format(
             sender, client_type))
@@ -899,6 +889,44 @@ class Router(HeartbeatMixin):
             'connected_schedulers': self.schedulers
         })
 
+    def start(self):
+        """
+        Begin listening for connections on:
+         - ``conf.FRONTEND_LISTEN_ADDR``
+         - ``conf.BACKEND_LISTEN_ADDR``
+         - ``conf.ADMINISTRATIVE_LISTEN_ADDR``
+        """
+        frontend_addr = conf.FRONTEND_LISTEN_ADDR
+        backend_addr = conf.BACKEND_LISTEN_ADDR
+        admin_addr = conf.ADMINISTRATIVE_LISTEN_ADDR
+
+        undefined_addresses = []
+        if not frontend_addr:
+            undefined_addresses.append('FRONTEND_LISTEN_ADDR')
+        if not backend_addr:
+            undefined_addresses.append('BACKEND_LISTEN_ADDR')
+        if not admin_addr:
+            undefined_addresses.append('ADMINISTRATIVE_LISTEN_ADDR')
+
+        if undefined_addresses:
+            raise exceptions.ConnectionError(
+                '{} must be defined before starting'.format(
+                    ', '.join(undefined_addresses)))
+
+        self.status = STATUS.starting
+
+        self.frontend.listen(frontend_addr)
+        self.backend.listen(backend_addr)
+        self.administrative_socket.listen(admin_addr)
+
+        self.status = STATUS.listening
+        logger.info('Listening for requests on {}'.format(frontend_addr))
+        logger.info('Listening for workers on {}'.format(backend_addr))
+        logger.info('Listening for administrative commands on {}'.format(
+            admin_addr))
+
+        self._start_event_loop()
+
     def sighup_handler(self, signum, frame):
         """
         Reloads the configuration and rebinds the ports. Exectued when the
@@ -907,20 +935,21 @@ class Router(HeartbeatMixin):
         logger.info('Caught signame %s' % signum)
         self.frontend.unbind(conf.FRONTEND_LISTEN_ADDR)
         self.backend.unbind(conf.BACKEND_LISTEN_ADDR)
-        import_settings('router')
-        self.start(frontend_addr=conf.FRONTEND_LISTEN_ADDR,
-                   backend_addr=conf.BACKEND_LISTEN_ADDR,
-                   administrative_addr=conf.ADMINISTRATIVE_LISTEN_ADDR)
+        self.administrative_socket.unbind(conf.ADMINISTRATIVE_LISTEN_ADDR)
 
-    def router_main(self):
+        self.load_settings()
+
+        self.start()
+
+    def load_settings(self):
         """
-        Kick off router with logging and settings import
+        Reload settings by resetting to defaults, reading the config file, and
+        setting any overriden settings.
         """
-        setup_logger('eventmq')
-        import_settings('router')
-        self.start(frontend_addr=conf.FRONTEND_LISTEN_ADDR,
-                   backend_addr=conf.BACKEND_LISTEN_ADDR,
-                   administrative_addr=conf.ADMINISTRATIVE_LISTEN_ADDR)
+        conf.reload()
+        conf.section = 'router'
+        load_settings_from_file('router')
+        load_settings_from_dict(self.override_settings, 'router')
 
 
 def router_on_full():

@@ -14,8 +14,26 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
+import argparse
+import sys
+
+from eventmq import exceptions
+from eventmq.log import setup_logger
 from eventmq.scheduler import Scheduler
+from eventmq.settings import build_parser_arguments
 
 if __name__ == "__main__":
-    s = Scheduler()
-    s.scheduler_main()
+    logger = setup_logger('')
+    parser = argparse.ArgumentParser(
+        description='Manager of scheduled jobs')
+
+    build_parser_arguments(parser, 'scheduler')
+
+    cli_args = vars(parser.parse_args())
+    s = Scheduler(override_settings=cli_args)
+
+    try:
+        s.start()
+    except exceptions.ConnectionError as e:
+        logger.error(e.message)
+        sys.exit(1)

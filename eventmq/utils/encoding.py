@@ -14,7 +14,7 @@
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
 from past.builtins import basestring
 
-from .. import conf
+from ..settings import conf
 
 
 def encodify(message):

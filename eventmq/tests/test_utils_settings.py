@@ -12,14 +12,13 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
-from imp import reload
 import unittest
 
 from testfixtures import LogCapture
 
 from . import utils  # test utilities
-from .. import conf
-from ..utils import settings
+from .. import settings
+from ..settings import conf
 
 
 class TestCase(unittest.TestCase):
@@ -43,23 +42,23 @@ class TestCase(unittest.TestCase):
          "super_dEbug=TrUe",
          ""))
 
-    def test_import_settings_default(self):
+    def test_load_settings_default(self):
         # Test loading the global section only
         with LogCapture() as log_checker:
             with utils.mock_config_file(self.settings_ini):
-                settings.import_settings()
+                settings.load_settings_from_file()
 
             log_checker.check(
-                ('eventmq.utils.settings',
-                  'DEBUG',
-                  'Setting conf.SUPER_DEBUG to False'),
-                 ('eventmq.utils.settings',
-                  'DEBUG',
-                  'Setting conf.HIDE_HEARTBEAT_LOGS to False'),
-                 ('eventmq.utils.settings',
-                  'WARNING',
-                  'Ignoring ambiguous setting defined in global section: '
-                  'frontend_listen_addr=tcp://1.2.3.4:1234'))
+                ('eventmq.settings',
+                 'DEBUG',
+                 'Setting conf.SUPER_DEBUG to False'),
+                ('eventmq.settings',
+                 'DEBUG',
+                 'Setting conf.HIDE_HEARTBEAT_LOGS to False'),
+                ('eventmq.settings',
+                 'WARNING',
+                 'Tried to set invalid setting: frontend_listen_addr='
+                 'tcp://1.2.3.4:1234'))
 
         # Defined in the global section
         self.assertFalse(conf.SUPER_DEBUG)
@@ -67,12 +66,12 @@ class TestCase(unittest.TestCase):
 
         # Defaults defefined in conf.py
         self.assertEqual(conf.CONCURRENT_JOBS, 4)
-        self.assertEqual(conf.QUEUES, [(10, 'default'), ])
+        self.assertEqual(conf.QUEUES, [[10, 'default'], ])
 
     def test_read_section(self):
         # Test reading the router section
         with utils.mock_config_file(self.settings_ini):
-            settings.import_settings('router')
+            settings.load_settings_from_file('router')
 
         # Changed in global section
         self.assertFalse(conf.HIDE_HEARTBEAT_LOGS)
@@ -95,7 +94,7 @@ class TestCase(unittest.TestCase):
 
         # Invalid section
         with utils.mock_config_file(self.settings_ini):
-            settings.import_settings('nonexistent_section')
+            settings.load_settings_from_file('nonexistent_section')
 
         # Overwritten values
         self.assertEqual(conf.CONCURRENT_JOBS, 1234)
@@ -117,11 +116,11 @@ class TestCase(unittest.TestCase):
              "worker_addr=tcp://160.254.23.88:47290",
              "concurrent_jobs=9283",))
         # Ensure fresh test data
-        reload(conf)
+        conf.reload()
 
         with utils.mock_config_file(settings_ini):
             self.assertRaises(ValueError,
-                              settings.import_settings, 'jobmanager')
+                              settings.load_settings_from_file, 'jobmanager')
 
     def test_parse_string_array(self):
         # Tests parsing a non-nested array (nested are tested via QUEUES
@@ -130,11 +129,11 @@ class TestCase(unittest.TestCase):
             ("[jobmanager]",
              'fake_value=["asdf", "asdf2"]',))
         # Ensure fresh test data
-        reload(conf)
+        conf.reload()
         conf.FAKE_VALUE = [u'pew', u'pew']
 
         with utils.mock_config_file(settings_ini):
-            settings.import_settings('jobmanager')
+            settings.load_settings_from_file('jobmanager')
 
         self.assertEqual(conf.FAKE_VALUE, [u'asdf', u'asdf2'])
 
@@ -144,10 +143,10 @@ class TestCase(unittest.TestCase):
             ("[jobmanager]",
              'fake_value=[{"key1": "value1"}, {"key2": "value2"}]')
         )
-        reload(conf)
+        conf.reload()
         conf.FAKE_VALUE = [{'default': 1}]
         with utils.mock_config_file(settings_ini):
-            settings.import_settings('jobmanager')
+            settings.load_settings_from_file('jobmanager')
 
         self.assertEqual(conf.FAKE_VALUE,
                          [{u"key1": u"value1"}, {u"key2": u"value2"}])
@@ -157,14 +156,14 @@ class TestCase(unittest.TestCase):
             ("[global]",
              'nonexistent_setting=rabbit blood',))
         # Ensure fresh test data
-        reload(conf)
+        conf.reload()
 
         with LogCapture() as log_checker:
             with utils.mock_config_file(settings_ini):
-                settings.import_settings()
+                settings.load_settings_from_file()
 
             log_checker.check(
-                ('eventmq.utils.settings',
+                ('eventmq.settings',
                  'WARNING',
                  'Tried to set invalid setting: nonexistent_setting=rabbit '
                  'blood'))

@@ -21,8 +21,11 @@ from .. import constants, scheduler
 
 class TestCase(unittest.TestCase):
     def test__setup(self):
-        sched = scheduler.Scheduler(name='RuckusBringer')
-        self.assertEqual(sched.name, 'RuckusBringer')
+        override_settings = {
+            'NAME': 'RuckasBringer'
+        }
+        sched = scheduler.Scheduler(override_settings=override_settings)
+        self.assertEqual(sched.name, 'RuckasBringer')
 
         self.assertFalse(sched.awaiting_startup_ack)
         self.assertEqual(sched.status, constants.STATUS.ready)

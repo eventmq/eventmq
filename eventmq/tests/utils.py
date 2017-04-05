@@ -21,7 +21,8 @@ import uuid
 import mock
 import zmq
 
-from .. import conf, constants
+from .. import constants
+from ..settings import conf
 from ..utils.classes import ZMQReceiveMixin, ZMQSendMixin
 from ..utils.devices import generate_device_name
 
@@ -95,7 +96,7 @@ def mock_config_file(settings_ini):
 
     .. code:: python
 
-       from eventmq.utils.settings import import_settings
+       from eventmq.settings import load_settings_from_file
        from eventmq.tests.utils import mock_config_file
 
        settings_ini = "\n".join(
@@ -110,7 +111,7 @@ def mock_config_file(settings_ini):
             "concurrent_jobs=9283",))
 
        with mock_config_file(settings_ini):
-           import_settings('jobmanager')
+           load_settings_from_file('jobmanager')
 
     Args:
         settings_ini (str): INI-style config provided as a string
@@ -123,9 +124,9 @@ def mock_config_file(settings_ini):
         _config.readfp(io.BytesIO(settings_ini))
 
     with\
-        mock.patch('eventmq.utils.settings.ConfigParser',
+        mock.patch('eventmq.settings.ConfigParser',
                     return_value=_config), \
-        mock.patch('eventmq.utils.settings.os.path.exists',
+        mock.patch('eventmq.settings.os.path.exists',
                    return_value=True), \
         mock.patch.object(_config, 'read'):  # noqa
         yield

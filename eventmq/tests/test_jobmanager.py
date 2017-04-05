@@ -17,14 +17,18 @@ import unittest
 
 import mock
 
-from .. import conf, constants, jobmanager
+from .. import constants, jobmanager
+from ..settings import conf
 
 ADDR = 'inproc://pour_the_rice_in_the_thing'
 
 
 class TestCase(unittest.TestCase):
     def test__setup(self):
-        jm = jobmanager.JobManager(name='RuckusBringer')
+        override_settings = {
+            'NAME': 'RuckusBringer'
+        }
+        jm = jobmanager.JobManager(override_settings=override_settings)
         self.assertEqual(jm.name, 'RuckusBringer')
 
         self.assertFalse(jm.awaiting_startup_ack)
@@ -53,7 +57,9 @@ class TestCase(unittest.TestCase):
     def test__start_event_loop(self, send_ready_mock, maybe_send_hb_mock,
                                poll_mock, sender_mock, process_msg_mock,
                                pool_close_mock):
-        jm = jobmanager.JobManager()
+        jm = jobmanager.JobManager(override_settings={
+            'CONNECT_ADDR': ADDR
+        })
         maybe_send_hb_mock.return_value = False
         poll_mock.return_value = {jm.frontend: jobmanager.POLLIN}
         sender_mock.return_value = [1, 2, 3]
@@ -111,17 +117,16 @@ class TestCase(unittest.TestCase):
         self.assertTrue(jm.received_disconnect, "Did not receive disconnect.")
 
     # Other Tests
-    @mock.patch('eventmq.jobmanager.import_settings')
-    def test_sighup_handler(self, import_settings_mock):
+    @mock.patch('eventmq.jobmanager.load_settings_from_file')
+    def test_sighup_handler(self, load_settings_mock):
         jm = jobmanager.JobManager()
 
         jm.sighup_handler(982374, "FRAMEY the frame")
 
-        # called once for the default settings, once for the jobmanager
-        # settings
-        self.assertEqual(1, import_settings_mock.call_count)
+        # called once on init, and once for the sighup handler
+        self.assertEqual(2, load_settings_mock.call_count)
         # check to see if the last call was called with the jobmanager section
-        import_settings_mock.assert_called_with(section='jobmanager')
+        load_settings_mock.assert_called_with('jobmanager')
 
     @mock.patch('eventmq.jobmanager.sendmsg')
     def test_sigterm_handler(self, sendmsg_mock):
@@ -132,27 +137,6 @@ class TestCase(unittest.TestCase):
         sendmsg_mock.assert_called_with(jm.frontend, constants.KBYE)
         self.assertFalse(jm.awaiting_startup_ack)
         self.assertTrue(jm.received_disconnect)
-
-    @mock.patch('eventmq.jobmanager.JobManager.start')
-    @mock.patch('eventmq.jobmanager.import_settings')
-    def test_jobmanager_main(self, import_settings_mock, start_mock):
-        jm = jobmanager.JobManager()
-
-        jm.jobmanager_main()
-
-        self.assertEqual(1, import_settings_mock.call_count)
-        # Assert that the last call to import settings was for the jobmanager
-        # section
-        import_settings_mock.assert_called_with(section='jobmanager')
-
-        start_mock.assert_called_with(addr=conf.CONNECT_ADDR,
-                                      queues=conf.QUEUES)
-
-        jm.queues = ((10, 'derp'), (0, 'blurp'))
-        jm.jobmanager_main()
-
-        start_mock.assert_called_with(addr=conf.CONNECT_ADDR,
-                                      queues=jm.queues)
 
     def cleanup(self):
         self.jm.on_disconnect(None, None)

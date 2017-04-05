@@ -23,7 +23,8 @@ import logging
 
 import zmq.error
 
-from .. import conf, constants, exceptions, poller, utils
+from .. import constants, exceptions, poller, utils
+from ..settings import conf
 from ..utils.encoding import encodify
 from ..utils.messages import send_emqp_message as sendmsg
 from ..utils.timeutils import monotonic, timestamp
@@ -123,13 +124,19 @@ class EMQPService(object):
 
         self.status = constants.STATUS.ready
 
-    def start(self, addr, queues=conf.DEFAULT_QUEUE_NAME):
+    def start(self):
         """
         Connect to `addr` and begin listening for job requests
 
         Args:
             addr (str): connection string to connect to
         """
+        addr = conf.CONNECT_ADDR
+
+        if not addr:
+            raise exceptions.ConnectionError(
+                'CONNECT_ADDR must be defined before connecting')
+
         while not self.received_disconnect:
             self.status = constants.STATUS.connecting
             self.frontend.connect(addr)
@@ -140,14 +147,12 @@ class EMQPService(object):
 
             # If this is inside the loop, then many inform messages will stack
             # up on the buffer until something is actually connected to.
-            self.send_inform(queues)
+            self.send_inform(conf.QUEUES)
 
             # We don't want to accidentally start processing jobs before our
             # connection has been setup completely and acknowledged.
             while self.awaiting_startup_ack:
-                # Poller timeout is in ms so the reconnect timeout is
-                # multiplied by 1000 to get seconds
-                events = self.poller.poll(conf.RECONNECT_TIMEOUT * 1000)
+                events = self.poller.poll()
 
                 if self.frontend in events:  # A message from the Router!
                     msg = self.frontend.recv_multipart()
@@ -316,6 +321,12 @@ class HeartbeatMixin(object):
         return False
 
     def maybe_send_heartbeat(self, events):
+        """
+        Sends a heartbeat if heartbeating is enabled.
+
+        Returns:
+            (bool):
+        """
         # TODO: Optimization: Move the method calls into another thread so
         # they don't block the event loop
         if not conf.DISABLE_HEARTBEATS:

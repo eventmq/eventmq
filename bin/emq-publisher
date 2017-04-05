@@ -1,8 +1,46 @@
 #!/usr/bin/env python
 # -*- mode: python -*-
+# This file is part of eventmq.
+#
+# eventmq is free software: you can redistribute it and/or modify it under the
+# terms of the GNU Lesser General Public License as published by the Free
+# Software Foundation, either version 2.1 of the License, or (at your option)
+# any later version.
+#
+# eventmq is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
+import argparse
+import sys
+
+from future.utils import iteritems
+
+from eventmq import exceptions
 from eventmq.log import setup_logger
 from eventmq.pub import Pub
+from eventmq.settings import build_parser_arguments
 
 if __name__ == "__main__":
-    p = Pub()
-    p.pub_main()
+    logger = setup_logger('')
+    parser = argparse.ArgumentParser(
+        description='Listen for client PUBLISH messages and send them to '
+                    'connected subscribers')
+
+    build_parser_arguments(parser, 'publisher')
+
+    cli_args = vars(parser.parse_args())
+    # convert cli arg key names to upper case so they override the correct
+    # settings during initialization.
+    cli_args = {k.upper(): v for k, v in iteritems(cli_args)}
+
+    p = Publisher(override_settings=cli_args)
+
+    try:
+        p.start()
+    except exceptions.ConnectionError as e:
+        logger.error(e.message)
+        sys.exit(1)

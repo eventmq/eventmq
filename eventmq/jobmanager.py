@@ -25,16 +25,14 @@ import sys
 
 import zmq
 
-from eventmq.log import setup_logger
-from . import conf
 from .constants import KBYE, STATUS
 from .poller import Poller, POLLIN
 from .sender import Sender
+from .settings import conf, load_settings_from_dict, load_settings_from_file
 from .utils.classes import EMQPService, HeartbeatMixin
 from .utils.devices import generate_device_name
 from .utils.functions import get_timeout_from_headers
 from .utils.messages import send_emqp_message as sendmsg
-from .utils.settings import import_settings
 from .worker import MultiprocessWorker as Worker
 
 
@@ -56,35 +54,41 @@ class JobManager(HeartbeatMixin, EMQPService):
     """
     SERVICE_TYPE = 'worker'
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, override_settings=None, skip_signal=False, *args,
+                 **kwargs):
         """
-        .. note::
-
-           All args are optional unless otherwise noted.
+        Initialize the job manager. Loads settings, creates sockets, loads them
+        into the poller and generally prepares the service for a ``start()``
+        call.
 
         Args:
-            name (str): unique name of this instance. By default a uuid will be
-                 generated.
-            queues (tuple): List of queue names to listen on.
+            override_settings (dict): Dictionary containing settings that will
+                override defaults and anything loaded from a config file. The
+                key should match the upper case conf setting name.
+                See: :func:`eventmq.settings.load_settings_from_dict`
             skip_signal (bool): Don't register the signal handlers. Useful for
-                 testing.
+                testing.
         """
+        self.override_settings = override_settings
+
+        self.load_settings()
+
         super(JobManager, self).__init__(*args, **kwargs)
 
         #: Define the name of this JobManager instance. Useful to know when
         #: referring to the logs.
-        self.name = kwargs.pop('name', generate_device_name())
+        self.name = conf.NAME or generate_device_name()
         logger.info('Initializing JobManager {}...'.format(self.name))
 
-        #: keep track of workers
-        concurrent_jobs = kwargs.pop('concurrent_jobs', None)
-        if concurrent_jobs is not None:
-            conf.CONCURRENT_JOBS = concurrent_jobs
+        # #: keep track of workers
+        # concurrent_jobs = kwargs.pop('concurrent_jobs', None)
+        # if concurrent_jobs is not None:
+        #     conf.CONCURRENT_JOBS = concurrent_jobs
 
-        #: List of queues that this job manager is listening on
-        self.queues = kwargs.pop('queues', None)
+        # #: List of queues that this job manager is listening on
+        # self.queues = kwargs.pop('queues', None)
 
-        if not kwargs.pop('skip_signal', False):
+        if skip_signal:
             # handle any sighups by reloading config
             signal.signal(signal.SIGHUP, self.sighup_handler)
             signal.signal(signal.SIGTERM, self.sigterm_handler)
@@ -169,12 +173,6 @@ class JobManager(HeartbeatMixin, EMQPService):
             # Note: `maybe_send_heartbeat` is mocked by the tests to return
             #       False, so it should stay at the bottom of the loop.
             if not self.maybe_send_heartbeat(events):
-                # Toggle default and failover worker_addr
-                if (conf.CONNECT_ADDR == conf.CONNECT_ADDR_DEFAULT):
-                    conf.CONNECT_ADDR = conf.CONNECT_ADDR_FAILOVER
-                else:
-                    conf.CONNECT_ADDR = conf.CONNECT_ADDR_DEFAULT
-
                 break
 
     def on_request(self, msgid, msg):
@@ -182,26 +180,32 @@ class JobManager(HeartbeatMixin, EMQPService):
         Handles a REQUEST command
 
         Messages are formatted like this:
-        [subcmd(str), {
-            ...options...
-        }]
+
+        .. code::
+
+           [subcmd(str), {
+               ...options...
+           }]
 
         Subcommands:
-            run - run some callable. Options:
-                {
-                  'callable': func or method name (eg. walk),
-                  'path': module path (eg. os.path),
-                  'args': (optional) list of args,
-                  'kwargs': (optional) dict of kwargs,
-                  'class_args': (optional) list of args for class
-                      instantiation,
-                  'class_kwargs': (optional) dict of kwargs for class,
-                }
 
-        .. note:
+        .. code::
+
+           run - run some callable. Options:
+               {
+                 'callable': func or method name (eg. walk),
+                 'path': module path (eg. os.path),
+                 'args': (optional) list of args,
+                 'kwargs': (optional) dict of kwargs,
+                 'class_args': (optional) list of args for class
+                     instantiation,
+                 'class_kwargs': (optional) dict of kwargs for class,
+               }
+
+        .. note::
+
            If you want to run a method from a class you must specify the class
            name in the path preceeded with a colon. 'name.of.mypacakge:MyClass'
-
         """
         # s_ indicates the string path vs the actual module and class
         # queue_name = msg[0]
@@ -287,7 +291,7 @@ class JobManager(HeartbeatMixin, EMQPService):
 
     def sighup_handler(self, signum, frame):
         logger.info('Caught signal %s' % signum)
-        import_settings(section='jobmanager')
+        self.load_settings()
 
         self.should_reset = True
         self.received_disconnect = True
@@ -299,26 +303,12 @@ class JobManager(HeartbeatMixin, EMQPService):
         self.awaiting_startup_ack = False
         self.received_disconnect = True
 
-    def jobmanager_main(self, broker_addr=None):
+    def load_settings(self):
         """
-        Kick off jobmanager with logging and settings import
-
-        Args:
-            broker_addr (str): The address of the broker to connect to.
+        Reload settings by resetting to defaults, reading the config, and
+        setting any overridden settings.
         """
-        setup_logger('')
-        import_settings(section='jobmanager')
-
-        # If this manager was passed explicit options, favor those
-        if self.queues:
-            conf.QUEUES = self.queues
-
-        if broker_addr:
-            conf.CONNECT_ADDR = broker_addr
-
-        self.start(addr=conf.CONNECT_ADDR, queues=conf.QUEUES)
-
-
-def jobmanager_main():
-    j = JobManager()
-    j.jobmanager_main()
+        conf.reload()
+        conf.section = 'jobmanager'
+        load_settings_from_file('jobmanager')
+        load_settings_from_dict(self.override_settings, 'jobmanager')
