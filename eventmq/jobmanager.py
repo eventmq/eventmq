@@ -222,7 +222,6 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         """
 
-        logger.debug(resp)
         pid = resp['pid']
 
         callback = getattr(self, resp['callback'])
@@ -282,17 +281,33 @@ class JobManager(HeartbeatMixin, EMQPService):
         self.request_queue.put(payload)
 
     def premature_death(self, reply, msgid):
+        """
+        Worker died before running any jobs
+        """
         return
 
     def worker_death(self, reply, msgid):
+        """
+        Worker died of natural causes
+        """
         return
 
     def worker_done_with_reply(self, reply, msgid):
-        reply = serializer(reply)
+        """
+        Worker finished a job and requested the return value
+        """
+        try:
+            reply = serializer(reply)
+        except TypeError as e:
+            reply = {"value": str(e)}
+
         self.send_reply(reply, msgid)
         self.send_ready()
 
-    def worker_done(self, msgid):
+    def worker_done(self, reply, msgid):
+        """
+        Worker finished a job, notify broker of an additional slot opening
+        """
         self.send_ready()
 
     def send_ready(self):
