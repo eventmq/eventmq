@@ -107,13 +107,16 @@ class MultiprocessWorker(Process):
         import zmq
         zmq.Context.instance().term()
 
+        callback = 'premature_death'
+
         # Main execution loop, only break in cases that we can't recover from
         # or we reach job count limit
         while True:
             try:
-                payload = self.input_queue.get(block=False, timeout=1000)
+                payload = self.input_queue.get(timeout=1)
                 if payload == 'DONE':
                     break
+
             except Queue.Empty:
                 if os.getppid() != self.ppid:
                     break
@@ -121,6 +124,7 @@ class MultiprocessWorker(Process):
             except Exception as e:
                 break
             finally:
+                # If I'm an orphan, die
                 if os.getppid() != self.ppid:
                     break
 
@@ -140,6 +144,7 @@ class MultiprocessWorker(Process):
 
                 if worker_thread.isAlive():
                     worker_thread.stop()
+                    # TODO: this should actually kill the process
                     return_val = 'TimeoutError'
 
                 try:
