@@ -222,6 +222,7 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         """
 
+        logger.debug(resp)
         pid = resp['pid']
 
         callback = getattr(self, resp['callback'])
@@ -302,13 +303,16 @@ class JobManager(HeartbeatMixin, EMQPService):
             reply = {"value": str(e)}
 
         self.send_reply(reply, msgid)
-        self.send_ready()
+
+        if self.status != STATUS.stopping:
+            self.send_ready()
 
     def worker_done(self, reply, msgid):
         """
         Worker finished a job, notify broker of an additional slot opening
         """
-        self.send_ready()
+        if self.status != STATUS.stopping:
+            self.send_ready()
 
     def send_ready(self):
         """

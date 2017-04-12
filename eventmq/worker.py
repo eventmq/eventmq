@@ -25,9 +25,8 @@ from multiprocessing import Process
 
 import os
 import sys
-import time
 
-from threading import Event, Thread
+from threading import Thread
 
 from . import conf
 
@@ -123,7 +122,7 @@ class MultiprocessWorker(Process):
                 except Exception:
                     break
 
-                if return_val == 'TimeoutError':
+                if return_val["value"] == 'TimeoutError':
                     break
 
             except Exception as e:
@@ -169,55 +168,63 @@ def _run(queue, result_queue, logger):
                                    conf.SETUP_CALLABLE, str(e)))
 
     while True:
+        # Blocking get so we don't spin cycles reading over and over
         payload = queue.get()
-        try:
-            if ":" in payload["path"]:
-                _pkgsplit = payload["path"].split(':')
-                s_package = _pkgsplit[0]
-                s_cls = _pkgsplit[1]
-            else:
-                s_package = payload["path"]
-                s_cls = None
+        return_val = _run_job(payload, logger)
 
-            s_callable = payload["callable"]
-
-            package = import_module(s_package)
-            if s_cls:
-                cls = getattr(package, s_cls)
-
-                if "class_args" in payload:
-                    class_args = payload["class_args"]
-                else:
-                    class_args = ()
-
-                if "class_kwargs" in payload:
-                    class_kwargs = payload["class_kwargs"]
-                else:
-                    class_kwargs = {}
-
-                obj = cls(*class_args, **class_kwargs)
-                callable_ = getattr(obj, s_callable)
-            else:
-                callable_ = getattr(package, s_callable)
-
-            if "args" in payload:
-                args = payload["args"]
-            else:
-                args = ()
-
-            if "kwargs" in payload:
-                kwargs = payload["kwargs"]
-            else:
-                kwargs = {}
-
-            return_val = callable_(*args, **kwargs)
-        except Exception as e:
-            logger.exception(e)
-            return str(e)
-
-        # Signal that we're done with this job
+        # Signal that we're done with this job and put its return value on the
+        # result queue
         queue.task_done()
         result_queue.put(return_val)
+
+
+def _run_job(payload, logger):
+    try:
+        if ":" in payload["path"]:
+            _pkgsplit = payload["path"].split(':')
+            s_package = _pkgsplit[0]
+            s_cls = _pkgsplit[1]
+        else:
+            s_package = payload["path"]
+            s_cls = None
+
+        s_callable = payload["callable"]
+
+        package = import_module(s_package)
+        if s_cls:
+            cls = getattr(package, s_cls)
+
+            if "class_args" in payload:
+                class_args = payload["class_args"]
+            else:
+                class_args = ()
+
+            if "class_kwargs" in payload:
+                class_kwargs = payload["class_kwargs"]
+            else:
+                class_kwargs = {}
+
+            obj = cls(*class_args, **class_kwargs)
+            callable_ = getattr(obj, s_callable)
+        else:
+            callable_ = getattr(package, s_callable)
+
+        if "args" in payload:
+            args = payload["args"]
+        else:
+            args = ()
+
+        if "kwargs" in payload:
+            kwargs = payload["kwargs"]
+        else:
+            kwargs = {}
+
+        return_val = callable_(*args, **kwargs)
+    except Exception as e:
+        logger.exception(e)
+        return_val = str(e)
+
+    return return_val
 
 
 def run_setup(setup_path, setup_callable):
