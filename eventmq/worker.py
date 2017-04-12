@@ -25,6 +25,7 @@ from multiprocessing import Process
 
 import os
 import sys
+import time
 
 from threading import Event, Thread
 
@@ -34,33 +35,6 @@ if sys.version[0] == '2':
     import Queue
 else:
     import queue as Queue
-
-
-class StoppableThread(Thread):
-    """Thread class with a stop() method. The thread itself has to check
-    regularly for the stopped() condition."""
-
-    def __init__(self, target, name=None, args=()):
-        super(StoppableThread, self).__init__(name=name, target=target,
-                                              args=args)
-        self._return = None
-        self._stop = Event()
-
-    def stop(self):
-        self._stop.set()
-
-    def stopped(self):
-        return self._stop.isSet()
-
-    def run(self):
-        """
-        Overrides default run to have a side effect of saving the result
-        in self._return that will be accessible when the job completes,
-        or remain None after a timeout
-        """
-        if self._Thread__target is not None:
-            self._return = self._Thread__target(*self._Thread__args,
-                                                **self._Thread__kwargs)
 
 
 class MultiprocessWorker(Process):
@@ -89,25 +63,20 @@ class MultiprocessWorker(Process):
 
         This is designed to run in a seperate process.
         """
-        if self.run_setup:
-            self.run_setup = False
-            if any(conf.SETUP_CALLABLE) and any(conf.SETUP_PATH):
-                try:
-                    self.logger.debug("Running setup ({}.{}) for worker id {}"
-                                      .format(
-                                          conf.SETUP_PATH,
-                                          conf.SETUP_CALLABLE,
-                                          os.getpid()))
-                    run_setup(conf.SETUP_PATH, conf.SETUP_CALLABLE)
-                except Exception as e:
-                    self.logger.warning('Unable to do setup task ({}.{}): {}'
-                                        .format(conf.SETUP_PATH,
-                                                conf.SETUP_CALLABLE, str(e)))
+        # Define the 2 queues for communicating with the worker thread
+        worker_queue = Queue.Queue()
+        worker_result_queue = Queue.Queue()
+        worker_thread = Thread(target=_run,
+                               args=(worker_queue,
+                                     worker_result_queue,
+                                     self.logger))
 
         import zmq
         zmq.Context.instance().term()
 
         callback = 'premature_death'
+
+        worker_thread.start()
 
         # Main execution loop, only break in cases that we can't recover from
         # or we reach job count limit
@@ -135,17 +104,14 @@ class MultiprocessWorker(Process):
                 msgid = payload.get('msgid', '')
                 callback = payload.get('callback', '')
 
-                worker_thread = StoppableThread(target=_run,
-                                                args=(payload['params'],
-                                                      self.logger))
-                worker_thread.start()
-                worker_thread.join(timeout)
-                return_val = {"value": worker_thread._return}
+                worker_queue.put(payload['params'])
 
-                if worker_thread.isAlive():
-                    worker_thread.stop()
-                    # TODO: this should actually kill the process
+                try:
+                    return_val = worker_result_queue.get(timeout=timeout)
+                except Queue.Empty:
                     return_val = 'TimeoutError'
+
+                return_val = {"value": return_val}
 
                 try:
                     self.output_queue.put_nowait(
@@ -155,6 +121,9 @@ class MultiprocessWorker(Process):
                          'callback': callback}
                     )
                 except Exception:
+                    break
+
+                if return_val == 'TimeoutError':
                     break
 
             except Exception as e:
@@ -172,7 +141,7 @@ class MultiprocessWorker(Process):
         self.logger.debug("Worker death")
 
 
-def _run(payload, logger):
+def _run(queue, result_queue, logger):
     """
     Takes care of actually executing the code given a message payload
 
@@ -186,53 +155,69 @@ def _run(payload, logger):
         "class_kwargs": {"value": 2}
     }
     """
-    try:
-        if ":" in payload["path"]:
-            _pkgsplit = payload["path"].split(':')
-            s_package = _pkgsplit[0]
-            s_cls = _pkgsplit[1]
-        else:
-            s_package = payload["path"]
-            s_cls = None
+    if any(conf.SETUP_CALLABLE) and any(conf.SETUP_PATH):
+        try:
+            logger.debug("Running setup ({}.{}) for worker id {}"
+                         .format(
+                             conf.SETUP_PATH,
+                             conf.SETUP_CALLABLE,
+                             os.getpid()))
+            run_setup(conf.SETUP_PATH, conf.SETUP_CALLABLE)
+        except Exception as e:
+            logger.warning('Unable to do setup task ({}.{}): {}'
+                           .format(conf.SETUP_PATH,
+                                   conf.SETUP_CALLABLE, str(e)))
 
-        s_callable = payload["callable"]
-
-        package = import_module(s_package)
-        if s_cls:
-            cls = getattr(package, s_cls)
-
-            if "class_args" in payload:
-                class_args = payload["class_args"]
+    while True:
+        payload = queue.get()
+        try:
+            if ":" in payload["path"]:
+                _pkgsplit = payload["path"].split(':')
+                s_package = _pkgsplit[0]
+                s_cls = _pkgsplit[1]
             else:
-                class_args = ()
+                s_package = payload["path"]
+                s_cls = None
 
-            if "class_kwargs" in payload:
-                class_kwargs = payload["class_kwargs"]
+            s_callable = payload["callable"]
+
+            package = import_module(s_package)
+            if s_cls:
+                cls = getattr(package, s_cls)
+
+                if "class_args" in payload:
+                    class_args = payload["class_args"]
+                else:
+                    class_args = ()
+
+                if "class_kwargs" in payload:
+                    class_kwargs = payload["class_kwargs"]
+                else:
+                    class_kwargs = {}
+
+                obj = cls(*class_args, **class_kwargs)
+                callable_ = getattr(obj, s_callable)
             else:
-                class_kwargs = {}
+                callable_ = getattr(package, s_callable)
 
-            obj = cls(*class_args, **class_kwargs)
-            callable_ = getattr(obj, s_callable)
-        else:
-            callable_ = getattr(package, s_callable)
+            if "args" in payload:
+                args = payload["args"]
+            else:
+                args = ()
 
-        if "args" in payload:
-            args = payload["args"]
-        else:
-            args = ()
+            if "kwargs" in payload:
+                kwargs = payload["kwargs"]
+            else:
+                kwargs = {}
 
-        if "kwargs" in payload:
-            kwargs = payload["kwargs"]
-        else:
-            kwargs = {}
+            return_val = callable_(*args, **kwargs)
+        except Exception as e:
+            logger.exception(e)
+            return str(e)
 
-        return_val = callable_(*args, **kwargs)
-    except Exception as e:
-        logger.exception(e)
-        return str(e)
-
-    # Signal that we're done with this job
-    return return_val
+        # Signal that we're done with this job
+        queue.task_done()
+        result_queue.put(return_val)
 
 
 def run_setup(setup_path, setup_callable):
