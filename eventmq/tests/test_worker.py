@@ -39,7 +39,7 @@ def test_run_with_timeout():
         'args': [2]
     }
 
-    msgid = worker._run(payload, logging.getLogger())
+    msgid = worker._run_job(payload, logging.getLogger())
 
     assert msgid
 
