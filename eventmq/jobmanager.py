@@ -299,8 +299,8 @@ class JobManager(HeartbeatMixin, EMQPService):
         """
         try:
             reply = serializer(reply)
-        except TypeError as e:
-            reply = {"value": str(e)}
+        except TypeError:
+            reply = {"value": "Return value is not JSON serializable"}
 
         self.send_reply(reply, msgid)
 
