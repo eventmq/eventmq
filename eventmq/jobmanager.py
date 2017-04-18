@@ -76,6 +76,8 @@ class JobManager(HeartbeatMixin, EMQPService):
         """
         super(JobManager, self).__init__(*args, **kwargs)
 
+        setup_logger("eventmq")
+
         #: Define the name of this JobManager instance. Useful to know when
         #: referring to the logs.
         prefix = (socket.gethostname() + ":").encode('ascii')
@@ -301,8 +303,8 @@ class JobManager(HeartbeatMixin, EMQPService):
         """
         try:
             reply = serializer(reply)
-        except TypeError:
-            reply = {"value": "Return value is not JSON serializable"}
+        except TypeError as e:
+            reply = serializer({"value": str(e)})
 
         self.send_reply(reply, msgid)
 
@@ -406,7 +408,6 @@ class JobManager(HeartbeatMixin, EMQPService):
         Args:
             broker_addr (str): The address of the broker to connect to.
         """
-        setup_logger('')
         import_settings()
         import_settings(section='jobmanager')
 
