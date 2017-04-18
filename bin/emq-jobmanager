@@ -34,7 +34,10 @@ if __name__ == "__main__":
     parser.add_argument('--jobs', '-J', type=int, nargs='?',
                         help='the max number of concurrent jobs to manage at '
                         'a time')
-
+    parser.add_argument('--name', '-n', type=str, default=None,
+                        help="A unique ame to give this node. If one "
+                             "isn't provided a random uuid will be "
+                             "generated")
     args = parser.parse_args()
 
     # Overwrite the default config location with the one passed to the app
@@ -48,6 +51,8 @@ if __name__ == "__main__":
 
     broker_addr = args.broker_addr
     concurrent_jobs = args.jobs
+    name = args.name
 
-    j = JobManager(queues=queues, concurrent_jobs=concurrent_jobs)
+    j = JobManager(queues=queues, concurrent_jobs=concurrent_jobs,
+                   name=name)
     j.jobmanager_main(broker_addr=broker_addr)
