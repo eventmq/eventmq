@@ -23,7 +23,6 @@ import logging
 from multiprocessing import Queue as mp_queue
 import os
 import signal
-import socket
 import sys
 import time
 
@@ -97,6 +96,7 @@ class JobManager(HeartbeatMixin, EMQPService):
             signal.signal(signal.SIGTERM, self.sigterm_handler)
             signal.signal(signal.SIGINT, self.sigterm_handler)
             signal.signal(signal.SIGQUIT, self.sigterm_handler)
+            signal.signal(signal.SIGUSR1, self.handle_pdb)
 
         #: JobManager starts out by INFORMing the router of it's existence,
         #: then telling the router that it is READY. The reply will be the unit
@@ -106,10 +106,18 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         self.poller = Poller()
 
+        self.jobs_in_flight = {}
+        self.total_requests = 0
+        self.total_ready_sent = 0
+
         #: Setup worker queues
         self.request_queue = mp_queue()
         self.finished_queue = mp_queue()
         self._setup()
+
+    def handle_pdb(self, sig, frame):
+        import pdb
+        pdb.Pdb().set_trace(frame)
 
     @property
     def workers(self):
@@ -167,7 +175,7 @@ class JobManager(HeartbeatMixin, EMQPService):
                             sys.exit(0)
                     else:
                         try:
-                            events = self.poller.poll(10)
+                            events = self.poller.poll(1000)
                         except zmq.ZMQError:
                             logger.debug('Disconnecting due to ZMQError while'
                                          ' polling')
@@ -224,13 +232,15 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         logger.debug(resp)
         pid = resp['pid']
+        msgid = resp['msgid']
+        callback = resp['callback']
+        death = resp['death']
 
-        callback = getattr(self, resp['callback'])
-        callback(resp['return'], resp['msgid'])
+        callback = getattr(self, callback)
+        callback(resp['return'], msgid, death, pid)
 
-        if resp['return'] == 'DEATH':
-            if pid in self._workers.keys():
-                del self._workers[pid]
+        if msgid in self.jobs_in_flight:
+            del self.jobs_in_flight[msgid]
 
     def on_request(self, msgid, msg):
         """
@@ -262,6 +272,9 @@ class JobManager(HeartbeatMixin, EMQPService):
         # queue_name = msg[0]
 
         # Parse REQUEST message values
+
+        self.total_requests += 1
+
         headers = msg[1]
         payload = deserializer(msg[2])
         params = payload[1]
@@ -279,6 +292,8 @@ class JobManager(HeartbeatMixin, EMQPService):
         payload['msgid'] = msgid
         payload['callback'] = callback
 
+        self.jobs_in_flight[msgid] = (monotonic(), payload)
+
         self.request_queue.put(payload)
 
     def premature_death(self, reply, msgid):
@@ -287,16 +302,19 @@ class JobManager(HeartbeatMixin, EMQPService):
         """
         return
 
-    def worker_ready(self, reply, msgid):
+    def worker_death(self, reply, msgid, death, pid):
+        """
+        Worker died of natural causes, ensure its death and
+        remove from tracking, will be replaced on next heartbeat
+        """
+        self.kill_worker(pid, signal.SIGKILL)
+        if pid in self._workers.keys():
+            del self._workers[pid]
+
+    def worker_ready(self, reply, msgid, death, pid):
         self.send_ready()
 
-    def worker_death(self, reply, msgid):
-        """
-        Worker died of natural causes
-        """
-        return
-
-    def worker_done_with_reply(self, reply, msgid):
+    def worker_done_with_reply(self, reply, msgid, death, pid):
         """
         Worker finished a job and requested the return value
         """
@@ -307,14 +325,14 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         self.send_reply(reply, msgid)
 
-        if self.status != STATUS.stopping:
+        if self.status != STATUS.stopping and not death:
             self.send_ready()
 
-    def worker_done(self, reply, msgid):
+    def worker_done(self, reply, msgid, death, pid):
         """
         Worker finished a job, notify broker of an additional slot opening
         """
-        if self.status != STATUS.stopping:
+        if self.status != STATUS.stopping and not death:
             self.send_ready()
 
     def send_ready(self):
@@ -322,6 +340,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         send the READY command upstream to indicate that JobManager is ready
         for another REQUEST message.
         """
+        self.total_ready_sent += 1
         sendmsg(self.outgoing, 'READY')
 
     def send_reply(self, reply, msgid):
@@ -349,6 +368,9 @@ class JobManager(HeartbeatMixin, EMQPService):
         necessary
         """
         # Kill workers that aren't alive
+        logger.debug("Jobs in flight: {}".format(len(self.jobs_in_flight)))
+        logger.debug("Total requests: {}".format(self.total_requests))
+        logger.debug("Total ready sent: {}".format(self.total_ready_sent))
         try:
             [self.kill_worker(w.pid, signal.SIGKILL) for w in self.workers
              if not w.is_alive]
@@ -371,7 +393,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         try:
             os.kill(pid, signal)
         except Exception as e:
-            logger.excpetion(
+            logger.exception(
                 "Encountered exception trying to send {} to worker {}: {}"
                 .format(signal, pid, str(e)))
 

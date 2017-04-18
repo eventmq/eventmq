@@ -95,5 +95,6 @@ SETUP_CALLABLE = ''
 # Time to wait after receiving SIGTERM to kill the workers in the jobmanager
 # forecfully
 KILL_GRACE_PERIOD = 300
+GLOBAL_TIMEOUT = 300
 
 # }}}

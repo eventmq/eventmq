@@ -76,6 +76,7 @@ class MultiprocessWorker(Process):
         self.output_queue.put(
             {'msgid': None,
              'return': None,
+             'death': False,
              'pid': os.getpid(),
              'callback': 'worker_ready'}
         )
@@ -106,14 +107,19 @@ class MultiprocessWorker(Process):
             try:
                 return_val = 'None'
                 self.job_count += 1
-                timeout = payload.get("timeout", None)
+                timeout = payload.get("timeout", conf.GLOBAL_TIMEOUT)
                 msgid = payload.get('msgid', '')
                 callback = payload.get('callback', '')
+                self.logger.debug("Putting on thread queue msgid: {}".format(
+                    msgid))
 
                 worker_queue.put(payload['params'])
 
                 try:
                     return_val = worker_result_queue.get(timeout=timeout)
+
+                    self.logger.debug("Got from result queue msgid: {}".format(
+                        msgid))
                 except Queue.Empty:
                     return_val = 'TimeoutError'
 
@@ -123,6 +129,7 @@ class MultiprocessWorker(Process):
                     self.output_queue.put_nowait(
                         {'msgid': msgid,
                          'return': return_val,
+                         'death': self.job_count >= conf.MAX_JOB_COUNT,
                          'pid': os.getpid(),
                          'callback': callback}
                     )
@@ -142,6 +149,7 @@ class MultiprocessWorker(Process):
         self.output_queue.put(
             {'msgid': None,
              'return': 'DEATH',
+             'death': True,
              'pid': os.getpid(),
              'callback': 'worker_death'}
             )
@@ -177,12 +185,14 @@ def _run(queue, result_queue, logger):
 
     while True:
         # Blocking get so we don't spin cycles reading over and over
-        payload = queue.get()
-        return_val = _run_job(payload, logger)
+        try:
+            payload = queue.get()
+        except:
+            continue
 
+        return_val = _run_job(payload, logger)
         # Signal that we're done with this job and put its return value on the
         # result queue
-        queue.task_done()
         result_queue.put(return_val)
 
 
