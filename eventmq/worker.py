@@ -73,6 +73,13 @@ class MultiprocessWorker(Process):
         import zmq
         zmq.Context.instance().term()
 
+        self.output_queue.put(
+            {'msgid': None,
+             'return': None,
+             'pid': os.getpid(),
+             'callback': 'worker_ready'}
+        )
+
         callback = 'premature_death'
 
         worker_thread.start()
@@ -129,6 +136,7 @@ class MultiprocessWorker(Process):
                 return_val = str(e)
 
             if self.job_count >= conf.MAX_JOB_COUNT:
+                self.logger.debug("Worker reached job limit, exiting")
                 break
 
         self.output_queue.put(

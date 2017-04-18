@@ -23,6 +23,7 @@ import logging
 from multiprocessing import Queue as mp_queue
 import os
 import signal
+import socket
 import sys
 import time
 
@@ -77,7 +78,8 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         #: Define the name of this JobManager instance. Useful to know when
         #: referring to the logs.
-        self.name = kwargs.pop('name', generate_device_name())
+        prefix = (socket.gethostname() + ":").encode('ascii')
+        self.name = kwargs.pop('name', generate_device_name(prefix=prefix))
         logger.info('Initializing JobManager {}...'.format(self.name))
 
         #: keep track of workers
@@ -126,9 +128,6 @@ class JobManager(HeartbeatMixin, EMQPService):
         """
         # Acknowledgment has come
         # Send a READY for each available worker
-
-        for i in range(0, len(self.workers)):
-            self.send_ready()
 
         self.status = STATUS.running
 
@@ -286,6 +285,9 @@ class JobManager(HeartbeatMixin, EMQPService):
         Worker died before running any jobs
         """
         return
+
+    def worker_ready(self, reply, msgid):
+        self.send_ready()
 
     def worker_death(self, reply, msgid):
         """
