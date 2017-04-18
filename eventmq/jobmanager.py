@@ -80,8 +80,7 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         #: Define the name of this JobManager instance. Useful to know when
         #: referring to the logs.
-        prefix = (socket.gethostname() + ":").encode('ascii')
-        self.name = kwargs.pop('name', generate_device_name(prefix=prefix))
+        self.name = kwargs.pop('name', generate_device_name())
         logger.info('Initializing JobManager {}...'.format(self.name))
 
         #: keep track of workers
