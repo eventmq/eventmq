@@ -128,7 +128,8 @@ class MultiprocessWorker(Process):
                     self.output_queue.put_nowait(
                         {'msgid': msgid,
                          'return': return_val,
-                         'death': self.job_count >= conf.MAX_JOB_COUNT,
+                         'death': self.job_count >= conf.MAX_JOB_COUNT or
+                         return_val == 'TimeoutError',
                          'pid': os.getpid(),
                          'callback': callback}
                     )
