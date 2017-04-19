@@ -18,7 +18,6 @@ import unittest
 import mock
 
 from .. import constants, jobmanager
-from ..settings import conf
 
 ADDR = 'inproc://pour_the_rice_in_the_thing'
 
@@ -53,8 +52,7 @@ class TestCase(unittest.TestCase):
     @mock.patch('eventmq.jobmanager.Sender.recv_multipart')
     @mock.patch('eventmq.jobmanager.Poller.poll')
     @mock.patch('eventmq.jobmanager.JobManager.maybe_send_heartbeat')
-    @mock.patch('eventmq.jobmanager.JobManager.send_ready')
-    def test__start_event_loop(self, send_ready_mock, maybe_send_hb_mock,
+    def test__start_event_loop(self, maybe_send_hb_mock,
                                poll_mock, sender_mock, process_msg_mock,
                                pool_close_mock):
         jm = jobmanager.JobManager(override_settings={
@@ -65,9 +63,6 @@ class TestCase(unittest.TestCase):
         sender_mock.return_value = [1, 2, 3]
 
         jm._start_event_loop()
-
-        # send int(conf.CONCURRENT_JOBS) ready messages
-        self.assertEqual(conf.CONCURRENT_JOBS, send_ready_mock.call_count)
 
         process_msg_mock.assert_called_with(
             sender_mock.return_value)

@@ -18,6 +18,7 @@
 The sender is responsible for sending messages
 """
 import logging
+import sys
 import uuid
 
 import zmq
@@ -136,9 +137,11 @@ class Sender(ZMQSendMixin, ZMQReceiveMixin):
         if self.zsocket:
             self.zsocket.close()
 
-        self.name = kwargs.pop('name', str(uuid.uuid4()).encode('ascii'))
         self.zsocket = kwargs.pop('socket', self.zcontext.socket(zmq.DEALER))
-        self.zsocket.setsockopt(zmq.IDENTITY, self.name)
+        if sys.version[0] == '2':
+            self.zsocket.setsockopt(zmq.IDENTITY, self.name)
+        else:
+            self.zsocket.setsockopt_string(zmq.IDENTITY, str(self.name))
 
         self.status = constants.STATUS.ready
 
