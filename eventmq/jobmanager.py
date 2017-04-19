@@ -75,9 +75,11 @@ class JobManager(HeartbeatMixin, EMQPService):
         """
         super(JobManager, self).__init__(*args, **kwargs)
 
+        setup_logger("eventmq")
+
         #: Define the name of this JobManager instance. Useful to know when
         #: referring to the logs.
-        self.name = kwargs.pop('name', generate_device_name())
+        self.name = kwargs.pop('name', None) or generate_device_name()
         logger.info('Initializing JobManager {}...'.format(self.name))
 
         #: keep track of workers
@@ -94,6 +96,7 @@ class JobManager(HeartbeatMixin, EMQPService):
             signal.signal(signal.SIGTERM, self.sigterm_handler)
             signal.signal(signal.SIGINT, self.sigterm_handler)
             signal.signal(signal.SIGQUIT, self.sigterm_handler)
+            signal.signal(signal.SIGUSR1, self.handle_pdb)
 
         #: JobManager starts out by INFORMing the router of it's existence,
         #: then telling the router that it is READY. The reply will be the unit
@@ -103,10 +106,28 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         self.poller = Poller()
 
+        #: Stats and monitoring information
+
+        #: Jobs in flight tracks all jobs currently executing.
+        #: Key: msgid, Value: The message with all the details of the job
+        self.jobs_in_flight = {}
+
+        #: Running total number of REQUEST messages received on the broker
+        self.total_requests = 0
+        #: Running total number of READY messages sent to the broker
+        self.total_ready_sent = 0
+        #: Keep track of what pids are servicing our requests
+        #: Key: pid, Value: # of jobs completed on the process with that pid
+        self.pid_distribution = {}
+
         #: Setup worker queues
         self.request_queue = mp_queue()
         self.finished_queue = mp_queue()
         self._setup()
+
+    def handle_pdb(self, sig, frame):
+        import pdb
+        pdb.Pdb().set_trace(frame)
 
     @property
     def workers(self):
@@ -126,9 +147,6 @@ class JobManager(HeartbeatMixin, EMQPService):
         """
         # Acknowledgment has come
         # Send a READY for each available worker
-
-        for i in range(0, len(self.workers)):
-            self.send_ready()
 
         self.status = STATUS.running
 
@@ -167,7 +185,7 @@ class JobManager(HeartbeatMixin, EMQPService):
                             sys.exit(0)
                     else:
                         try:
-                            events = self.poller.poll(10)
+                            events = self.poller.poll(1000)
                         except zmq.ZMQError:
                             logger.debug('Disconnecting due to ZMQError while'
                                          ' polling')
@@ -224,13 +242,21 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         logger.debug(resp)
         pid = resp['pid']
+        msgid = resp['msgid']
+        callback = resp['callback']
+        death = resp['death']
 
-        callback = getattr(self, resp['callback'])
-        callback(resp['return'], resp['msgid'])
+        callback = getattr(self, callback)
+        callback(resp['return'], msgid, death, pid)
 
-        if resp['return'] == 'DEATH':
-            if pid in self._workers.keys():
-                del self._workers[pid]
+        if msgid in self.jobs_in_flight:
+            del self.jobs_in_flight[msgid]
+
+        if not death:
+            if pid not in self.pid_distribution:
+                self.pid_distribution[pid] = 1
+            else:
+                self.pid_distribution[pid] += 1
 
     def on_request(self, msgid, msg):
         """
@@ -262,6 +288,9 @@ class JobManager(HeartbeatMixin, EMQPService):
         # queue_name = msg[0]
 
         # Parse REQUEST message values
+
+        self.total_requests += 1
+
         headers = msg[1]
         payload = deserializer(msg[2])
         params = payload[1]
@@ -279,6 +308,8 @@ class JobManager(HeartbeatMixin, EMQPService):
         payload['msgid'] = msgid
         payload['callback'] = callback
 
+        self.jobs_in_flight[msgid] = (monotonic(), payload)
+
         self.request_queue.put(payload)
 
     def premature_death(self, reply, msgid):
@@ -287,31 +318,36 @@ class JobManager(HeartbeatMixin, EMQPService):
         """
         return
 
-    def worker_death(self, reply, msgid):
+    def worker_death(self, reply, msgid, death, pid):
         """
-        Worker died of natural causes
+        Worker died of natural causes, ensure its death and
+        remove from tracking, will be replaced on next heartbeat
         """
-        return
+        if pid in self._workers.keys():
+            del self._workers[pid]
 
-    def worker_done_with_reply(self, reply, msgid):
+    def worker_ready(self, reply, msgid, death, pid):
+        self.send_ready()
+
+    def worker_done_with_reply(self, reply, msgid, death, pid):
         """
         Worker finished a job and requested the return value
         """
         try:
             reply = serializer(reply)
         except TypeError as e:
-            reply = {"value": str(e)}
+            reply = serializer({"value": str(e)})
 
         self.send_reply(reply, msgid)
 
-        if self.status != STATUS.stopping:
+        if self.status != STATUS.stopping and not death:
             self.send_ready()
 
-    def worker_done(self, reply, msgid):
+    def worker_done(self, reply, msgid, death, pid):
         """
         Worker finished a job, notify broker of an additional slot opening
         """
-        if self.status != STATUS.stopping:
+        if self.status != STATUS.stopping and not death:
             self.send_ready()
 
     def send_ready(self):
@@ -319,6 +355,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         send the READY command upstream to indicate that JobManager is ready
         for another REQUEST message.
         """
+        self.total_ready_sent += 1
         sendmsg(self.outgoing, 'READY')
 
     def send_reply(self, reply, msgid):
@@ -346,6 +383,9 @@ class JobManager(HeartbeatMixin, EMQPService):
         necessary
         """
         # Kill workers that aren't alive
+        logger.debug("Jobs in flight: {}".format(len(self.jobs_in_flight)))
+        logger.debug("Total requests: {}".format(self.total_requests))
+        logger.debug("Total ready sent: {}".format(self.total_ready_sent))
         try:
             [self.kill_worker(w.pid, signal.SIGKILL) for w in self.workers
              if not w.is_alive]
@@ -368,7 +408,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         try:
             os.kill(pid, signal)
         except Exception as e:
-            logger.excpetion(
+            logger.exception(
                 "Encountered exception trying to send {} to worker {}: {}"
                 .format(signal, pid, str(e)))
 
@@ -404,7 +444,6 @@ class JobManager(HeartbeatMixin, EMQPService):
         Args:
             broker_addr (str): The address of the broker to connect to.
         """
-        setup_logger('')
         import_settings()
         import_settings(section='jobmanager')
 
