@@ -79,7 +79,7 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         #: Define the name of this JobManager instance. Useful to know when
         #: referring to the logs.
-        self.name = kwargs.pop('name') or generate_device_name()
+        self.name = kwargs.pop('name', None) or generate_device_name()
         logger.info('Initializing JobManager {}...'.format(self.name))
 
         #: keep track of workers
@@ -106,9 +106,12 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         self.poller = Poller()
 
+        # Stats and monitoring information
         self.jobs_in_flight = {}
         self.total_requests = 0
         self.total_ready_sent = 0
+        # Keep track of what pids are servicing our requests
+        self.pid_distribution = {}
 
         #: Setup worker queues
         self.request_queue = mp_queue()
@@ -242,6 +245,12 @@ class JobManager(HeartbeatMixin, EMQPService):
         if msgid in self.jobs_in_flight:
             del self.jobs_in_flight[msgid]
 
+        if not death:
+            if pid not in self.pid_distribution:
+                self.pid_distribution[pid] = 1
+            else:
+                self.pid_distribution[pid] += 1
+
     def on_request(self, msgid, msg):
         """
         Handles a REQUEST command
@@ -307,7 +316,6 @@ class JobManager(HeartbeatMixin, EMQPService):
         Worker died of natural causes, ensure its death and
         remove from tracking, will be replaced on next heartbeat
         """
-        self.kill_worker(pid, signal.SIGKILL)
         if pid in self._workers.keys():
             del self._workers[pid]
 
