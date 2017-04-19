@@ -106,11 +106,18 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         self.poller = Poller()
 
-        # Stats and monitoring information
+        #: Stats and monitoring information
+
+        #: Jobs in flight tracks all jobs currently executing.
+        #: Key: msgid, Value: The message with all the details of the job
         self.jobs_in_flight = {}
+
+        #: Running total number of REQUEST messages received on the broker
         self.total_requests = 0
+        #: Running total number of READY messages sent to the broker
         self.total_ready_sent = 0
-        # Keep track of what pids are servicing our requests
+        #: Keep track of what pids are servicing our requests
+        #: Key: pid, Value: # of jobs completed on the process with that pid
         self.pid_distribution = {}
 
         #: Setup worker queues
