@@ -26,7 +26,7 @@ from multiprocessing import Process
 import os
 import sys
 
-from threading import Event, Thread
+from threading import Thread
 
 from .settings import conf
 
@@ -34,33 +34,6 @@ if sys.version[0] == '2':
     import Queue
 else:
     import queue as Queue
-
-
-class StoppableThread(Thread):
-    """Thread class with a stop() method. The thread itself has to check
-    regularly for the stopped() condition."""
-
-    def __init__(self, target, name=None, args=()):
-        super(StoppableThread, self).__init__(name=name, target=target,
-                                              args=args)
-        self._return = None
-        self._stop = Event()
-
-    def stop(self):
-        self._stop.set()
-
-    def stopped(self):
-        return self._stop.isSet()
-
-    def run(self):
-        """
-        Overrides default run to have a side effect of saving the result
-        in self._return that will be accessible when the job completes,
-        or remain None after a timeout
-        """
-        if self._Thread__target is not None:
-            self._return = self._Thread__target(*self._Thread__args,
-                                                **self._Thread__kwargs)
 
 
 class MultiprocessWorker(Process):
@@ -78,10 +51,7 @@ class MultiprocessWorker(Process):
 
     @property
     def logger(self):
-        if not hasattr(self, '_logger'):
-            self._logger = logging.getLogger(__name__ + '.' + str(os.getpid()))
-
-        return self._logger
+        return logging.getLogger(__name__ + '.' + str(os.getpid()))
 
     def run(self):
         """
@@ -89,31 +59,39 @@ class MultiprocessWorker(Process):
 
         This is designed to run in a seperate process.
         """
-        if self.run_setup:
-            self.run_setup = False
-            if any(conf.SETUP_CALLABLE) and any(conf.SETUP_PATH):
-                try:
-                    self.logger.debug("Running setup ({}.{}) for worker id {}"
-                                      .format(
-                                          conf.SETUP_PATH,
-                                          conf.SETUP_CALLABLE,
-                                          os.getpid()))
-                    run_setup(conf.SETUP_PATH, conf.SETUP_CALLABLE)
-                except Exception as e:
-                    self.logger.warning('Unable to do setup task ({}.{}): {}'
-                                        .format(conf.SETUP_PATH,
-                                                conf.SETUP_CALLABLE, str(e)))
+        # Define the 2 queues for communicating with the worker thread
+        logger = self.logger
+
+        worker_queue = Queue.Queue(1)
+        worker_result_queue = Queue.Queue(1)
+        worker_thread = Thread(target=_run,
+                               args=(worker_queue,
+                                     worker_result_queue,
+                                     logger))
 
         import zmq
         zmq.Context.instance().term()
+
+        self.output_queue.put(
+            {'msgid': None,
+             'return': None,
+             'death': False,
+             'pid': os.getpid(),
+             'callback': 'worker_ready'}
+        )
+
+        callback = 'premature_death'
+
+        worker_thread.start()
 
         # Main execution loop, only break in cases that we can't recover from
         # or we reach job count limit
         while True:
             try:
-                payload = self.input_queue.get(block=False, timeout=1000)
+                payload = self.input_queue.get(timeout=1)
                 if payload == 'DONE':
                     break
+
             except Queue.Empty:
                 if os.getppid() != self.ppid:
                     break
@@ -121,53 +99,71 @@ class MultiprocessWorker(Process):
             except Exception as e:
                 break
             finally:
+                # If I'm an orphan, die
                 if os.getppid() != self.ppid:
                     break
 
             try:
                 return_val = 'None'
                 self.job_count += 1
-                timeout = payload.get("timeout", None)
+                timeout = payload.get("timeout") or conf.GLOBAL_TIMEOUT
                 msgid = payload.get('msgid', '')
                 callback = payload.get('callback', '')
+                logger.debug("Putting on thread queue msgid: {}".format(
+                    msgid))
 
-                worker_thread = StoppableThread(target=_run,
-                                                args=(payload['params'],
-                                                      self.logger))
-                worker_thread.start()
-                worker_thread.join(timeout)
-                return_val = {"value": worker_thread._return}
+                worker_queue.put(payload['params'])
 
-                if worker_thread.isAlive():
-                    worker_thread.stop()
+                try:
+                    return_val = worker_result_queue.get(timeout=timeout)
+
+                    logger.debug("Got from result queue msgid: {}".format(
+                        msgid))
+                except Queue.Empty:
                     return_val = 'TimeoutError'
+
+                return_val = {"value": return_val}
 
                 try:
                     self.output_queue.put_nowait(
                         {'msgid': msgid,
                          'return': return_val,
+                         'death': self.job_count >= conf.MAX_JOB_COUNT or
+                         return_val == 'TimeoutError',
                          'pid': os.getpid(),
                          'callback': callback}
                     )
                 except Exception:
                     break
 
+                if return_val["value"] == 'TimeoutError':
+                    break
+
             except Exception as e:
                 return_val = str(e)
 
             if self.job_count >= conf.MAX_JOB_COUNT:
+                logger.debug("Worker reached job limit, exiting")
                 break
+
+        worker_queue.put('DONE')
+        worker_thread.join(timeout=5)
 
         self.output_queue.put(
             {'msgid': None,
              'return': 'DEATH',
+             'death': True,
              'pid': os.getpid(),
              'callback': 'worker_death'}
             )
-        self.logger.debug("Worker death")
+
+        logger.debug("Worker death")
+
+        if worker_thread.is_alive():
+            logger.debug("Worker thread did not die gracefully")
 
 
-def _run(payload, logger):
+def _run(queue, result_queue, logger):
     """
     Takes care of actually executing the code given a message payload
 
@@ -181,6 +177,39 @@ def _run(payload, logger):
         "class_kwargs": {"value": 2}
     }
     """
+    if any(conf.SETUP_CALLABLE) and any(conf.SETUP_PATH):
+        try:
+            logger.debug("Running setup ({}.{}) for worker id {}"
+                         .format(
+                             conf.SETUP_PATH,
+                             conf.SETUP_CALLABLE,
+                             os.getpid()))
+            run_setup(conf.SETUP_PATH, conf.SETUP_CALLABLE)
+        except Exception as e:
+            logger.warning('Unable to do setup task ({}.{}): {}'
+                           .format(conf.SETUP_PATH,
+                                   conf.SETUP_CALLABLE, str(e)))
+
+    while True:
+        # Blocking get so we don't spin cycles reading over and over
+        try:
+            payload = queue.get()
+        except Exception as e:
+            logger.exception(e)
+            continue
+
+        if payload == 'DONE':
+            break
+
+        return_val = _run_job(payload, logger)
+        # Signal that we're done with this job and put its return value on the
+        # result queue
+        result_queue.put(return_val)
+
+    logger.debug("Worker thread death")
+
+
+def _run_job(payload, logger):
     try:
         if ":" in payload["path"]:
             _pkgsplit = payload["path"].split(':')
@@ -224,9 +253,8 @@ def _run(payload, logger):
         return_val = callable_(*args, **kwargs)
     except Exception as e:
         logger.exception(e)
-        return str(e)
+        return_val = str(e)
 
-    # Signal that we're done with this job
     return return_val
 
 

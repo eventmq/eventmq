@@ -185,6 +185,13 @@ _CONFIG_DEFS = {
                     "weight from the name with a comma. For example "
                     "-Q 10,default 20,high"
         },
+        'MAX_JOB_COUNT': {
+            'default': 1024,
+            'long-arg': '--max-job-count',
+            'type': int,
+            'help': "Maximum number of jobs each worker process executes "
+                    "before resetting",
+        },
         'CONCURRENT_JOBS': {
             'default': 4,
             'long-arg': '--concurrent-jobs',
@@ -209,7 +216,15 @@ _CONFIG_DEFS = {
             'long-arg': '--kill-grace-period',
             'type': int,
             'help': 'Seconds to wait before forefully killing worker '
-                    'processes after receiving a SIGTERM'
+                    'processes after receiving a SIGTERM',
+        },
+        'GLOBAL_TIMEOUT': {
+            'default': 300,
+            'long-arg': '--global-timeout',
+            'short-arg': '-t',
+            'type': int,
+            'help': "Global default timeout for all jobs unless the request "
+                    "specifies otherwise",
         }
     },
     'scheduler': {
