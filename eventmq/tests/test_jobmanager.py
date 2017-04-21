@@ -55,8 +55,11 @@ class TestCase(unittest.TestCase):
     def test__start_event_loop(self, maybe_send_hb_mock,
                                poll_mock, sender_mock, process_msg_mock,
                                pool_close_mock):
+
+        # Create a jobmanager with no child processes for testing
         jm = jobmanager.JobManager(override_settings={
-            'CONNECT_ADDR': ADDR
+            'CONNECT_ADDR': ADDR,
+            'CONCURRENT_JOBS': 0,
         })
         maybe_send_hb_mock.return_value = False
         poll_mock.return_value = {jm.frontend: jobmanager.POLLIN}
