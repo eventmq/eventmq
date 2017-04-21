@@ -182,6 +182,7 @@ class EMQPService(object):
         Resets the current connection by closing and reopening the socket
         """
         # Unregister the old socket from the poller
+        logger.debug("Resetting Jobmanager")
         self.poller.unregister(self.frontend)
 
         # Polish up a new socket to use
@@ -189,6 +190,9 @@ class EMQPService(object):
 
         # Prepare the device to connect again
         self._setup()
+
+        # Start the jobmanager again
+        self.start()
 
     def process_message(self, msg):
         """
