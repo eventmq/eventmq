@@ -129,7 +129,7 @@ class MultiprocessWorker(Process):
                         {'msgid': msgid,
                          'return': return_val,
                          'death': self.job_count >= conf.MAX_JOB_COUNT or
-                         return_val == 'TimeoutError',
+                         return_val["value"] == 'TimeoutError',
                          'pid': os.getpid(),
                          'callback': callback}
                     )
