@@ -142,6 +142,9 @@ class JobManager(HeartbeatMixin, EMQPService):
         # Acknowledgment has come
         # Send a READY for each available worker
 
+        # Instatiate workers
+        self.workers
+
         self.status = STATUS.running
 
         try:
@@ -164,19 +167,24 @@ class JobManager(HeartbeatMixin, EMQPService):
                         else:
                             self.handle_response(resp)
 
-                    if self.status == STATUS.stopping and \
-                       not self.should_reset:
+                    if self.status == STATUS.stopping:
                         if len(self._workers) > 0:
                             time.sleep(0.1)
-                        else:
+                        elif not self.should_reset:
                             sys.exit(0)
+                        else:
+                            break
 
                         if monotonic() > self.disconnect_time + \
                            conf.KILL_GRACE_PERIOD:
                             logger.debug("Killing unresponsive workers")
                             for pid in self._workers.keys():
                                 self.kill_worker(pid, signal.SIGKILL)
-                            sys.exit(0)
+
+                            if not self.should_reset:
+                                sys.exit(0)
+                            else:
+                                break
                     else:
                         try:
                             events = self.poller.poll(1000)
@@ -199,6 +207,14 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         except Exception:
             logger.exception("Unhandled exception in main jobmanager loop")
+
+        # Cleanup
+        del self._workers
+
+        # Flush the queues with workers
+        self.request_queue = mp_queue()
+        self.finished_queue = mp_queue()
+        logger.info("Reached end of event loop")
 
     def handle_response(self, resp):
         """
@@ -321,7 +337,8 @@ class JobManager(HeartbeatMixin, EMQPService):
             del self._workers[pid]
 
     def worker_ready(self, reply, msgid, death, pid):
-        self.send_ready()
+        if self.status != STATUS.stopping:
+            self.send_ready()
 
     def worker_done_with_reply(self, reply, msgid, death, pid):
         """
@@ -350,6 +367,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         for another REQUEST message.
         """
         self.total_ready_sent += 1
+        logger.debug("Sending READY")
         sendmsg(self.frontend, 'READY')
 
     def send_reply(self, reply, msgid):
@@ -416,7 +434,7 @@ class JobManager(HeartbeatMixin, EMQPService):
             self.reset()
 
     def sighup_handler(self, signum, frame):
-        logger.info('Caught signal %s' % signum)
+        logger.info('Caught SIGHUP')
         reload_settings('jobmanager', self.override_settings)
 
         self.should_reset = True
