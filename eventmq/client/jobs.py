@@ -86,8 +86,11 @@ class Job(object):
                 socket = Sender()
                 socket.connect(addr=self.broker_addr)
 
+                msgid = kwargs.get('msgid', None)
+
                 msgid = messages.defer_job(
-                    socket, f, args=args, kwargs=kwargs, queue=self.queue)
+                    socket, f, args=args, kwargs=kwargs, queue=self.queue,
+                    msgid=msgid)
 
                 return msgid
             else:

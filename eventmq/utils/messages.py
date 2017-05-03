@@ -89,20 +89,23 @@ def generate_msgid(prefix=None):
     return id if not prefix else str(prefix) + id
 
 
-def send_emqp_message(socket, command, message=None):
+def send_emqp_message(socket, command, msgid=None, message=None):
     """
     Formats and sends an eMQP message
 
     Args:
-        socket
-        command
-        message
+        socket (zmq.socket) Socket to send on
+        command (str) Command to send
+        msgid: (str): An optional msgid to use instead of a generated one
+        message (tuple, str) Message to send
     Raises:
 
     Returns:
         str: Message id for this message
     """
-    msgid = generate_msgid()
+    if not msgid:
+        msgid = generate_msgid()
+
     msg = (str(command).upper(), msgid)
     if message and isinstance(message, (tuple, list)):
         msg += tuple(message)
@@ -114,7 +117,8 @@ def send_emqp_message(socket, command, message=None):
     return msgid
 
 
-def send_emqp_router_message(socket, recipient_id, command, message=None):
+def send_emqp_router_message(socket, recipient_id, command, msgid=None,
+                             message=None):
     """
     Formats and sends an eMQP message taking into account the recipient frame
     used by a :attr:`zmq.ROUTER` device.
@@ -123,12 +127,15 @@ def send_emqp_router_message(socket, recipient_id, command, message=None):
         socket: socket to send the message with
         recipient_id (str): the id of the connected device to reply to
         command (str): the eMQP command to send
+        msgid: (str): An optional msgid to use instead of a generated one
         message: a msg tuple to send
 
     Returns
         str: Message id for this message
     """
-    msgid = generate_msgid()
+    if not msgid:
+        msgid = generate_msgid()
+
     msg = (str(command).upper(), msgid)
     if message and isinstance(message, (tuple, list)):
         msg += message
