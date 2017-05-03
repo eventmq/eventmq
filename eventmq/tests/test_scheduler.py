@@ -16,7 +16,9 @@
 import json
 import unittest
 
-from .. import constants, scheduler
+import mock
+
+from .. import constants, scheduler, utils
 
 
 class TestCase(unittest.TestCase):
@@ -66,7 +68,8 @@ class TestCase(unittest.TestCase):
         h2 = scheduler.Scheduler.schedule_hash(msg2)
         self.assertEqual('4658982cab9d32bf1ef9113a9d8bdec01775e2bc', h2)
 
-    def test_on_schedule(self):
+    @mock.patch.object(utils.classes.ZMQSendMixin, 'send_multipart')
+    def test_on_schedule(self, send_mock):
         override_settings = {}
         sched = scheduler.Scheduler(override_settings=override_settings)
 
@@ -135,6 +138,9 @@ class TestCase(unittest.TestCase):
             sched.get_scheduled_jobs())['interval_jobs']))
         self.assertEqual(1, len(json.loads(
             sched.get_scheduled_jobs())['cron_jobs']))
+
+        # Make sure the scheduler obeyed 3 schedule commands with 'haste'
+        self.assertEqual(3, send_mock.call_count)
 
 
 # EMQP Tests
