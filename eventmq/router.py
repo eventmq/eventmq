@@ -322,6 +322,9 @@ class Router(HeartbeatMixin):
         elif client_type == CLIENT_TYPE.scheduler:
             self.add_scheduler(sender)
             self.send_ack(self.frontend, sender, msgid)
+        else:
+            logger.error('Received invalid client type on INFORM ({}), '
+                         'ignoring'.format(client_type))
 
     def on_reply(self, sender, msgid, msg):
         """

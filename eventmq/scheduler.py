@@ -372,6 +372,9 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
         schedule_hash = self.schedule_hash(message)
 
+        # If interval is negative, cron MUST be populated
+        interval_job = interval >= 0
+
         # Notify if this is updating existing, or new
         if (schedule_hash in self.cron_jobs or
                 schedule_hash in self.interval_jobs):
@@ -381,8 +384,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
             logger.debug('Creating a new scheduled job with %s'
                          % schedule_hash)
 
-        # If interval is negative, cron MUST be populated
-        if interval >= 0:
+        if interval_job:
             inter_iter = IntervalIter(monotonic(), interval)
 
             self.interval_jobs[schedule_hash] = [
@@ -430,7 +432,8 @@ class Scheduler(HeartbeatMixin, EMQPService):
             if run_count > 0 or run_count == INFINITE_RUN_COUNT:
                 # Don't allow run_count to decrement below 0
                 if run_count > 0:
-                    self.interval_jobs[schedule_hash][4] -= 1
+                    if interval_job:
+                        self.interval_jobs[schedule_hash][4] -= 1
                 self.send_request(message[3], queue=queue)
 
     def get_run_count_from_headers(self, headers):

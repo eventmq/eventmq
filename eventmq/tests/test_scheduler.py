@@ -66,6 +66,77 @@ class TestCase(unittest.TestCase):
         h2 = scheduler.Scheduler.schedule_hash(msg2)
         self.assertEqual('4658982cab9d32bf1ef9113a9d8bdec01775e2bc', h2)
 
+    def test_on_schedule(self):
+        override_settings = {}
+        sched = scheduler.Scheduler(override_settings=override_settings)
+
+        job_msg = json.dumps(['run', {
+            'path': 'test',
+            'args': [33, 'asdf'],
+            'kwargs': {'zeta': 'Z', 'alpha': 'α'},
+            'class_args': [0],
+            'class_kwargs': {
+                'donkey': True, 'apple': False},
+            'callable': 'do_the_thing'}])
+
+        msg = [
+            'default',
+            'run_count:3,guarantee',
+            '3',
+            job_msg,
+            None
+        ]
+
+        cron_msg = [
+            'default',
+            'run_count:3,guarantee',
+            '-1',
+            job_msg,
+            '* * * * *',
+        ]
+
+        sched.on_schedule('fake_msgid', msg)
+        self.assertEqual(1, len(sched.interval_jobs))
+        self.assertEqual(0, len(sched.cron_jobs))
+
+        self.assertEqual(1, len(json.loads(
+            sched.get_scheduled_jobs())['interval_jobs']))
+        self.assertEqual(0,
+                         len(json.loads(
+                             sched.get_scheduled_jobs())['cron_jobs']))
+
+        # Scheduling the same job as a cron should remove it from interval
+        sched.on_schedule('fake_msgid2', cron_msg)
+        self.assertEqual(0, len(sched.interval_jobs))
+        self.assertEqual(1, len(sched.cron_jobs))
+
+        self.assertEqual(0, len(json.loads(
+            sched.get_scheduled_jobs())['interval_jobs']))
+        self.assertEqual(1, len(json.loads(
+            sched.get_scheduled_jobs())['cron_jobs']))
+
+        # Change the job message and it should make new jobs
+        job_msg = json.dumps(['run', {
+            'path': 'test',
+            'args': [333, 'asdf'],
+            'kwargs': {'zeta': 'Z', 'alpha': 'α'},
+            'class_args': [0],
+            'class_kwargs': {
+                'donkey': True, 'apple': False},
+            'callable': 'do_the_thing'}])
+
+        msg[3] = job_msg
+
+        sched.on_schedule('fake_msgid3', msg)
+        self.assertEqual(1, len(sched.interval_jobs))
+        self.assertEqual(1, len(sched.cron_jobs))
+
+        self.assertEqual(1, len(json.loads(
+            sched.get_scheduled_jobs())['interval_jobs']))
+        self.assertEqual(1, len(json.loads(
+            sched.get_scheduled_jobs())['cron_jobs']))
+
+
 # EMQP Tests
     def test_reset(self):
         sched = scheduler.Scheduler()
