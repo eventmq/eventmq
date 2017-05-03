@@ -31,11 +31,14 @@ from . import constants
 from .client.messages import send_request
 from .constants import KBYE
 from .poller import Poller, POLLIN
+from .receiver import Receiver
 from .sender import Sender
 from .settings import conf, reload_settings
 from .utils.classes import EMQPService, HeartbeatMixin
 from .utils.devices import generate_device_name
+from .utils.jsonencoders import EventMQEncoder
 from .utils.messages import send_emqp_message as sendmsg
+from .utils.messages import send_emqp_router_message as send_router_msg
 from .utils.timeutils import IntervalIter, monotonic, seconds_until, timestamp
 
 
@@ -75,6 +78,12 @@ class Scheduler(HeartbeatMixin, EMQPService):
         self.frontend = Sender()
         self._redis_server = None
 
+        admin_addr = conf.SCHEDULER_ADMINISTRATIVE_LISTEN_ADDR
+
+        #: Port for administrative commands
+        self.administrative_socket = Receiver()
+        self.administrative_socket.listen(admin_addr)
+
         # contains dict of 4-item lists representing cron jobs key of this
         # dictionary is a hash of arguments, path, and callable from the
         # message of the SCHEDULE command received
@@ -99,6 +108,8 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
         self.poller = Poller()
         self.load_jobs()
+
+        self.poller.register(self.administrative_socket, POLLIN)
 
         self._setup()
 
@@ -134,6 +145,18 @@ class Scheduler(HeartbeatMixin, EMQPService):
             ts_now = int(timestamp())
             m_now = monotonic()
             events = self.poller.poll()
+
+            if events.get(self.administrative_socket) == POLLIN:
+                msg = self.administrative_socket.recv_multipart()
+                # ##############
+                # Admin Commands
+                # ##############
+                if len(msg) > 4:
+                    if msg[3] == constants.SCHEDULER_SHOW_SCHEDULED_JOBS:
+                        send_router_msg(self.administrative_socket,
+                                        msg[0],
+                                        'REPLY',
+                                        (self.get_scheduled_jobs(),))
 
             if events.get(self.frontend) == POLLIN:
                 msg = self.frontend.recv_multipart()
@@ -417,10 +440,24 @@ class Scheduler(HeartbeatMixin, EMQPService):
                 run_count = int(header.split(':')[1])
         return run_count
 
+    def on_status(self, msgid, message):
+
+        sendmsg(self.frontend, message[0], 'REPLY', (self.interval_jobs, ))
+
     def on_heartbeat(self, msgid, message):
         """
         Noop command. The logic for heartbeating is in the event loop.
         """
+
+    def get_scheduled_jobs(self):
+
+        return json.dumps(
+            {
+                'interval_jobs': self.interval_jobs,
+                'cron_jobs': self.cron_jobs,
+                'name': self.name,
+            },
+            cls=EventMQEncoder)
 
     @classmethod
     def schedule_hash(cls, message):

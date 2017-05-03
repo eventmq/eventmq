@@ -298,25 +298,25 @@ class Router(HeartbeatMixin):
         queue_names = msg[0]
         client_type = msg[1]
 
-        if not queue_names:  # Ideally, this matches some workers
-            logger.error('Recieved INFORM message with no defined '
-                         'queues. Message was: {}'.format(msg))
-            return
-
-        try:
-            queues = list(map(tuplify, json.loads(queue_names)))
-        except ValueError:
-            # this was invalid json
-            logger.error(
-                'Received invalid queue names in INFORM. names:{} from:{} '
-                'type:{}'.format(
-                    queue_names, sender, client_type))
-            return
-
         logger.info('Received INFORM request from {} (type: {})'.format(
             sender, client_type))
 
         if client_type == CLIENT_TYPE.worker:
+            if not queue_names:  # Ideally, this matches some workers
+                logger.error('Recieved INFORM message with no defined '
+                             'queues. Message was: {}'.format(msg))
+                return
+
+            try:
+                queues = list(map(tuplify, json.loads(queue_names)))
+            except ValueError:
+                # this was invalid json
+                logger.error(
+                    'Received invalid queue names in INFORM. names:{} from:{} '
+                    'type:{}'.format(
+                        queue_names, sender, client_type))
+                return
+
             self.add_worker(sender, queues)
             self.send_ack(self.backend, sender, msgid)
         elif client_type == CLIENT_TYPE.scheduler:
