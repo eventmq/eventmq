@@ -24,13 +24,13 @@ from pprint import pprint
 import sys
 
 from eventmq import exceptions
-from eventmq.client.messages import send_emqp_message
 from eventmq.constants import (
-        PROTOCOL_VERSION, ROUTER_SHOW_WORKERS, ROUTER_SHOW_SCHEDULERS
+        PROTOCOL_VERSION, STATUS_COMMANDS
 )
 from eventmq.poller import Poller, POLLIN
 from eventmq.sender import Sender
 from eventmq.utils.messages import generate_msgid
+
 
 class Shell(cmd.Cmd):
     """
@@ -92,21 +92,21 @@ class Shell(cmd.Cmd):
         """
         Request the status of the connected component
         """
-        self.send_message('STATUS')
+        self.send_message('STATUS', ('',))
         pprint(self.recv_reply())
 
-    def do_show_workers(self, line):
+    def do_show_managers(self, line):
         """
-        Request the status of the connected workers and queues
+        Request the status of the connected job managers and queues
         """
-        self.send_message(ROUTER_SHOW_WORKERS)
+        self.send_message(('STATUS', (STATUS_COMMANDS.show_managers,)))
         pprint(self.recv_reply())
 
     def do_show_schedulers(self, line):
         """
         Request the status of the connected schedulers
         """
-        self.send_message(ROUTER_SHOW_SCHEDULERS)
+        self.send_message('STATUS', (STATUS_COMMANDS.show_schedulers,))
         pprint(self.recv_reply())
 
     def do_shutdown(self, line):
@@ -128,7 +128,7 @@ class Shell(cmd.Cmd):
             return
 
         message = (command, generate_msgid('admin:')) + message
-
+        print('sending: {}'.format(message))
         self.socket.send_multipart(message, PROTOCOL_VERSION)
 
     def recv_reply(self, timeout_secs=1000):
