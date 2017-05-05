@@ -25,7 +25,7 @@ import signal
 from eventmq.log import setup_logger
 from . import conf, constants, exceptions, poller, receiver
 from .constants import (
-    CLIENT_TYPE, DISCONNECT, KBYE, PROTOCOL_VERSION, STATUS_COMMANDS, STATUS
+    CLIENT_TYPE, DISCONNECT, KBYE, PROTOCOL_VERSION, STATUS, STATUS_COMMANDS
 )
 from .utils import tuplify
 from .utils.classes import EMQdeque, HeartbeatMixin
