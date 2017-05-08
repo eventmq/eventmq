@@ -89,7 +89,7 @@ def generate_msgid(prefix=None):
     return id if not prefix else str(prefix) + id
 
 
-def send_emqp_message(socket, command, msgid=None, message=None):
+def send_emqp_message(socket, command, message=None, msgid=None):
     """
     Formats and sends an eMQP message
 
@@ -117,8 +117,8 @@ def send_emqp_message(socket, command, msgid=None, message=None):
     return msgid
 
 
-def send_emqp_router_message(socket, recipient_id, command, msgid=None,
-                             message=None):
+def send_emqp_router_message(socket, recipient_id, command,
+                             message=None, msgid=None):
     """
     Formats and sends an eMQP message taking into account the recipient frame
     used by a :attr:`zmq.ROUTER` device.
