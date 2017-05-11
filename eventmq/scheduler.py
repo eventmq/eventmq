@@ -24,12 +24,13 @@ from json import loads as deserialize
 import logging
 
 from croniter import croniter
+from future.utils import iteritems
 import redis
 from six import next
 
 from . import constants
 from .client.messages import send_request
-from .constants import KBYE
+from .constants import KBYE, STATUS_CMD, STATUS_COMMANDS
 from .poller import Poller, POLLIN
 from .receiver import Receiver
 from .sender import Sender
@@ -50,6 +51,8 @@ class Scheduler(HeartbeatMixin, EMQPService):
     """
     Keeper of time, master of schedules
     """
+    # TODO: Remove dependency on redis, make the backing store a generic
+    # interface
     SERVICE_TYPE = constants.CLIENT_TYPE.scheduler
 
     def __init__(self, override_settings=None, skip_signal=False, *args,
@@ -137,6 +140,9 @@ class Scheduler(HeartbeatMixin, EMQPService):
     def _start_event_loop(self):
         """
         Starts the actual event loop. Usually called by :meth:`Scheduler.start`
+
+        This loop is responsible for sending REQUESTs for scheduled jobs when
+        their next scheduled time has occurred
         """
         while True:
             if self.received_disconnect:
@@ -152,89 +158,111 @@ class Scheduler(HeartbeatMixin, EMQPService):
                 # Admin Commands
                 # ##############
                 if len(msg) > 4:
-                    if msg[3] == constants.SCHEDULER_SHOW_SCHEDULED_JOBS:
-                        send_router_msg(self.administrative_socket,
-                                        msg[0],
-                                        'REPLY',
-                                        (self.get_scheduled_jobs(),))
+                    if msg[3] == STATUS_CMD:
+                        if msg[5] == STATUS_COMMANDS.show_scheduled_jobs:
+                            send_router_msg(self.administrative_socket,
+                                            msg[0],
+                                            'REPLY',
+                                            (self.get_scheduled_jobs(),))
 
             if events.get(self.frontend) == POLLIN:
                 msg = self.frontend.recv_multipart()
                 self.process_message(msg)
 
-            # TODO: distribute me!
-            for hash_, cron in self.cron_jobs.items():
-                # If the time is now, or passed
-                if cron[0] <= ts_now:
-                    msg = cron[1]
-                    queue = cron[3]
+            for hash_, cron in iteritems(self.cron_jobs):
+                # the next ts this job should be executed in
+                next_monotonic = cron[0]
+                # 1 = the function to be executed
+                job_message = cron[1]
+                # 2 = the croniter iterator for this job
+                interval_iterator = cron[2]
+                # 3 = the queue to execute the job in
+                queue = cron[3]
 
+                # If the time is now, or passed
+                if next_monotonic <= ts_now:
                     # Run the msg
                     logger.debug("Time is: %s; Schedule is: %s - Running %s"
-                                 % (ts_now, cron[0], msg))
+                                 % (ts_now, next_monotonic, job_message))
 
-                    self.send_request(msg, queue=queue)
+                    self.send_request(job_message, queue=queue)
 
                     # Update the next time to run
-                    cron[0] = next(cron[2])
+                    next_monotonic = next(interval_iterator)
                     logger.debug("Next execution will be in %ss" %
-                                 seconds_until(cron[0]))
+                                 seconds_until(next_monotonic))
 
             cancel_jobs = []
-            for k, v in self.interval_jobs.iteritems():
-                # TODO: Refactor this entire loop to be readable by humankind
-                # The schedule time has elapsed
-                if v[0] <= m_now:
-                    msg = v[1]
-                    queue = v[3]
+
+            # Iterate all interval style jobs and update their state,
+            # send REQUESTs if necessary
+            for job_hash, job in iteritems(self.interval_jobs):
+                # the next (monotonic) ts that this job should be executed in
+                next_monotonic = job[0]
+                # the function to be executed
+                job_message = job[1]
+                # the interval iter for this job
+                interval_iterator = job[2]
+                # the queue to execute the job in
+                queue = job[3]
+                # run_count: # of times to execute this job
+                run_count = job[4]
+
+                if next_monotonic <= m_now:
+                    # The schedule time has elapsed
 
                     logger.debug("Time is: %s; Schedule is: %s - Running %s"
-                                 % (ts_now, v[0], msg))
+                                 % (ts_now, next_monotonic, job_message))
 
-                    # v[4] is the current remaining run_count
-                    if v[4] != INFINITE_RUN_COUNT:
-                        # If run_count was 0, we cancel the job
-                        if v[4] <= 0:
-                            cancel_jobs.append(k)
+                    # Only do run_count processing if its set to anything
+                    # besides the default of INFINITE
+                    if run_count != INFINITE_RUN_COUNT:
+                        # If run_count was <= 0, we cancel the job
+                        if run_count <= 0:
+                            cancel_jobs.append(job_hash)
                         else:
                             # Decrement run_count
-                            v[4] -= 1
+                            run_count -= 1
                             # Persist the change to redis
                             try:
-                                message = deserialize(self.redis_server.get(k))
+                                message = deserialize(
+                                    self.redis_server.get(job_hash))
                                 new_headers = []
                                 for header in message[1].split(','):
                                     if 'run_count:' in header:
                                         new_headers.append(
-                                            'run_count:{}'.format(v[4]))
+                                            'run_count:{}'.format(run_count))
                                     else:
                                         new_headers.append(header)
                                 message[1] = ",".join(new_headers)
-                                self.redis_server.set(k, serialize(message))
+                                self.redis_server.set(
+                                    job_hash, serialize(message))
                             except Exception as e:
                                 logger.warning(
                                     'Unable to update key in redis '
                                     'server: {}'.format(e))
                             # Perform the request since run_count still > 0
-                            self.send_request(msg, queue=queue)
-                            v[0] = next(v[2])
+                            self.send_request(job_message, queue=queue)
+                            next_monotonic = next(interval_iterator)
                     else:
                         # Scheduled job is in running infinitely
                         # Send job and update next schedule time
-                        self.send_request(msg, queue=queue)
-                        v[0] = next(v[2])
+                        self.send_request(job_message, queue=queue)
+                        next_monotonic = next(interval_iterator)
 
+            # Cancel and remove jobs where run_count has reached 0,
+            # and persist that to redis
             for job in cancel_jobs:
                 try:
                     logger.debug('Cancelling job due to run_count: {}'
-                                 .format(k))
-                    self.redis_server.delete(k)
-                    self.redis_server.lrem('interval_jobs', 0, k)
+                                 .format(job_hash))
+                    self.redis_server.delete(job_hash)
+                    self.redis_server.lrem('interval_jobs', 0, job_hash)
                 except Exception as e:
                     logger.warning(
                         'Unable to update key in redis '
                         'server: {}'.format(e))
-                del self.interval_jobs[k]
+                del self.interval_jobs[job_hash]
 
             if not self.maybe_send_heartbeat(events):
                 break
@@ -257,19 +285,19 @@ class Scheduler(HeartbeatMixin, EMQPService):
         else:
             return self._redis_server
 
-    def send_request(self, jobmsg, queue=None):
+    def send_request(self, job_message, queue=None):
         """
         Send a request message to the broker
 
         Args:
-            jobmsg: The message to send to the broker
+            job_message: The message to send to the broker
             queue: The name of the queue to use_impersonation
 
         Returns:
             str: ID of the message
         """
-        jobmsg = json.loads(jobmsg)
-        msgid = send_request(self.frontend, jobmsg, queue=queue,
+        job_message = json.loads(job_message)
+        msgid = send_request(self.frontend, job_message, queue=queue,
                              reply_requested=True)
 
         return msgid

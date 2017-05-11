@@ -72,7 +72,7 @@ FRAME  Value          Description
 4      _MSG_          The reply to respond with
 ====== ============== ===========
 
-A **HEARTBEAT** frame consists of a
+A **HEARTBEAT** frame consists of a 5-frame multipart message formatted as follows.
 
 ====== ============== ===========
 FRAME  Value          Description
@@ -84,7 +84,7 @@ FRAME  Value          Description
 4      _UNIX_TS_      A unix timestamp
 ====== ============== ===========
 
-A **DISCONNECT** frame consists of
+A **DISCONNECT** frame consists of a 4-frame multipart message formatted as follows.
 
 ====== ============== ===========
 FRAME  Value          Description
@@ -95,7 +95,7 @@ FRAME  Value          Description
 3      _MSGID_        A unique id for the msg
 ====== ============== ===========
 
-A **KBAI** frame consists of
+A **KBYE** frame consists of a 4-frame multipart message formatted as follows.
 
 ====== ============== ===========
 FRAME  Value          Description
@@ -105,6 +105,19 @@ FRAME  Value          Description
 2      KBAI           command
 3      _MSGID_        A unique id for the msg
 ====== ============== ===========
+
+A **STATUS** frame consists of a 5-frame multipart message formatted as follows.
+
+====== ============== ===========
+FRAME  Value          Description
+====== ============== ===========
+0      _EMPTY_        leave empty
+1      eMQP/1.0       Protocol version
+2      STATUS           command
+3      _MSGID_        A unique id for the msg
+4      _SUB_COMMAND_  A sub command (or empty string). Defined on a per device basis.
+====== ============== ===========
+
 
 eMQP / Client
 -------------

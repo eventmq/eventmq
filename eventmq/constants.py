@@ -18,16 +18,23 @@ class CLIENT_TYPE(object):
 # See doc/protocol.rst
 PROTOCOL_VERSION = 'eMQP/1.0'
 
-# PROTOCOL COMMANDS
 DISCONNECT = "DISCONNECT"
 KBYE = "KBYE"
+STATUS_CMD = "STATUS"
 
-# Router ADMINISTRATIVE COMMANDS
-ROUTER_SHOW_WORKERS = 'ROUTER_SHOW_WORKERS'
-ROUTER_SHOW_SCHEDULERS = 'ROUTER_SHOW_SCHEDULERS'
 
-# Scheduler ADMINISTRATIVE COMMANDS
-SCHEDULER_SHOW_SCHEDULED_JOBS = 'SCHEDULER_SHOW_SCHEDULED_JOBS'
+class STATUS_COMMANDS(object):
+    """
+    Defines the STATUS sub commands
+    """
+    #: Router subcommand to show connected job managbers
+    show_managers = 'show_managers'
+    #: Router subcommand to show connected schedulers
+    show_schedulers = 'show_schedulers'
+
+    #: Scheduler subcommand to show scheduled jobs
+    show_scheduled_jobs = 'show_scheduled_jobs'
+
 
 # ENVIRONMENT VARIABLES
 ENV_BROKER_ADDR = 'EMQ_CONNECT_ADDR'
