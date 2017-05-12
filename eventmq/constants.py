@@ -27,10 +27,13 @@ class STATUS_COMMANDS(object):
     """
     Defines the STATUS sub commands
     """
-    #: Router subommand to show connected job managbers
+    #: Router subcommand to show connected job managbers
     show_managers = 'show_managers'
     #: Router subcommand to show connected schedulers
     show_schedulers = 'show_schedulers'
+
+    #: Scheduler subcommand to show scheduled jobs
+    show_scheduled_jobs = 'show_scheduled_jobs'
 
 
 # ENVIRONMENT VARIABLES

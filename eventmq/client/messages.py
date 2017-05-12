@@ -111,7 +111,8 @@ def schedule(socket, func, interval_secs=None, args=(), kwargs=None,
 def defer_job(
         socket, func, args=(), kwargs=None, class_args=(),
         class_kwargs=None, reply_requested=False, guarantee=False,
-        retry_count=0, timeout=0, queue=conf.DEFAULT_QUEUE_NAME):
+        retry_count=0, timeout=0, queue=conf.DEFAULT_QUEUE_NAME,
+        msgid=None):
     """
     Used to send a job to a worker to execute via `socket`.
 
@@ -141,6 +142,7 @@ def defer_job(
         queue (str): Name of queue to use when executing the job. If this value
             evaluates to False, the default is used. Default: is configured
             default queue name
+        msgid: (str): An optional msgid to use instead of a generated one
     Raises:
         TypeError: When one or more parameters are not JSON serializable.
     Returns:
@@ -191,13 +193,14 @@ def defer_job(
                          guarantee=guarantee,
                          retry_count=retry_count,
                          timeout=timeout,
-                         queue=queue)
+                         queue=queue,
+                         msgid=msgid)
 
     return msgid
 
 
 def send_request(socket, message, reply_requested=False, guarantee=False,
-                 retry_count=0, timeout=0, queue=None):
+                 retry_count=0, timeout=0, queue=None, msgid=None):
     """
     Send a REQUEST command.
 
@@ -238,6 +241,7 @@ def send_request(socket, message, reply_requested=False, guarantee=False,
             default: 0 which means infinite timeout
         queue (str): Name of queue to use when executing the job. Default: is
             configured default queue name
+        msgid: (str): An optional msgid to use instead of a generated one
 
     Returns:
         str: ID of the message
@@ -259,7 +263,8 @@ def send_request(socket, message, reply_requested=False, guarantee=False,
     msgid = send_emqp_message(socket, 'REQUEST',
                               (queue or conf.DEFAULT_QUEUE_NAME,
                                ",".join(headers),
-                               serialize(message)))
+                               serialize(message)),
+                              msgid=msgid)
 
     return msgid
 

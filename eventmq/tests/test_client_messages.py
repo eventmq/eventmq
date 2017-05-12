@@ -86,6 +86,7 @@ class TestCase(unittest.TestCase):
                                        guarantee=False,
                                        retry_count=3,
                                        timeout=0,
+                                       msgid=None,
                                        queue='test_queue')
 
         with LogCapture() as log_checker:
@@ -259,7 +260,8 @@ class TestCase(unittest.TestCase):
             socket, 'REQUEST',
             ('mozo',
              'reply-requested,retry-count:2',
-             messages.serialize(msg)))
+             messages.serialize(msg)),
+            msgid=None)
 
     @mock.patch('eventmq.client.messages.send_emqp_message')
     def test_send_request_all_headers(self, snd_empq_msg_mock):
@@ -282,7 +284,8 @@ class TestCase(unittest.TestCase):
             socket, 'REQUEST',
             ('default',
              'reply-requested,guarantee,retry-count:2,timeout:3',
-             messages.serialize(msg)))
+             messages.serialize(msg)),
+            msgid=None)
 
     @mock.patch('eventmq.client.messages.send_emqp_message')
     def test_send_schedule_request(self, snd_empq_msg_mock):

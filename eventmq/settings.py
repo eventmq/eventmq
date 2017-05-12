@@ -270,7 +270,15 @@ _CONFIG_DEFS = {
             'long-arg': '--redis-password',
             'type': str,
             'help': 'Password to redis'
-        }
+        },
+        'ADMINISTRATIVE_LISTEN_ADDR': {
+            'default': 'tcp://127.0.0.1:47294',
+            'long-arg': '--administrative-listen-addr',
+            'short-arg': '-S',
+            'type': str,
+            'help': 'Address to listen for administrative commands for '
+                    'schedulers',
+        },
     },
     'publisher': {
         'FRONTEND_LISTEN_ADDR': {

@@ -34,13 +34,13 @@ class TestCase(unittest.TestCase):
         self.assertEqual(d(), 12)
         self.assertEqual(d.delay(), '43e14eaa-2034-4c84-8fe7-5577c70b6a7c')
         defer_job_mock.assert_called_with(Sender_mock(), test_func, args=(),
-                                          kwargs={}, queue=None)
+                                          msgid=None, kwargs={}, queue=None)
 
         d = jobs.job(test_func, broker_addr=self.BROKER_ADDR, queue='mojo')
         d.delay(1, 2, three=3)
         defer_job_mock.assert_called_with(Sender_mock(), test_func,
                                           args=(1, 2), kwargs={'three': 3},
-                                          queue='mojo')
+                                          msgid=None, queue='mojo')
 
     @mock.patch('eventmq.client.messages.defer_job')
     @mock.patch('eventmq.client.jobs.Sender')
@@ -85,7 +85,8 @@ class TestCase(unittest.TestCase):
         sched_mock.assert_called_with(
             Sender_mock(), test_func, args=(), class_args=(),
             class_kwargs=None, cron=None, headers=('guarantee',),
-            interval_secs=None, kwargs=None, queue='default', unschedule=True)
+            interval_secs=None, kwargs=None, queue='default',
+            unschedule=True)
 
 
 def test_func():

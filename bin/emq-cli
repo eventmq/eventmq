@@ -95,6 +95,10 @@ class Shell(cmd.Cmd):
         self.send_message('STATUS', ('',))
         pprint(self.recv_reply())
 
+    def do_show_scheduled_jobs(self, line):
+        self.send_message(('STATUS', (STATUS_COMMANDS.show_scheduled_jobs,)))
+        pprint(self.recv_reply())
+
     def do_show_managers(self, line):
         """
         Request the status of the connected job managers and queues

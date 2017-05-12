@@ -75,9 +75,14 @@ class TestCase(unittest.TestCase):
 
             log_checker.check(
                 ('eventmq.router',
+                 'INFO',
+                 'Received INFORM request from {} (type: worker)'.format(
+                     sender_id)),
+
+                ('eventmq.router',
                  'ERROR',
-                 'Recieved INFORM message with no defined queues. Message '
-                 'was: {}'.format(msg))
+                 "Recieved INFORM message with no defined queues. Message "
+                 "was: {}".format(msg)),
             )
 
     def test_on_inform_invalid_queues(self):
@@ -93,9 +98,14 @@ class TestCase(unittest.TestCase):
 
             log_checker.check(
                 ('eventmq.router',
+                 'INFO',
+                 'Received INFORM request from {} (type: worker)'.format(
+                     sender_id)),
+
+                ('eventmq.router',
                  'ERROR',
                  'Received invalid queue names in INFORM. names:{} from:{} '
-                 'type:{}'.format(msg[0], sender_id, msg[1]))
+                 'type:{}'.format(msg[0], sender_id, msg[1])),
             )
 
     # @mock.patch('eventmq.router.Router.prioritize_queue_list')

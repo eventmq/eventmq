@@ -24,7 +24,8 @@ import signal
 
 from . import constants, exceptions, poller, receiver
 from .constants import (
-    CLIENT_TYPE, DISCONNECT, KBYE, PROTOCOL_VERSION, STATUS, STATUS_COMMANDS
+    CLIENT_TYPE, DISCONNECT, KBYE, PROTOCOL_VERSION, STATUS, STATUS_CMD,
+    STATUS_COMMANDS
 )
 from .settings import conf, reload_settings
 from .utils import tuplify
@@ -280,30 +281,33 @@ class Router(HeartbeatMixin):
         queue_names = msg[0]
         client_type = msg[1]
 
-        if not queue_names:  # Ideally, this matches some workers
-            logger.error('Recieved INFORM message with no defined '
-                         'queues. Message was: {}'.format(msg))
-            return
-
-        try:
-            queues = list(map(tuplify, json.loads(queue_names)))
-        except ValueError:
-            # this was invalid json
-            logger.error(
-                'Received invalid queue names in INFORM. names:{} from:{} '
-                'type:{}'.format(
-                    queue_names, sender, client_type))
-            return
-
         logger.info('Received INFORM request from {} (type: {})'.format(
             sender, client_type))
 
         if client_type == CLIENT_TYPE.worker:
+            if not queue_names:  # Ideally, this matches some workers
+                logger.error('Recieved INFORM message with no defined '
+                             'queues. Message was: {}'.format(msg))
+                return
+
+            try:
+                queues = list(map(tuplify, json.loads(queue_names)))
+            except ValueError:
+                # this was invalid json
+                logger.error(
+                    'Received invalid queue names in INFORM. names:{} from:{} '
+                    'type:{}'.format(
+                        queue_names, sender, client_type))
+                return
+
             self.add_worker(sender, queues)
             self.send_ack(self.backend, sender, msgid)
         elif client_type == CLIENT_TYPE.scheduler:
             self.add_scheduler(sender)
             self.send_ack(self.frontend, sender, msgid)
+        else:
+            logger.error('Received invalid client type on INFORM ({}), '
+                         'ignoring'.format(client_type))
 
     def on_reply(self, sender, msgid, msg):
         """
@@ -819,7 +823,7 @@ class Router(HeartbeatMixin):
                 self.send_ack(
                     self.administrative_socket, msg[0], msg[4])
                 self.on_disconnect(msg[4], msg)
-            elif msg[3] == 'STATUS':
+            elif msg[3] == STATUS_CMD:
                 if msg[5] == STATUS_COMMANDS.show_managers:
                     sendmsg(self.administrative_socket, msg[0], 'REPLY',
                             (self.get_workers_status(),))
