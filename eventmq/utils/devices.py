@@ -20,17 +20,19 @@
 
 def generate_device_name(prefix=None):
     """
-    This generates a uuid for use in setsockopt_string(zmq.IDENTITY, x)
-    Note: This will fail if used with python3 and setsockopt(zmq.IDENTIOTY, x)
+    This takes care of the python3 'everything is unicode' feature which
+    causes errors when setting the IDENTITY of the ZMQ socket.
 
     Args:
         prefix (str): Prefix the id with this string.
 
-    Returns (str) An ascii encoded string that can be used as an IDENTITY for a
-        ZMQ socket.
+    Returns (str/bytes) An ascii encoded string that can be used as an IDENTITY
+        for a ZMQ socket.  In python3 this returns a `bytes`, python2 a 'str
     """
     import uuid
     ret = str(uuid.uuid4())
+
     if prefix:
-        ret = prefix + ret
-    return ret
+        ret = "{}:{}".format(prefix, ret)
+
+    return ret.encode('ascii')

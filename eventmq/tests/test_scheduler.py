@@ -29,7 +29,7 @@ class TestCase(unittest.TestCase):
             'NAME': 'RuckasBringer'
         }
         sched = scheduler.Scheduler(override_settings=override_settings)
-        self.assertEqual(sched.name, 'RuckasBringer:some_uuid')
+        self.assertEqual(sched.name.decode('ascii'), 'RuckasBringer:some_uuid')
 
         self.assertFalse(sched.awaiting_startup_ack)
         self.assertEqual(sched.status, constants.STATUS.ready)

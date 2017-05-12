@@ -30,7 +30,7 @@ class TestCase(unittest.TestCase):
             'NAME': 'RuckusBringer'
         }
         jm = jobmanager.JobManager(override_settings=override_settings)
-        self.assertEqual(jm.name, 'RuckusBringer:some_uuid')
+        self.assertEqual(jm.name.decode('ascii'), 'RuckusBringer:some_uuid')
 
         self.assertFalse(jm.awaiting_startup_ack)
         self.assertEqual(jm.status, constants.STATUS.ready)
@@ -41,7 +41,7 @@ class TestCase(unittest.TestCase):
         name_mock.return_value = 'some_uuid'
         jm = jobmanager.JobManager()
 
-        self.assertEqual(jm.name, 'some_uuid')
+        self.assertEqual(jm.name.decode('ascii'), 'some_uuid')
 
         self.assertFalse(jm.awaiting_startup_ack)
         self.assertEqual(jm.status, constants.STATUS.ready)

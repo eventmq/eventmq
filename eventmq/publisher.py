@@ -23,14 +23,13 @@ import zmq
 
 from . import constants
 from .utils.devices import generate_device_name
-from .settings import conf
 
 logger = logging.getLogger(__name__)
 
 
 class Publisher(object):
     """
-        name (str): Name of this socket
+        name (str): Named prefix of this socket
         zcontext (:class:`zmq.Context`): socket context
         zsocket (:class:`zmq.Socket`):
     """
@@ -38,13 +37,10 @@ class Publisher(object):
     def __init__(self, *args, **kwargs):
         self.zcontext = kwargs.get('context', zmq.Context.instance())
 
-        if conf.NAME:
-            self.name = "{}:{}".format(conf.NAME, generate_device_name())
-        else:
-            self.name = generate_device_name()
+        self.name = generate_device_name(kwargs.pop('name', None))
 
         self.zsocket = kwargs.get('socket', self.zcontext.socket(zmq.PUB))
-        self.zsocket.setsockopt_string(zmq.IDENTITY, self.name)
+        self.zsocket.setsockopt(zmq.IDENTITY, self.name)
 
         self.status = constants.STATUS.ready
 

@@ -75,12 +75,9 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
         super(Scheduler, self).__init__(*args, **kwargs)
 
-        if conf.NAME:
-            self.name = "{}:{}".format(conf.NAME, generate_device_name())
-        else:
-            self.name = generate_device_name()
+        self.name = generate_device_name(conf.NAME)
 
-        self.frontend = Sender()
+        self.frontend = Sender(conf.NAME)
         self._redis_server = None
 
         # contains dict of 4-item lists representing cron jobs key of this
