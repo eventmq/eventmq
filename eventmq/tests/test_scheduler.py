@@ -22,12 +22,14 @@ from .. import constants, scheduler, utils
 
 
 class TestCase(unittest.TestCase):
-    def test__setup(self):
+    @mock.patch('uuid.uuid4')
+    def test__setup(self, name_mock):
+        name_mock.return_value = 'some_uuid'
         override_settings = {
             'NAME': 'RuckasBringer'
         }
         sched = scheduler.Scheduler(override_settings=override_settings)
-        self.assertEqual(sched.name, 'RuckasBringer')
+        self.assertEqual(sched.name.decode('ascii'), 'RuckasBringer:some_uuid')
 
         self.assertFalse(sched.awaiting_startup_ack)
         self.assertEqual(sched.status, constants.STATUS.ready)

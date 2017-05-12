@@ -81,7 +81,8 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         #: Define the name of this JobManager instance. Useful to know when
         #: referring to the logs.
-        self.name = conf.NAME or generate_device_name()
+        self.name = generate_device_name(conf.NAME)
+
         logger.info('Initializing JobManager {}...'.format(self.name))
 
         if not skip_signal:
@@ -96,7 +97,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         #: then telling the router that it is READY. The reply will be the unit
         #: of work.
         # Despite the name, jobs are received on this socket
-        self.frontend = Sender(name=self.name)
+        self.frontend = Sender(name=conf.NAME)
 
         self.poller = Poller()
 

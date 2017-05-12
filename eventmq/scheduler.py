@@ -77,8 +77,10 @@ class Scheduler(HeartbeatMixin, EMQPService):
         logger.info('Initializing Scheduler...')
 
         super(Scheduler, self).__init__(*args, **kwargs)
-        self.name = conf.NAME or generate_device_name()
-        self.frontend = Sender()
+
+        self.name = generate_device_name(conf.NAME)
+
+        self.frontend = Sender(conf.NAME)
         self._redis_server = None
 
         admin_addr = conf.SCHEDULER_ADMINISTRATIVE_LISTEN_ADDR

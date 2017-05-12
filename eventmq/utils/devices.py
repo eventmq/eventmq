@@ -26,11 +26,13 @@ def generate_device_name(prefix=None):
     Args:
         prefix (str): Prefix the id with this string.
 
-    Returns (str) An ascii encoded string that can be used as an IDENTITY for a
-        ZMQ socket.
+    Returns (str/bytes) An ascii encoded string that can be used as an IDENTITY
+        for a ZMQ socket.  In python3 this returns a `bytes`, python2 a 'str
     """
     import uuid
-    ret = str(uuid.uuid4()).encode('ascii')
+    ret = str(uuid.uuid4())
+
     if prefix:
-        ret = prefix + ret
-    return ret
+        ret = "{}:{}".format(prefix, ret)
+
+    return ret.encode('ascii')
