@@ -142,7 +142,7 @@ class TestCase(unittest.TestCase):
 
     def test_emqDeque(self):
 
-        full = random.randint(1, 100)
+        full = random.randint(2, 100)
         pfull = random.randint(1, full-1)
 
         q = classes.EMQdeque(full=full,

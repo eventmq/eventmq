@@ -37,7 +37,7 @@ class FakeDevice(ZMQReceiveMixin, ZMQSendMixin):
 
         self.name = generate_device_name()
         self.zsocket = zmq.Context.instance().socket(type_)
-        self.zsocket.setsockopt(zmq.IDENTITY, self.name)
+        self.zsocket.setsockopt_string(zmq.IDENTITY, self.name)
 
 
 def send_raw_INFORM(sock, type_, queues=(conf.DEFAULT_QUEUE_NAME,)):
