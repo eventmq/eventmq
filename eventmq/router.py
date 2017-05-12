@@ -64,7 +64,11 @@ class Router(HeartbeatMixin):
 
         super(Router, self).__init__(*args, **kwargs)  # Creates _meta
 
-        self.name = conf.NAME or generate_device_name()
+        if conf.NAME:
+            self.name = "{}:{}".format(conf.NAME, generate_device_name())
+        else:
+            self.name = generate_device_name()
+
         logger.info('Initializing Router %s...' % self.name)
 
         self.poller = poller.Poller()

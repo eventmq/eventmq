@@ -81,7 +81,11 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         #: Define the name of this JobManager instance. Useful to know when
         #: referring to the logs.
-        self.name = conf.NAME or generate_device_name()
+        if conf.NAME:
+            self.name = "{}:{}".format(conf.NAME, generate_device_name())
+        else:
+            self.name = generate_device_name()
+
         logger.info('Initializing JobManager {}...'.format(self.name))
 
         if not skip_signal:
