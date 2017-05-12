@@ -57,7 +57,7 @@ class Receiver(ZMQReceiveMixin, ZMQSendMixin):
         self.name = kwargs.get('name', generate_device_name())
 
         self.zsocket = kwargs.get('socket', self.zcontext.socket(zmq.ROUTER))
-        self.zsocket.setsockopt(zmq.IDENTITY, self.name)
+        self.zsocket.setsockopt_string(zmq.IDENTITY, self.name)
         self.zsocket.setsockopt(zmq.ROUTER_MANDATORY, 1)
 
         self.status = constants.STATUS.ready
