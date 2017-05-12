@@ -83,7 +83,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
         self.frontend = Sender(conf.NAME)
         self._redis_server = None
 
-        admin_addr = conf.SCHEDULER_ADMINISTRATIVE_LISTEN_ADDR
+        admin_addr = conf.ADMINISTRATIVE_LISTEN_ADDR
 
         #: Port for administrative commands
         self.administrative_socket = Receiver()
