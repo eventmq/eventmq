@@ -132,8 +132,8 @@ _CONFIG_DEFS = {
             'long-arg': '--name',
             'short-arg': '-n',
             'type': str,
-            'help': "A unique ame to give this node. If one isn't provided a "
-                    "random uuid will be generated",
+            'help': "A unique name to give this node. If one isn't provided a "
+                    "random uuid will be generated in its place",
         },
     },
     'router': {

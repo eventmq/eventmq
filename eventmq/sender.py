@@ -18,13 +18,12 @@
 The sender is responsible for sending messages
 """
 import logging
-import sys
-import uuid
 
 import zmq
 
 from . import constants, exceptions
 from .utils.classes import ZMQReceiveMixin, ZMQSendMixin
+from .utils.devices import generate_device_name
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +60,8 @@ class Sender(ZMQSendMixin, ZMQReceiveMixin):
         # rebuilding it later.
         self.zsocket = None
 
-        self.name = kwargs.pop('name', str(uuid.uuid4()))
+        # Immutable name that was specified at construction time
+        self.conf_name = kwargs.pop('name', None)
 
         self.rebuild(*args, **kwargs)
 
@@ -138,10 +138,8 @@ class Sender(ZMQSendMixin, ZMQReceiveMixin):
             self.zsocket.close()
 
         self.zsocket = kwargs.pop('socket', self.zcontext.socket(zmq.DEALER))
-        if sys.version[0] == '2':
-            self.zsocket.setsockopt(zmq.IDENTITY, self.name)
-        else:
-            self.zsocket.setsockopt_string(zmq.IDENTITY, str(self.name))
+        self.name = generate_device_name(self.conf_name)
+        self.zsocket.setsockopt(zmq.IDENTITY, self.name)
 
         self.status = constants.STATUS.ready
 

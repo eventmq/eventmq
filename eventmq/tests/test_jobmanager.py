@@ -23,19 +23,25 @@ ADDR = 'inproc://pour_the_rice_in_the_thing'
 
 
 class TestCase(unittest.TestCase):
-    def test__setup(self):
+    @mock.patch('uuid.uuid4')
+    def test__setup(self, name_mock):
+        name_mock.return_value = 'some_uuid'
         override_settings = {
             'NAME': 'RuckusBringer'
         }
         jm = jobmanager.JobManager(override_settings=override_settings)
-        self.assertEqual(jm.name, 'RuckusBringer')
+        self.assertEqual(jm.name.decode('ascii'), 'RuckusBringer:some_uuid')
 
         self.assertFalse(jm.awaiting_startup_ack)
         self.assertEqual(jm.status, constants.STATUS.ready)
 
 # EMQP Tests
-    def test_reset(self):
+    @mock.patch('uuid.uuid4')
+    def test_reset(self, name_mock):
+        name_mock.return_value = 'some_uuid'
         jm = jobmanager.JobManager()
+
+        self.assertEqual(jm.name.decode('ascii'), 'some_uuid')
 
         self.assertFalse(jm.awaiting_startup_ack)
         self.assertEqual(jm.status, constants.STATUS.ready)

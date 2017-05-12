@@ -29,14 +29,15 @@ logger = logging.getLogger(__name__)
 
 class Publisher(object):
     """
-        name (str): Name of this socket
+        name (str): Named prefix of this socket
         zcontext (:class:`zmq.Context`): socket context
         zsocket (:class:`zmq.Socket`):
     """
 
     def __init__(self, *args, **kwargs):
         self.zcontext = kwargs.get('context', zmq.Context.instance())
-        self.name = kwargs.get('name', generate_device_name())
+
+        self.name = generate_device_name(kwargs.pop('name', None))
 
         self.zsocket = kwargs.get('socket', self.zcontext.socket(zmq.PUB))
         self.zsocket.setsockopt(zmq.IDENTITY, self.name)
