@@ -271,9 +271,9 @@ _CONFIG_DEFS = {
             'type': str,
             'help': 'Password to redis'
         },
-        'SCHEDULER_ADMINISTRATIVE_LISTEN_ADDR': {
+        'ADMINISTRATIVE_LISTEN_ADDR': {
             'default': 'tcp://127.0.0.1:47294',
-            'long-arg': '--scheduler-administrative-listen-addr',
+            'long-arg': '--administrative-listen-addr',
             'short-arg': '-S',
             'type': str,
             'help': 'Address to listen for administrative commands for '
