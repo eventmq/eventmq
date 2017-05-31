@@ -147,7 +147,10 @@ class TestCase(unittest.TestCase):
 
 # EMQP Tests
     def test_reset(self):
-        sched = scheduler.Scheduler()
+        sched = scheduler.Scheduler(
+            override_settings={
+                "ADMINISTRATIVE_LISTEN_ADDR": "ipc://forkthis:12345"
+            })
 
         self.assertFalse(sched.awaiting_startup_ack)
         self.assertEqual(sched.status, constants.STATUS.ready)
