@@ -179,7 +179,8 @@ class Router(HeartbeatMixin):
 
             if events.get(self.administrative_socket) == poller.POLLIN:
                 msg = self.administrative_socket.recv_multipart()
-                logger.debug('ADMIN: {}'.format(msg))
+                if conf.SUPER_DEBUG:
+                    logger.debug('ADMIN: {}'.format(msg))
                 # ##############
                 # Admin Commands
                 # ##############
@@ -331,8 +332,9 @@ class Router(HeartbeatMixin):
         """
 
         orig_msgid = msg[1]
-        logger.info('Received REPLY from {} (msgid: {}, ACK msgid: {})'.format(
-            sender, msgid, orig_msgid))
+        if conf.SUPER_DEBUG:
+            logger.debug('Received REPLY from {} (msgid: {}, ACK msgid: {})'.
+                         format(sender, msgid, orig_msgid))
 
         if orig_msgid in self.job_latencies:
             elapsed_secs = (monotonic()
