@@ -186,9 +186,9 @@ class JobManager(HeartbeatMixin, EMQPService):
                     else:
                         try:
                             events = self.poller.poll(1000)
-                        except zmq.ZMQError:
+                        except zmq.ZMQError as e:
                             logger.debug('Disconnecting due to ZMQError while'
-                                         ' polling')
+                                         ' polling: {}'.format(e))
                             sendmsg(self.outgoing, KBYE)
                             self.received_disconnect = True
                             continue
