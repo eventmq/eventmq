@@ -28,6 +28,7 @@ import time
 
 import zmq
 
+from . import __version__
 from .constants import KBYE, STATUS
 from .poller import Poller, POLLIN
 from .sender import Sender
@@ -83,7 +84,8 @@ class JobManager(HeartbeatMixin, EMQPService):
         #: referring to the logs.
         self.name = generate_device_name(conf.NAME)
 
-        logger.info('Initializing JobManager {}...'.format(self.name))
+        logger.info('Initializing JobManager {}...'.format(str(self.name)))
+        logger.info('JogManager version: ' + __version__)
 
         if not skip_signal:
             # handle any sighups by reloading config

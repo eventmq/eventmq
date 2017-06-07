@@ -22,7 +22,7 @@ import json  # deserialize queues in on_inform. should be refactored
 import logging
 import signal
 
-from . import constants, exceptions, poller, receiver
+from . import __version__, constants, exceptions, poller, receiver
 from .constants import (
     CLIENT_TYPE, DISCONNECT, KBYE, PROTOCOL_VERSION, STATUS, STATUS_CMD,
     STATUS_COMMANDS
@@ -67,7 +67,8 @@ class Router(HeartbeatMixin):
 
         self.name = generate_device_name(conf.NAME)
 
-        logger.info('Initializing Router %s...' % self.name)
+        logger.info('Initializing Router %s...' % str(self.name))
+        logger.info('Router version: ' + __version__)
 
         self.poller = poller.Poller()
 

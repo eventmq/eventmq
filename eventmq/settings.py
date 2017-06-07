@@ -50,7 +50,7 @@ import os
 # for py2 since dict().items() is inefficient
 from future.utils import iteritems
 
-from . import constants, __version__
+from . import __version__, constants
 from .utils import tuplify
 
 
