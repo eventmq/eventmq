@@ -709,7 +709,7 @@ class Router(HeartbeatMixin):
 
         command = message[1]
 
-        if conf.WAL_LOG_ENABLED and \
+        if conf.WAL_ENABLED and \
            command in ("REQUEST", "SCHEDULE", "UNSCHEDULE"):
             wal_logger.info(original_msg)
 
@@ -934,7 +934,7 @@ class Router(HeartbeatMixin):
         """
         setup_logger('eventmq')
         import_settings()
-        setup_wal_logger('eventmq-wal', conf.WAL_LOG)
+        setup_wal_logger('eventmq-wal', conf.WAL)
         self.start(frontend_addr=conf.FRONTEND_ADDR,
                    backend_addr=conf.BACKEND_ADDR,
                    administrative_addr=conf.ADMINISTRATIVE_ADDR)
