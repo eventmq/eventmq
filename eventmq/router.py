@@ -94,6 +94,10 @@ class Router(HeartbeatMixin):
         #: workers available to take the job
         self.waiting_messages = {}
 
+        # Key: Queue.name, Value: # of messages sent to workers on that queue
+        # Includes REQUESTS in flight but not REQUESTS queued
+        self.processed_message_counts = {}
+
         #: Tracks the last time the scheduler queue was cleaned out of dead
         #: schedulers
         self._meta['last_scheduler_cleanup'] = 0
@@ -494,6 +498,11 @@ class Router(HeartbeatMixin):
 
             # Rebuild the message to be sent to the worker. fwdmsg will
             # properly address the message.
+            if queue_name not in self.processed_message_counts:
+                self.processed_message_counts[queue_name] = 1
+            else:
+                self.processed_message_counts[queue_name] += 1
+
             fwdmsg(self.outgoing, worker_addr, ['', constants.PROTOCOL_VERSION,
                                                 'REQUEST', msgid, ] + msg)
 
@@ -876,7 +885,8 @@ class Router(HeartbeatMixin):
            (str) Serialized information about the current state of the router.
         """
         return json.dumps({
-            'job_latencies': self.job_latencies,
+            'job_latencies': None,  # Deprecated, to be removed from reporting
+            'processed_messages': self.processed_message_counts,
             'executed_functions': self.executed_functions,
             'waiting_message_counts': [
                 '{}: {}'.
