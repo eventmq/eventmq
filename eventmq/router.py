@@ -125,8 +125,6 @@ class Router(HeartbeatMixin):
         #: Excecuted function tracking dictionary
         #: Key: msgid of msg each REQUEST received and forwarded to a worker
         #: Value: (function_name, queue_name)
-        self.executed_functions = {}
-
         #: Set to True when the router should die.
         self.received_disconnect = False
 
@@ -491,12 +489,6 @@ class Router(HeartbeatMixin):
 
         try:
             # Check if msg type is for executing function
-            if 'run' in msg and len(msg) > 2:
-                args_list = json.loads(msg[2])
-                args_dict = args_list[1]
-                function = args_dict.get('callable')
-                if function:
-                    self.executed_functions[msgid] = (function, queue_name)
             self.job_latencies[msgid] = (monotonic(), queue_name)
 
             # Rebuild the message to be sent to the worker. fwdmsg will
@@ -897,7 +889,6 @@ class Router(HeartbeatMixin):
             'processed_messages': self.processed_message_counts,
             'processed_messages_by_worker':
                 self.processed_message_counts_by_worker,
-            'executed_functions': self.executed_functions,
             'waiting_message_counts': [
                 '{}: {}'.
                 format(q,
