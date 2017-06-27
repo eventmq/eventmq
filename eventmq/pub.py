@@ -19,7 +19,7 @@ Publishes messages to subscribers
 """
 import logging
 
-from . import exceptions, poller, publisher, receiver
+from . import __version__, exceptions, poller, publisher, receiver
 from .constants import STATUS
 from .settings import conf, reload_settings
 from .utils.classes import HeartbeatMixin
@@ -44,6 +44,9 @@ class Pub(HeartbeatMixin):
         """
         self.override_settings = override_settings
         reload_settings('publisher', self.override_settings)
+
+        logger.info('Initiaizing publisher...')
+        logger.info('Publisher version: ' + __version__)
 
         super(Pub, self).__init__(*args, **kwargs)  # creates _meta
         self.poller = poller.Poller()

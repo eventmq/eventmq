@@ -28,6 +28,7 @@ from future.utils import iteritems
 import redis
 from six import next
 
+from . import __version__
 from . import constants
 from .client.messages import send_request
 from .constants import KBYE, STATUS_CMD, STATUS_COMMANDS
@@ -74,11 +75,12 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
         reload_settings('scheduler', self.override_settings)
 
-        logger.info('Initializing Scheduler...')
-
         super(Scheduler, self).__init__(*args, **kwargs)
 
         self.name = generate_device_name(conf.NAME)
+
+        logger.info('Initializing Scheduler... ' + str(self.name))
+        logger.info('Scheduler version: ' + __version__)
 
         self.frontend = Sender(conf.NAME)
         self._redis_server = None

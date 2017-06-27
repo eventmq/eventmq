@@ -50,7 +50,7 @@ import os
 # for py2 since dict().items() is inefficient
 from future.utils import iteritems
 
-from . import constants
+from . import __version__, constants
 from .utils import tuplify
 
 
@@ -478,7 +478,7 @@ def build_parser_arguments(parser, section):
         section (str): the section of the config to generate arguments for.
     """
     for s in ('global', section):
-        for k, v in iteritems(_CONFIG_DEFS[s]):
+        for _, v in iteritems(_CONFIG_DEFS[s]):
             if not v.get('long-arg'):
                 continue
 
@@ -501,6 +501,10 @@ def build_parser_arguments(parser, section):
                         add_argument_kwargs[kwarg] = v.get(kwarg)
 
             parser.add_argument(*add_argument_args, **add_argument_kwargs)
+
+    # Tack on the version arugment to all options
+    parser.add_argument('--version', action='version',
+                        version='%(prog)s ' + __version__)
 
 
 class Conf(object):
