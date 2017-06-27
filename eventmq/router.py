@@ -22,7 +22,7 @@ import json  # deserialize queues in on_inform. should be refactored
 import logging
 import signal
 
-from eventmq.log import setup_logger
+from eventmq.log import setup_logger, setup_wal_logger
 from . import conf, constants, exceptions, poller, receiver
 from .constants import (
     CLIENT_TYPE, DISCONNECT, KBYE, PROTOCOL_VERSION, ROUTER_SHOW_SCHEDULERS,
@@ -41,6 +41,7 @@ from .utils.timeutils import monotonic, timestamp
 
 
 logger = logging.getLogger(__name__)
+wal_logger = logging.getLogger('eventmq-wal')
 
 
 class Router(HeartbeatMixin):
@@ -176,6 +177,7 @@ class Router(HeartbeatMixin):
 
             if events.get(self.incoming) == poller.POLLIN:
                 msg = self.incoming.recv_multipart()
+                self.handle_wal_log(msg)
                 self.process_client_message(msg)
 
             if events.get(self.outgoing) == poller.POLLIN:
@@ -184,7 +186,8 @@ class Router(HeartbeatMixin):
 
             if events.get(self.administrative_socket) == poller.POLLIN:
                 msg = self.administrative_socket.recv_multipart()
-                logger.debug('ADMIN: {}'.format(msg))
+                if conf.SUPER_DEBUG:
+                    logger.debug('ADMIN: {}'.format(msg))
                 # ##############
                 # Admin Commands
                 # ##############
@@ -336,8 +339,9 @@ class Router(HeartbeatMixin):
         """
 
         orig_msgid = msg[1]
-        logger.info('Received REPLY from {} (msgid: {}, ACK msgid: {})'.format(
-            sender, msgid, orig_msgid))
+        if conf.SUPER_DEBUG:
+            logger.debug('Received REPLY from {} (msgid: {}, ACK msgid: {})'.
+                         format(sender, msgid, orig_msgid))
 
         if orig_msgid in self.job_latencies:
             elapsed_secs = (monotonic()
@@ -703,6 +707,21 @@ class Router(HeartbeatMixin):
         """
         self.workers[worker_id]['available_slots'] += 1
 
+    def handle_wal_log(self, original_msg):
+
+        try:
+            message = parse_router_message(original_msg)
+        except exceptions.InvalidMessageError:
+            logger.exception('Invalid message from clients: {}'.format(
+                str(original_msg)))
+            return
+
+        command = message[1]
+
+        if conf.WAL_ENABLED and \
+           command in ("REQUEST", "SCHEDULE", "UNSCHEDULE"):
+            wal_logger.info(original_msg)
+
     def process_client_message(self, original_msg, depth=0):
         """
         Args:
@@ -926,6 +945,7 @@ class Router(HeartbeatMixin):
         """
         setup_logger('eventmq')
         import_settings()
+        setup_wal_logger('eventmq-wal', conf.WAL)
         self.start(frontend_addr=conf.FRONTEND_ADDR,
                    backend_addr=conf.BACKEND_ADDR,
                    administrative_addr=conf.ADMINISTRATIVE_ADDR)

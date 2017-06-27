@@ -7,7 +7,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='eventmq',
-    version='0.3.4.6',
+    version='0.3.4.7',
     description='EventMQ job execution and messaging system based on ZeroMQ',
     packages=find_packages(),
     install_requires=['pyzmq==15.4.0',

@@ -97,4 +97,7 @@ SETUP_CALLABLE = ''
 KILL_GRACE_PERIOD = 300
 GLOBAL_TIMEOUT = 300
 
+WAL = '/var/log/eventmq/wal.log'
+WAL_ENABLED = False
+
 # }}}

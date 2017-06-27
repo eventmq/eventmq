@@ -17,7 +17,10 @@ log module for eventmq
 
 this needs so much work.
 """
+import errno
 import logging
+import os
+import time
 
 import zmq
 import zmq.log.handlers
@@ -44,6 +47,7 @@ class handlers(object):
     """
     PUBLISH_HANDLER = PUBHandler
     STREAM_HANDLER = logging.StreamHandler
+    FILE_HANDLER = logging.FileHandler
 
 
 def setup_logger(base_name, formatter=FORMAT_STANDARD,
@@ -73,3 +77,30 @@ def setup_logger(base_name, formatter=FORMAT_STANDARD,
     logger.addHandler(handler)
 
     return logger
+
+
+def setup_wal_logger(base_name, filename, handler=handlers.FILE_HANDLER):
+    """
+    Write-ahead Log for replaying messages.  Should only contain
+    commands on the data path (REQUEST, SCHEDULE, UNSCHEDULE)
+    """
+
+    if not os.path.exists(os.path.dirname(filename)):
+        try:
+            os.makedirs(os.path.dirname(filename))
+        except OSError as exc:  # Guard against race condition
+            if exc.errno != errno.EEXIST:
+                raise
+
+    with open(filename, "a+") as f:
+        f.close()
+
+    wal = logging.getLogger(base_name)
+    wal_handler = handler(filename)
+    formatter = logging.Formatter('%(asctime)s %(message)s')
+    formatter.converter = time.gmtime
+    wal_handler.setFormatter(formatter)
+    wal.addHandler(wal_handler)
+    wal.setLevel(logging.INFO)
+
+    return wal
