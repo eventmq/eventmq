@@ -776,8 +776,9 @@ class TestCase(unittest.TestCase):
         # correctly and what not.
         self.assertEqual(
             json.loads(json.dumps({
-                'job_latencies': self.router.job_latencies,
-                'executed_functions': self.router.executed_functions,
+                'job_latencies_count': len(self.router.job_latencies),
+                'processed_messages': {},
+                'processed_messages_by_worker': {},
                 'waiting_message_counts': [
                     '{}: {}'.format(
                         q,

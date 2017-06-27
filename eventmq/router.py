@@ -94,6 +94,13 @@ class Router(HeartbeatMixin):
         #: workers available to take the job
         self.waiting_messages = {}
 
+        # Key: Queue.name, Value: # of messages sent to workers on that queue
+        # Includes REQUESTS in flight but not REQUESTS queued
+        self.processed_message_counts = {}
+
+        # Same as above but Key: Worker.uuid
+        self.processed_message_counts_by_worker = {}
+
         #: Tracks the last time the scheduler queue was cleaned out of dead
         #: schedulers
         self._meta['last_scheduler_cleanup'] = 0
@@ -118,8 +125,6 @@ class Router(HeartbeatMixin):
         #: Excecuted function tracking dictionary
         #: Key: msgid of msg each REQUEST received and forwarded to a worker
         #: Value: (function_name, queue_name)
-        self.executed_functions = {}
-
         #: Set to True when the router should die.
         self.received_disconnect = False
 
@@ -484,16 +489,20 @@ class Router(HeartbeatMixin):
 
         try:
             # Check if msg type is for executing function
-            if 'run' in msg and len(msg) > 2:
-                args_list = json.loads(msg[2])
-                args_dict = args_list[1]
-                function = args_dict.get('callable')
-                if function:
-                    self.executed_functions[msgid] = (function, queue_name)
             self.job_latencies[msgid] = (monotonic(), queue_name)
 
             # Rebuild the message to be sent to the worker. fwdmsg will
             # properly address the message.
+            if queue_name not in self.processed_message_counts:
+                self.processed_message_counts[queue_name] = 1
+            else:
+                self.processed_message_counts[queue_name] += 1
+
+            if queue_name not in self.processed_message_counts_by_worker:
+                self.processed_message_counts_by_worker[worker_addr] = 1
+            else:
+                self.processed_message_counts_by_worker[worker_addr] += 1
+
             fwdmsg(self.outgoing, worker_addr, ['', constants.PROTOCOL_VERSION,
                                                 'REQUEST', msgid, ] + msg)
 
@@ -876,8 +885,10 @@ class Router(HeartbeatMixin):
            (str) Serialized information about the current state of the router.
         """
         return json.dumps({
-            'job_latencies': self.job_latencies,
-            'executed_functions': self.executed_functions,
+            'job_latencies_count': len(self.job_latencies),
+            'processed_messages': self.processed_message_counts,
+            'processed_messages_by_worker':
+                self.processed_message_counts_by_worker,
             'waiting_message_counts': [
                 '{}: {}'.
                 format(q,
