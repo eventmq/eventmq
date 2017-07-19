@@ -146,7 +146,9 @@ class JobManager(HeartbeatMixin, EMQPService):
         Starts the actual event loop. Usually called by :meth:`start`
         """
         # Acknowledgment has come
-        # Send a READY for each available worker
+        # Send a READY for each previously available worker
+        for _ in self.workers:
+            self.send_ready()
 
         self.status = STATUS.running
 
