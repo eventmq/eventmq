@@ -390,10 +390,6 @@ class JobManager(HeartbeatMixin, EMQPService):
         necessary
         """
         # Kill workers that aren't alive
-        if conf.SUPER_DEBUG:
-            logger.debug("Jobs in flight: {}".format(len(self.jobs_in_flight)))
-            logger.debug("Total requests: {}".format(self.total_requests))
-            logger.debug("Total ready sent: {}".format(self.total_ready_sent))
         try:
             [self.kill_worker(w.pid, signal.SIGKILL) for w in self.workers
              if not w.is_alive]
