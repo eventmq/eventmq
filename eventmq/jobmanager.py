@@ -146,7 +146,13 @@ class JobManager(HeartbeatMixin, EMQPService):
         Starts the actual event loop. Usually called by :meth:`start`
         """
         # Acknowledgment has come
-        # Send a READY for each available worker
+        # When the job manager unexpectedly disconnects from the router and
+        # reconnects it needs to send a ready for each previously available
+        # worker.
+        # Send a READY for each previously available worker
+        if hasattr(self, '_workers'):
+            for _ in self._workers:
+                self.send_ready()
 
         self.status = STATUS.running
 
