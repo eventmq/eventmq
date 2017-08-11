@@ -146,14 +146,6 @@ class JobManager(HeartbeatMixin, EMQPService):
         Starts the actual event loop. Usually called by :meth:`start`
         """
         # Acknowledgment has come
-        # When the job manager unexpectedly disconnects from the router and
-        # reconnects it needs to send a ready for each previously available
-        # worker.
-        # Send a READY for each previously available worker
-        if hasattr(self, '_workers'):
-            for _ in self._workers:
-                self.send_ready()
-
         self.status = STATUS.running
 
         try:
@@ -217,6 +209,15 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         except Exception:
             logger.exception("Unhandled exception in main jobmanager loop")
+
+        # Cleanup
+        if hasattr(self, '_workers'):
+            del self._workers
+
+        # Flush the queues with workers
+        self.request_queue = mp_queue()
+        self.finished_queue = mp_queue()
+        logger.info("Reached end of event loop")
 
     def handle_response(self, resp):
         """
