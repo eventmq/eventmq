@@ -146,8 +146,6 @@ class JobManager(HeartbeatMixin, EMQPService):
         Starts the actual event loop. Usually called by :meth:`start`
         """
         # Acknowledgment has come
-        # Send a READY for each available worker
-
         self.status = STATUS.running
 
         try:
@@ -186,9 +184,9 @@ class JobManager(HeartbeatMixin, EMQPService):
                     else:
                         try:
                             events = self.poller.poll(1000)
-                        except zmq.ZMQError:
+                        except zmq.ZMQError as e:
                             logger.debug('Disconnecting due to ZMQError while'
-                                         ' polling')
+                                         ' polling: {}'.format(e))
                             sendmsg(self.outgoing, KBYE)
                             self.received_disconnect = True
                             continue
@@ -211,6 +209,15 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         except Exception:
             logger.exception("Unhandled exception in main jobmanager loop")
+
+        # Cleanup
+        if hasattr(self, '_workers'):
+            del self._workers
+
+        # Flush the queues with workers
+        self.request_queue = mp_queue()
+        self.finished_queue = mp_queue()
+        logger.info("Reached end of event loop")
 
     def handle_response(self, resp):
         """
@@ -240,7 +247,8 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         """
 
-        logger.debug(resp)
+        if conf.SUPER_DEBUG:
+            logger.debug(resp)
         pid = resp['pid']
         msgid = resp['msgid']
         callback = resp['callback']
@@ -383,9 +391,6 @@ class JobManager(HeartbeatMixin, EMQPService):
         necessary
         """
         # Kill workers that aren't alive
-        logger.debug("Jobs in flight: {}".format(len(self.jobs_in_flight)))
-        logger.debug("Total requests: {}".format(self.total_requests))
-        logger.debug("Total ready sent: {}".format(self.total_ready_sent))
         try:
             [self.kill_worker(w.pid, signal.SIGKILL) for w in self.workers
              if not w.is_alive]

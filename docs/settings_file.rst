@@ -30,6 +30,20 @@ Default: 'tcp://127.0.0.1:47291'
 
 The address used to listen for connections from workers
 
+wal
+=======
+Default: '/var/log/eventmq/wal.log'
+
+Write-ahead Log for replaying messages received by the Router.  Will
+try to create the directory specified and append to the filename given.
+Requires correct permissions to write to the given file.
+
+wal_enabled
+===============
+Default: False
+
+Enable or disable the Write-ahead Log
+
 *********
 Scheduler
 *********

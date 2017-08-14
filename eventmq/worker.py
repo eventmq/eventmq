@@ -109,16 +109,19 @@ class MultiprocessWorker(Process):
                 timeout = payload.get("timeout") or conf.GLOBAL_TIMEOUT
                 msgid = payload.get('msgid', '')
                 callback = payload.get('callback', '')
-                logger.debug("Putting on thread queue msgid: {}".format(
-                    msgid))
+
+                if conf.SUPER_DEBUG:
+                    logger.debug("Putting on thread queue msgid: {}".format(
+                        msgid))
 
                 worker_queue.put(payload['params'])
 
                 try:
                     return_val = worker_result_queue.get(timeout=timeout)
 
-                    logger.debug("Got from result queue msgid: {}".format(
-                        msgid))
+                    if conf.SUPER_DEBUG:
+                        logger.debug("Got from result queue msgid: {}".format(
+                            msgid))
                 except Queue.Empty:
                     return_val = 'TimeoutError'
 
