@@ -22,7 +22,7 @@ if __name__ == "__main__":
             'callable': 'work_job',
             'class_args': ('blurp',),
             'class_kwargs': {'kwarg1': True},
-            'args': (1, ),
+            'args': (10, ),
             'kwargs': {}
             }]
 
