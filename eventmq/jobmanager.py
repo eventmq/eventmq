@@ -20,7 +20,7 @@ Ensures things about jobs and spawns the actual tasks
 from json import dumps as serializer, loads as deserializer
 
 import logging
-from multiprocessing import Queue as mp_queue
+from multiprocessing import Manager as MPManager
 import os
 import signal
 import sys
@@ -121,8 +121,9 @@ class JobManager(HeartbeatMixin, EMQPService):
         self.pid_distribution = {}
 
         #: Setup worker queues
-        self.request_queue = mp_queue()
-        self.finished_queue = mp_queue()
+        self._mp_manager = MPManager()
+        self.request_queue = self._mp_manager.Queue()
+        self.finished_queue = self._mp_manager.Queue()
         self._setup()
 
     def handle_pdb(self, sig, frame):
