@@ -502,7 +502,7 @@ class Router(HeartbeatMixin):
             else:
                 self.processed_message_counts[queue_name] += 1
 
-            if queue_name not in self.processed_message_counts_by_worker:
+            if worker_addr not in self.processed_message_counts_by_worker:
                 self.processed_message_counts_by_worker[worker_addr] = 1
             else:
                 self.processed_message_counts_by_worker[worker_addr] += 1
