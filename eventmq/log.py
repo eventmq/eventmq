@@ -27,9 +27,11 @@ import zmq.log.handlers
 
 
 FORMAT_STANDARD = logging.Formatter(
-    '%(asctime)s - %(name)s  %(levelname)s - %(message)s')
+    '%(asctime)s - %(name)s  %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%dT%H:%M:%S%z')
 FORMAT_NAMELESS = logging.Formatter(
-    '%(asctime)s - %(levelname)s - %(message)s')
+    '%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%dT%H:%M:%S%z')
 
 
 class PUBHandler(zmq.log.handlers.PUBHandler):

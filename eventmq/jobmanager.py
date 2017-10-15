@@ -20,7 +20,7 @@ Ensures things about jobs and spawns the actual tasks
 from json import dumps as serializer, loads as deserializer
 
 import logging
-from multiprocessing import Queue as mp_queue
+from multiprocessing import Manager as MPManager
 import os
 import signal
 import sys
@@ -121,8 +121,9 @@ class JobManager(HeartbeatMixin, EMQPService):
         self.pid_distribution = {}
 
         #: Setup worker queues
-        self.request_queue = mp_queue()
-        self.finished_queue = mp_queue()
+        self._mp_manager = MPManager()
+        self.request_queue = self._mp_manager.Queue()
+        self.finished_queue = self._mp_manager.Queue()
         self._setup()
 
     def handle_pdb(self, sig, frame):
@@ -146,6 +147,14 @@ class JobManager(HeartbeatMixin, EMQPService):
         Starts the actual event loop. Usually called by :meth:`start`
         """
         # Acknowledgment has come
+        # When the job manager unexpectedly disconnects from the router and
+        # reconnects it needs to send a ready for each previously available
+        # worker.
+        # Send a READY for each previously available worker
+        if hasattr(self, '_workers'):
+            for _ in self._workers:
+                self.send_ready()
+
         self.status = STATUS.running
 
         try:
@@ -209,15 +218,6 @@ class JobManager(HeartbeatMixin, EMQPService):
 
         except Exception:
             logger.exception("Unhandled exception in main jobmanager loop")
-
-        # Cleanup
-        if hasattr(self, '_workers'):
-            del self._workers
-
-        # Flush the queues with workers
-        self.request_queue = mp_queue()
-        self.finished_queue = mp_queue()
-        logger.info("Reached end of event loop")
 
     def handle_response(self, resp):
         """
