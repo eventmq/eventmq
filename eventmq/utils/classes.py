@@ -20,6 +20,7 @@ Defines some classes to use when implementing ZMQ devices
 from collections import deque
 import json
 import logging
+import sys
 
 import zmq.error
 
@@ -344,7 +345,11 @@ class ZMQReceiveMixin(object):
         """
         Receive a message
         """
-        msg = self.zsocket.recv()
+        if sys.version[0] == '2':
+            msg = self.zsocket.recv()
+        else:
+            msg = self.zsocket.recv_string()
+
         if not ("HEARTBEAT" == msg[2] or "HEARTBEAT" == msg[3]) or \
                 not conf.HIDE_HEARTBEAT_LOGS:
             logger.debug('Received message: {}'.format(msg))
@@ -355,6 +360,11 @@ class ZMQReceiveMixin(object):
         Receive a multipart message
         """
         msg = self.zsocket.recv_multipart()
+
+        # Decode bytes to strings in python3
+        if type(msg[0] in (bytes,)):
+            msg = [m.decode() for m in msg]
+
         # If it's not at least 4 frames long then most likely it isn't an
         # eventmq message
         if len(msg) >= 4 and \
