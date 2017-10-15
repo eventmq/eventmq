@@ -14,24 +14,13 @@
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from multiprocessing import Pool
 import time
-
-from nose import with_setup
 
 from .. import worker
 
 ADDR = 'inproc://pour_the_rice_in_the_thing'
 
 
-def setup_func():
-    global pool
-    global out
-    pool = Pool()
-    out = pool.map(job, range(1))
-
-
-@with_setup(setup_func)
 def test_run_with_timeout():
     payload = {
         'path': 'eventmq.tests.test_worker',
@@ -44,7 +33,6 @@ def test_run_with_timeout():
     assert msgid
 
 
-@with_setup(setup_func)
 def test_run_setup():
     setup_callable = 'pre_hook'
     setup_path = 'eventmq.tests.test_worker'
