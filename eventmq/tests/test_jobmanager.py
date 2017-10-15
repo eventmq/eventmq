@@ -23,7 +23,6 @@ ADDR = 'inproc://pour_the_rice_in_the_thing'
 
 
 class TestCase(unittest.TestCase):
-    @unittest.skip('temporarily')
     def test__setup(self):
         jm = jobmanager.JobManager(name='RuckusBringer')
         self.assertEqual(jm.name, 'RuckusBringer')
@@ -32,7 +31,6 @@ class TestCase(unittest.TestCase):
         self.assertEqual(jm.status, constants.STATUS.ready)
 
 # EMQP Tests
-    @unittest.skip('temporarily')
     def test_reset(self):
         jm = jobmanager.JobManager()
 
@@ -40,7 +38,6 @@ class TestCase(unittest.TestCase):
         self.assertEqual(jm.status, constants.STATUS.ready)
 
     @mock.patch('eventmq.jobmanager.sendmsg')
-    @unittest.skip('temporarily')
     def test_send_ready(self, sndmsg_mock):
         jm = jobmanager.JobManager()
         jm.send_ready()
@@ -52,7 +49,6 @@ class TestCase(unittest.TestCase):
     @mock.patch('eventmq.jobmanager.Sender.recv_multipart')
     @mock.patch('eventmq.jobmanager.Poller.poll')
     @mock.patch('eventmq.jobmanager.JobManager.maybe_send_heartbeat')
-    @unittest.skip('temporarily')
     def test__start_event_loop(self, maybe_send_hb_mock,
                                poll_mock, sender_mock, process_msg_mock,
                                pool_close_mock):
@@ -71,7 +67,6 @@ class TestCase(unittest.TestCase):
         jm.should_reset = True
         jm._start_event_loop()
 
-    @unittest.skip('temporarily')
     def test_on_request(self):
         _msgid = 'aaa0j8-ac40jf0-04tjv'
         _msg = ['a', 'b', '["run", {"a": 1}]']
@@ -80,7 +75,6 @@ class TestCase(unittest.TestCase):
 
         jm.on_request(_msgid, _msg)
 
-    @unittest.skip('temporarily')
     def test_on_request_with_timeout(self):
         timeout = 3
         _msgid = 'aaa0j8-ac40jf0-04tjv'
@@ -90,7 +84,6 @@ class TestCase(unittest.TestCase):
 
         jm.on_request(_msgid, _msg)
 
-    @unittest.skip('temporarily')
     def test_on_request_with_timeout_and_reply(self):
         timeout = 3
         _msgid = 'aaa0j8-ac40jf0-04tjv'
@@ -104,7 +97,6 @@ class TestCase(unittest.TestCase):
 
     @mock.patch('eventmq.jobmanager.sendmsg')
     @mock.patch('zmq.Socket.unbind')
-    @unittest.skip('temporarily')
     def test_on_disconnect(self, socket_mock, sendmsg_mock):
         msgid = 'goog8l-uitty40-007b'
         msg = ['a', 'b', 'whatever']
@@ -118,7 +110,6 @@ class TestCase(unittest.TestCase):
 
     # Other Tests
     @mock.patch('eventmq.jobmanager.import_settings')
-    @unittest.skip('temporarily')
     def test_sighup_handler(self, import_settings_mock):
         jm = jobmanager.JobManager()
 
@@ -131,7 +122,6 @@ class TestCase(unittest.TestCase):
         import_settings_mock.assert_called_with(section='jobmanager')
 
     @mock.patch('eventmq.jobmanager.sendmsg')
-    @unittest.skip('temporarily')
     def test_sigterm_handler(self, sendmsg_mock):
         jm = jobmanager.JobManager()
 
@@ -143,7 +133,6 @@ class TestCase(unittest.TestCase):
 
     @mock.patch('eventmq.jobmanager.JobManager.start')
     @mock.patch('eventmq.jobmanager.import_settings')
-    @unittest.skip('temporarily')
     def test_jobmanager_main(self, import_settings_mock, start_mock):
         jm = jobmanager.JobManager()
 

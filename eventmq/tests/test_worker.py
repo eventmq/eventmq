@@ -16,8 +16,6 @@
 import logging
 import time
 
-from nose import with_setup
-
 from .. import worker
 
 ADDR = 'inproc://pour_the_rice_in_the_thing'
