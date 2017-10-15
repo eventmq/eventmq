@@ -44,7 +44,7 @@ class TestCase(unittest.TestCase):
 
         sndmsg_mock.assert_called_with(jm.outgoing, 'READY')
 
-    @mock.patch('multiprocessing.pool.Pool.close')
+    @mock.patch('multiprocessing.Manager')
     @mock.patch('eventmq.jobmanager.JobManager.process_message')
     @mock.patch('eventmq.jobmanager.Sender.recv_multipart')
     @mock.patch('eventmq.jobmanager.Poller.poll')
@@ -56,6 +56,7 @@ class TestCase(unittest.TestCase):
         maybe_send_hb_mock.return_value = False
         poll_mock.return_value = {jm.outgoing: jobmanager.POLLIN}
         sender_mock.return_value = [1, 2, 3]
+        pool_close_mock.return_value = None
 
         jm._start_event_loop()
 
