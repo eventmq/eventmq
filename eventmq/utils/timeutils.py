@@ -63,23 +63,19 @@ class IntervalIter(object):
         next(interval)  # 300
         next(interval)  # 600
     """
-    def __init__(self, start_value, interval_secs, iterate_immediately=False):
+    def __init__(self, start_value, interval_secs):
         """
         Args:
             start_value (numeric): the timestamp to begin with. usually gotten
                 via :func:`monotonic` or :func:`timestamp`
             interval_secs (int): the number of seconds between intervals
-            iterate_immediately (bool): When this is ``True`` the value of this
-                iterator will increase ``start_value`` by ``interval_secs``
-                immediately. *Default is False*
         """
         self.current = start_value
         self.interval_secs = interval_secs
 
-        # iterate the first time so the first call to .next() is interval_secs
-        # + start_value
-        if iterate_immediately:
-            self.__next__()
+        # iterate so the first call to .next() is `interval_secs` ahead of the
+        # initial `start_value`
+        self.__next__()
 
     def __iter__(self):
         return self
