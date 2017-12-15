@@ -175,15 +175,6 @@ class Router(HeartbeatMixin):
             now = monotonic()
             events = self.poller.poll()
 
-            if events.get(self.incoming) == poller.POLLIN:
-                msg = self.incoming.recv_multipart()
-                self.handle_wal_log(msg)
-                self.process_client_message(msg)
-
-            if events.get(self.outgoing) == poller.POLLIN:
-                msg = self.outgoing.recv_multipart()
-                self.process_worker_message(msg)
-
             if events.get(self.administrative_socket) == poller.POLLIN:
                 msg = self.administrative_socket.recv_multipart()
                 if conf.SUPER_DEBUG:
@@ -206,6 +197,15 @@ class Router(HeartbeatMixin):
                     elif msg[3] == ROUTER_SHOW_SCHEDULERS:
                         sendmsg(self.administrative_socket, msg[0], 'REPLY',
                                 (self.get_schedulers_status(),))
+
+            if events.get(self.incoming) == poller.POLLIN:
+                msg = self.incoming.recv_multipart()
+                self.handle_wal_log(msg)
+                self.process_client_message(msg)
+
+            if events.get(self.outgoing) == poller.POLLIN:
+                msg = self.outgoing.recv_multipart()
+                self.process_worker_message(msg)
 
             # TODO: Optimization: the calls to functions could be done in
             #     another thread so they don't block the loop. synchronize
