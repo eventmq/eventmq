@@ -362,7 +362,7 @@ class ZMQReceiveMixin(object):
         msg = self.zsocket.recv_multipart()
 
         # Decode bytes to strings in python3
-        if type(msg[0] in (bytes,)):
+        if sys.version[0] == '3' and type(msg[0] in (bytes,)):
             msg = [m.decode() for m in msg]
 
         # If it's not at least 4 frames long then most likely it isn't an
