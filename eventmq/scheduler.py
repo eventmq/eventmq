@@ -150,8 +150,8 @@ class Scheduler(HeartbeatMixin, EMQPService):
                     msg = v[1]
                     queue = v[3]
 
-                    logger.debug("Time is: %s; Schedule is: %s - Running %s"
-                                 % (ts_now, v[0], msg))
+                    logger.debug("Time is: {}; Schedule is: {} - Running {} "
+                                 "({})".format(m_now, v[0], k, msg))
 
                     # v[4] is the current remaining run_count
                     if v[4] != INFINITE_RUN_COUNT:
@@ -161,42 +161,41 @@ class Scheduler(HeartbeatMixin, EMQPService):
                         else:
                             # Decrement run_count
                             v[4] -= 1
-                            # Persist the change to redis
-                            try:
-                                message = deserialize(self.redis_server.get(k))
-                                new_headers = []
-                                for header in message[1].split(','):
-                                    if 'run_count:' in header:
-                                        new_headers.append(
-                                            'run_count:{}'.format(v[4]))
-                                    else:
-                                        new_headers.append(header)
-                                message[1] = ",".join(new_headers)
-                                self.redis_server.set(k, serialize(message))
-                            except Exception as e:
-                                logger.warning(
-                                    'Unable to update key in redis '
-                                    'server: {}'.format(e))
-                            # Perform the request since run_count still > 0
+                            if v[4] > 0:
+                                # Update the next run time
+                                v[0] = next(v[2])
+                                # Persist the change to redis if there are run
+                                # counts still left
+                                try:
+                                    message = deserialize(
+                                        self.redis_server.get(k))
+                                    new_headers = []
+                                    for header in message[1].split(','):
+                                        if 'run_count:' in header:
+                                            new_headers.append(
+                                                'run_count:{}'.format(v[4]))
+                                        else:
+                                            new_headers.append(header)
+                                    message[1] = ",".join(new_headers)
+                                    self.redis_server.set(
+                                        k, serialize(message))
+                                except Exception as e:
+                                    logger.warning(
+                                        'Unable to update key in redis '
+                                        'server: {}'.format(e))
+                            else:
+                                cancel_jobs.append(k)
+
+                            # Perform the job since run_count was still > 0
                             self.send_request(msg, queue=queue)
-                            v[0] = next(v[2])
                     else:
                         # Scheduled job is in running infinitely
                         # Send job and update next schedule time
                         self.send_request(msg, queue=queue)
                         v[0] = next(v[2])
 
-            for job in cancel_jobs:
-                try:
-                    logger.debug('Cancelling job due to run_count: {}'
-                                 .format(k))
-                    self.redis_server.delete(k)
-                    self.redis_server.lrem('interval_jobs', 0, k)
-                except Exception as e:
-                    logger.warning(
-                        'Unable to update key in redis '
-                        'server: {}'.format(e))
-                del self.interval_jobs[k]
+            for job_id in cancel_jobs:
+                self.cancel_job(job_id)
 
             if not self.maybe_send_heartbeat(events):
                 break
@@ -253,24 +252,30 @@ class Scheduler(HeartbeatMixin, EMQPService):
         """
         logger.info("Received new UNSCHEDULE request: {}".format(message))
 
-        # TODO: Notify router whether or not this succeeds
-        self.unschedule_job(message)
-
-    def unschedule_job(self, message):
-        """
-        Unschedules a job if it exists based on the message used to generate it
-        """
         schedule_hash = self.schedule_hash(message)
+        # TODO: Notify router whether or not this succeeds
+        self.cancel_job(schedule_hash)
 
+    def cancel_job(self, schedule_hash):
+        """
+        Cancels a job if it exists
+
+        Args:
+            schedule_hash (str): The schedule's unique hash. See
+                :meth:`Scheduler.schedule_hash`
+        """
         if schedule_hash in self.interval_jobs:
-            # Remove scheduled job
-            self.interval_jobs.pop(schedule_hash)
-        elif schedule_hash in self.cron_jobs:
-            # Remove scheduled job
-            self.cron_jobs.pop(schedule_hash)
-        else:
-            logger.warning("Couldn't find matching schedule for unschedule " +
-                           "request")
+
+            # If the hash wasn't found in either `cron_jobs` or `interval_jobs`
+            # then it's safe to assume it's already deleted.
+            try:
+                del self.interval_jobs[schedule_hash]
+            except KeyError:
+                pass
+            try:
+                del self.cron_jobs[schedule_hash]
+            except KeyError:
+                pass
 
         # Double check the redis server even if we didn't find the hash
         # in memory
@@ -279,10 +284,10 @@ class Scheduler(HeartbeatMixin, EMQPService):
                 self.redis_server.delete(schedule_hash)
                 self.redis_server.lrem('interval_jobs', 0, schedule_hash)
                 self.redis_server.save()
-        except redis.ConnectionError:
-            logger.warning('Could not contact redis server')
+        except redis.ConnectionError as e:
+            logger.warning('Could not contact redis server: {}'.format(e))
         except Exception as e:
-            logger.warning(str(e))
+            logger.warning(str(e), exc_info=True)
 
     def load_job_from_redis(self, message):
         """
