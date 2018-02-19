@@ -1,18 +1,19 @@
 #!/usr/bin/env python
 # -*- mode: python -*-
 import argparse
+from eventmq import conf
 from eventmq.scheduler import Scheduler
 
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser(
-	    description='Listen for scheduled jobs and run them')
-	parser.add_argument('--config', '-C', type=str, nargs='?',
+    parser = argparse.ArgumentParser(
+        description='Listen for scheduled jobs and run them')
+    parser.add_argument('--config', '-C', type=str, nargs='?',
                         help='manually specify the location of eventmq.conf')
 
-	args = parser.parse_args()
+    args = parser.parse_args()
 
-	if args.config:
-	    conf.CONFIG_FILE = args.config
+    if args.config:
+        conf.CONFIG_FILE = args.config
 
     s = Scheduler()
     s.scheduler_main()
