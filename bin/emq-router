@@ -1,8 +1,20 @@
 #!/usr/bin/env python
 # -*- mode: python -*-
+import argparse
+
 from eventmq.log import setup_logger
 from eventmq.router import Router
 
 if __name__ == "__main__":
+	parser = argparse.ArgumentParser(
+	    description='Route job messages to their appropriate queues')
+	parser.add_argument('--config', '-C', type=str, nargs='?',
+                        help='manually specify the location of eventmq.conf')
+
+	args = parser.parse_args()
+
+	if args.config:
+	    conf.CONFIG_FILE = args.config
+
     r = Router()
     r.router_main()
