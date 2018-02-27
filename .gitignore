@@ -61,3 +61,7 @@ target/
 
 # Rope
 .ropeproject
+
+# IntelliJ
+.idea/
+*.iml
