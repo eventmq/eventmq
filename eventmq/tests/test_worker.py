@@ -14,10 +14,11 @@
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import time
 import sys
+import time
 
 import mock
+
 from .. import worker
 
 if sys.version[0] == '2':
@@ -28,6 +29,7 @@ else:
 
 ADDR = 'inproc://pour_the_rice_in_the_thing'
 SETUP_SUCCESS_RETVAL = 'job setup success'
+
 
 def test_run_with_timeout():
     payload = {
@@ -168,15 +170,12 @@ def job(sleep_time=0):
 
 
 def process_setup_hook():
-    print 'process setup hook executed'
     return True
 
 
 def job_setup_hook():
-    print 'job setup hook executed'
     return SETUP_SUCCESS_RETVAL
 
 
 def job_teardown_hook():
-    print 'job teardown hook executed'
     return True

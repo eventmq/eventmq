@@ -24,8 +24,8 @@ import os
 import sys
 from threading import Thread
 
-from .utils.functions import callable_from_name
 from . import conf
+from .utils.functions import callable_from_name
 
 if sys.version[0] == '2':
     import Queue
