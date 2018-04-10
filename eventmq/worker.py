@@ -18,16 +18,13 @@
 Defines different short-lived workers that execute jobs
 """
 from importlib import import_module
-
 import logging
-
 from multiprocessing import Process
-
 import os
 import sys
-
 from threading import Thread
 
+from .utils.functions import callable_from_name
 from . import conf
 
 if sys.version[0] == '2':
@@ -180,7 +177,19 @@ def _run(queue, result_queue, logger):
         "class_kwargs": {"value": 2}
     }
     """
-    if any(conf.SETUP_CALLABLE) and any(conf.SETUP_PATH):
+    if any(conf.SUBPROCESS_SETUP_FUNC):
+        try:
+            logger.debug("Running setup ({}) for worker id {}".format(
+                conf.SUBPROCESS_SETUP_FUNC, os.getpid()))
+            setup_func = callable_from_name(conf.SUBPROCESS_SETUP_FUNC)
+            setup_func()
+        except Exception as e:
+            logger.warning('Unable to do setup task ({}): {}'
+                           .format(conf.SUBPROCESS_SETUP_FUNC, str(e)))
+
+    elif any(conf.SETUP_CALLABLE) and any(conf.SETUP_PATH):
+        logger.warning("SETUP_CALLABLE and SETUP_PATH deprecated in favor for "
+                       "SUBPROCESS_SETUP_FUNC")
         try:
             logger.debug("Running setup ({}.{}) for worker id {}"
                          .format(
@@ -193,6 +202,16 @@ def _run(queue, result_queue, logger):
                            .format(conf.SETUP_PATH,
                                    conf.SETUP_CALLABLE, str(e)))
 
+    if conf.JOB_ENTRY_FUNC:
+        job_entry_func = callable_from_name(conf.JOB_ENTRY_FUNC)
+    else:
+        job_entry_func = None
+
+    if conf.JOB_EXIT_FUNC:
+        job_exit_func = callable_from_name(conf.JOB_EXIT_FUNC)
+    else:
+        job_exit_func = None
+
     while True:
         # Blocking get so we don't spin cycles reading over and over
         try:
@@ -204,7 +223,14 @@ def _run(queue, result_queue, logger):
         if payload == 'DONE':
             break
 
+        if job_entry_func:
+            job_entry_func()
+
         return_val = _run_job(payload, logger)
+
+        if job_exit_func:
+            job_exit_func()
+
         # Signal that we're done with this job and put its return value on the
         # result queue
         result_queue.put(return_val)
@@ -278,4 +304,4 @@ def run_setup(setup_path, setup_callable):
 
         setup_callable_ = getattr(setup_package, setup_callable)
 
-        setup_callable_()
+        return setup_callable_()

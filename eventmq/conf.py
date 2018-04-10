@@ -89,9 +89,18 @@ RQ_PASSWORD = ''
 MAX_JOB_COUNT = 1024
 
 # Path/Callable to run on start of a worker process
+# These options are deprecated for the more user-friendly
+# SUBPROCESS_SETUP_FUNC which can be a full path to a function.
 SETUP_PATH = ''
 SETUP_CALLABLE = ''
 
+# Function to run on the start of a new worker subprocess
+SUBPROCESS_SETUP_FUNC = ''
+
+# function to be run before the execution of every job
+JOB_ENTRY_FUNC = ''
+# function to be run after the execution of every job
+JOB_EXIT_FUNC = ''
 # Time to wait after receiving SIGTERM to kill the workers in the jobmanager
 # forecfully
 KILL_GRACE_PERIOD = 300
