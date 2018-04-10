@@ -27,13 +27,13 @@ queues=[[20,"heavy-cpu"], [30,"low-cpu"], [10,"default"]]
 concurrent_jobs=2
 
 # This function is executed when EventMQ creates a new worker subprocess
-# subprocess_setup_func = 'path.to.my_setup_function'
+# subprocess_setup_func = path.to.my_setup_function
 
 # This function is executed before every job
-# job_entry_func = 'path.to.my_job_setup_function'
+# job_entry_func = path.to.my_job_setup_function
 
 # This function is executed after every job
-# job_exit_func = 'path.to.my_job_teardown_function'
+# job_exit_func = path.to.my_job_teardown_function
 
 [publisher]
 publisher_incoming_addr=tcp://0.0.0.0:47298

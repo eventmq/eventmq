@@ -29,6 +29,7 @@ import time
 import zmq
 
 from eventmq.log import setup_logger
+from . import __version__
 from . import conf
 from .constants import KBYE, STATUS
 from .poller import Poller, POLLIN
@@ -80,6 +81,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         #: Define the name of this JobManager instance. Useful to know when
         #: referring to the logs.
         self.name = kwargs.pop('name', None) or generate_device_name()
+        logger.info('EventMQ Version {}'.format(__version__))
         logger.info('Initializing JobManager {}...'.format(self.name))
 
         #: keep track of workers
