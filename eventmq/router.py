@@ -23,6 +23,7 @@ import logging
 import signal
 
 from eventmq.log import setup_logger, setup_wal_logger
+from . import __version__
 from . import conf, constants, exceptions, poller, receiver
 from .constants import (
     CLIENT_TYPE, DISCONNECT, KBYE, PROTOCOL_VERSION, ROUTER_SHOW_SCHEDULERS,
@@ -51,8 +52,11 @@ class Router(HeartbeatMixin):
     def __init__(self, *args, **kwargs):
         super(Router, self).__init__(*args, **kwargs)  # Creates _meta
 
+        setup_logger("eventmq")
+
         self.name = generate_device_name()
-        logger.info('Initializing Router %s...' % self.name)
+        logger.info('EventMQ Version {}'.format(__version__))
+        logger.info('Initializing Router {}...'.format(self.name))
 
         self.poller = poller.Poller()
 
@@ -943,7 +947,6 @@ class Router(HeartbeatMixin):
         """
         Kick off router with logging and settings import
         """
-        setup_logger('eventmq')
         import_settings()
         setup_wal_logger('eventmq-wal', conf.WAL)
         self.start(frontend_addr=conf.FRONTEND_ADDR,

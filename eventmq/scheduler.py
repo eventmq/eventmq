@@ -29,6 +29,7 @@ from six import next
 
 from eventmq.log import setup_logger
 
+from . import __version__
 from . import conf, constants
 from .client.messages import send_request
 from .constants import KBYE
@@ -53,6 +54,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
     def __init__(self, *args, **kwargs):
         self.name = kwargs.get('name', None)
 
+        logger.info('EventMQ Version {}'.format(__version__))
         logger.info('Initializing Scheduler...')
         import_settings()
         super(Scheduler, self).__init__(*args, **kwargs)
