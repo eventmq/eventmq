@@ -24,27 +24,18 @@
 
   
 
-  
-  
-    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="EventMQ 0 documentation" href="index.html"/>
-        <link rel="up" title="Contributing to EventMQ" href="contributing.html"/>
-        <link rel="prev" title="Contributing to EventMQ" href="contributing.html"/> 
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Contributing to EventMQ" href="contributing.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -66,7 +57,7 @@
             
             
               <div class="version">
-                0.3.6
+                0.3.8
               </div>
             
           
@@ -128,7 +119,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">EventMQ</a>
@@ -136,9 +127,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -610,7 +602,7 @@
 <td>A unique id for the msg</td>
 </tr>
 <tr class="row-even"><td>4</td>
-<td>&#160;</td>
+<td>&nbsp;</td>
 <td>Queues. Unused for scheduler</td>
 </tr>
 <tr class="row-odd"><td>5</td>
@@ -777,35 +769,35 @@
 <tbody valign="top">
 <tr class="row-even"><td>reply-requested</td>
 <td>X</td>
-<td>&#160;</td>
-<td>&#160;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
 <td>False</td>
 <td>Once the job is finished, send a reply back with information from the job. If there is no information reply with a True value.</td>
 </tr>
 <tr class="row-odd"><td>retry-count:#</td>
 <td>X</td>
-<td>&#160;</td>
-<td>&#160;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
 <td>0</td>
 <td>Retry a failed job this many times before accepting defeat.</td>
 </tr>
 <tr class="row-even"><td>timeout:#</td>
 <td>X</td>
-<td>&#160;</td>
-<td>&#160;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
 <td>0</td>
 <td>Kill the job after X seconds, defaults to never timing out (0)</td>
 </tr>
 <tr class="row-odd"><td>guarantee</td>
 <td>X</td>
-<td>&#160;</td>
-<td>&#160;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
 <td>False</td>
 <td>Ensure the job completes by letting someone else worry about a success reply.</td>
 </tr>
 <tr class="row-even"><td>nohaste</td>
-<td>&#160;</td>
-<td>&#160;</td>
+<td>&nbsp;</td>
+<td>&nbsp;</td>
 <td>X</td>
 <td>False</td>
 <td>When scheduling a job, set this to True if you don&#8217;t want the job to run immediately as it&#8217;s scheduled.  Instead, it will run for the first time when the interval has elapsed.</td>
@@ -836,9 +828,7 @@
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -854,11 +844,11 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2017, EventMQ Contributors.
+        &copy; Copyright 2018, EventMQ Contributors.
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -877,6 +867,7 @@
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
             VERSION:'0',
+            LANGUAGE:'None',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true,
@@ -889,19 +880,13 @@
 
   
 
-  
-  
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="_static/js/theme.js"></script>
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>
