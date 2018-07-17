@@ -13,6 +13,12 @@ Default: False
 
 Enable most verbose level of debug statements
 
+max_sockets
+===========
+Default: 1024
+
+Define the max sockets for a process/context
+
 ******
 Router
 ******
