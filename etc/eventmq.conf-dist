@@ -2,6 +2,9 @@
 # Enable message output at different stages in the app.
 super_debug = true
 
+# Number of maximum sockets to open per context/process.
+max_sockets = 1024
+
 # Hide the heartbeat logs when super_debug is enabled. Showing them will generate a lot of messages.
 hide_heartbeat_logs = True
 
