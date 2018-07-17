@@ -13,6 +13,8 @@
 
   
   
+  
+  
 
   
 
@@ -45,6 +47,7 @@
 
 <body class="wy-body-for-nav" role="document">
 
+   
   <div class="wy-grid-for-nav">
 
     
@@ -64,7 +67,7 @@
             
             
               <div class="version">
-                0.3.3
+                0.3.6
               </div>
             
           
@@ -85,7 +88,10 @@
           
             
             
-                <ul class="current">
+              
+            
+            
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="using.html">Using EventMQ</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">API Documentation</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="client.html"><code class="docutils literal"><span class="pre">client</span></code> &#8211; Client Utilities</a></li>
@@ -111,8 +117,10 @@
 
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="index.html">EventMQ</a>
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">EventMQ</a>
+        
       </nav>
 
 
@@ -121,25 +129,42 @@
         <div class="rst-content">
           
 
- 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="index.html">Docs</a> &raquo;</li>
-      
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
           <li><a href="api.html">API Documentation</a> &raquo;</li>
-      
-    <li><code class="docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager</li>
+        
+      <li><code class="docutils literal"><span class="pre">jobmanager</span></code> &#8211; Job Manager</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
+            
             <a href="_sources/jobmanager.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
@@ -166,10 +191,10 @@ to manage the resources on the server it&#8217;s running.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; unique name of this instance. By default a uuid will be
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) &#8211; unique name of this instance. By default a uuid will be
 generated.</li>
-<li><strong>queues</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) &#8211; List of queue names to listen on.</li>
-<li><strong>skip_signal</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; Don&#8217;t register the signal handlers. Useful for
+<li><strong>queues</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.7)"><em>tuple</em></a>) &#8211; List of queue names to listen on.</li>
+<li><strong>skip_signal</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) &#8211; Don&#8217;t register the signal handlers. Useful for
 testing.</li>
 </ul>
 </td>
@@ -192,6 +217,38 @@ necessary</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="eventmq.jobmanager.JobManager.handle_response">
+<code class="descname">handle_response</code><span class="sig-paren">(</span><em>resp</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.handle_response" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles a response from a worker process to the jobmanager</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>resp</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><em>dict</em></a>) &#8211; Must contain a key &#8216;callback&#8217; with the desired callback</td>
+</tr>
+</tbody>
+</table>
+<p>function as a string, i.e. &#8216;worker_done&#8217; which is then called</p>
+<p>Sample Input
+resp = {</p>
+<blockquote>
+<div>&#8216;callback&#8217;: &#8216;worker_done&#8217;, (str)
+&#8216;msgid&#8217;: &#8216;some_uuid&#8217;, (str)
+&#8216;return&#8217;: &#8216;return value&#8217;, (dict)
+&#8216;pid&#8217;: &#8216;pid_of_worker_process&#8217; (int)</div></blockquote>
+<p>}</p>
+<p>return_value must be a dictionary that can be json serialized and
+formatted like:</p>
+<dl class="docutils">
+<dt>{</dt>
+<dd>&#8220;value&#8221;: &#8216;return value of job goes here&#8217;</dd>
+</dl>
+<p>}</p>
+<p>if the &#8216;return&#8217; value of resp is &#8216;DEATH&#8217;, the worker died so we clean
+that up as well</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="eventmq.jobmanager.JobManager.jobmanager_main">
 <code class="descname">jobmanager_main</code><span class="sig-paren">(</span><em>broker_addr=None</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.jobmanager_main" title="Permalink to this definition">¶</a></dt>
 <dd><p>Kick off jobmanager with logging and settings import</p>
@@ -199,10 +256,18 @@ necessary</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>broker_addr</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; The address of the broker to connect to.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>broker_addr</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) &#8211; The address of the broker to connect to.</td>
 </tr>
 </tbody>
 </table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="eventmq.jobmanager.JobManager.jobs_in_flight">
+<code class="descname">jobs_in_flight</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.jobmanager.JobManager.jobs_in_flight" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stats and monitoring information
+Jobs in flight tracks all jobs currently executing.
+Key: msgid, Value: The message with all the details of the job</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -261,15 +326,22 @@ of work.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="eventmq.jobmanager.JobManager.queues">
-<code class="descname">queues</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.jobmanager.JobManager.queues" title="Permalink to this definition">¶</a></dt>
-<dd><p>List of queues that this job manager is listening on</p>
+<dt id="eventmq.jobmanager.JobManager.pid_distribution">
+<code class="descname">pid_distribution</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.jobmanager.JobManager.pid_distribution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Keep track of what pids are servicing our requests
+Key: pid, Value: # of jobs completed on the process with that pid</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.jobmanager.JobManager.premature_death">
+<code class="descname">premature_death</code><span class="sig-paren">(</span><em>reply</em>, <em>msgid</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.premature_death" title="Permalink to this definition">¶</a></dt>
+<dd><p>Worker died before running any jobs</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="eventmq.jobmanager.JobManager.request_queue">
-<code class="descname">request_queue</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.jobmanager.JobManager.request_queue" title="Permalink to this definition">¶</a></dt>
-<dd><p>Setup worker queues</p>
+<dt id="eventmq.jobmanager.JobManager.queues">
+<code class="descname">queues</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.jobmanager.JobManager.queues" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of queues that this job manager is listening on</p>
 </dd></dl>
 
 <dl class="method">
@@ -288,8 +360,7 @@ for another REQUEST message.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/2/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; The socket to use for this ack</li>
-<li><strong>recipient</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; The recipient id for the ack</li>
+<li><strong>reply</strong> &#8211; Message to send as the reply</li>
 <li><strong>msgid</strong> &#8211; The unique id that we are acknowledging</li>
 </ul>
 </td>
@@ -298,21 +369,55 @@ for another REQUEST message.</p>
 </table>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="eventmq.jobmanager.JobManager.total_ready_sent">
+<code class="descname">total_ready_sent</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.jobmanager.JobManager.total_ready_sent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Running total number of READY messages sent to the broker</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="eventmq.jobmanager.JobManager.total_requests">
+<code class="descname">total_requests</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.jobmanager.JobManager.total_requests" title="Permalink to this definition">¶</a></dt>
+<dd><p>Running total number of REQUEST messages received on the broker</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.jobmanager.JobManager.worker_death">
+<code class="descname">worker_death</code><span class="sig-paren">(</span><em>reply</em>, <em>msgid</em>, <em>death</em>, <em>pid</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.worker_death" title="Permalink to this definition">¶</a></dt>
+<dd><p>Worker died of natural causes, ensure its death and
+remove from tracking, will be replaced on next heartbeat</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.jobmanager.JobManager.worker_done">
+<code class="descname">worker_done</code><span class="sig-paren">(</span><em>reply</em>, <em>msgid</em>, <em>death</em>, <em>pid</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.worker_done" title="Permalink to this definition">¶</a></dt>
+<dd><p>Worker finished a job, notify broker of an additional slot opening</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="eventmq.jobmanager.JobManager.worker_done_with_reply">
+<code class="descname">worker_done_with_reply</code><span class="sig-paren">(</span><em>reply</em>, <em>msgid</em>, <em>death</em>, <em>pid</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.jobmanager.JobManager.worker_done_with_reply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Worker finished a job and requested the return value</p>
+</dd></dl>
+
 </dd></dl>
 
 </div>
 
 
            </div>
+           <div class="articleComments">
+            
+           </div>
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="poller.html" class="btn btn-neutral float-right" title="poller – Poller" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="poller.html" class="btn btn-neutral float-right" title="poller – Poller" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="exceptions.html" class="btn btn-neutral" title="exceptions – Exceptions" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="exceptions.html" class="btn btn-neutral" title="exceptions – Exceptions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -346,7 +451,8 @@ for another REQUEST message.</p>
             VERSION:'0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
         };
     </script>
       <script type="text/javascript" src="_static/jquery.js"></script>

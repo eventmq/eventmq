@@ -13,6 +13,8 @@
 
   
   
+  
+  
 
   
 
@@ -45,6 +47,7 @@
 
 <body class="wy-body-for-nav" role="document">
 
+   
   <div class="wy-grid-for-nav">
 
     
@@ -64,7 +67,7 @@
             
             
               <div class="version">
-                0.3.3
+                0.3.6
               </div>
             
           
@@ -85,7 +88,10 @@
           
             
             
-                <ul class="current">
+              
+            
+            
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../using.html">Using EventMQ</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Documentation</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="../client.html"><code class="docutils literal"><span class="pre">client</span></code> &#8211; Client Utilities</a><ul class="current">
@@ -115,8 +121,10 @@
 
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="../index.html">EventMQ</a>
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">EventMQ</a>
+        
       </nav>
 
 
@@ -125,27 +133,44 @@
         <div class="rst-content">
           
 
- 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="../index.html">Docs</a> &raquo;</li>
-      
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
           <li><a href="../api.html">API Documentation</a> &raquo;</li>
-      
+        
           <li><a href="../client.html"><code class="docutils literal"><span class="pre">client</span></code> &#8211; Client Utilities</a> &raquo;</li>
-      
-    <li><code class="docutils literal"><span class="pre">jobs</span></code> &#8211; Client Job Helpers</li>
+        
+      <li><code class="docutils literal"><span class="pre">jobs</span></code> &#8211; Client Job Helpers</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
+            
             <a href="../_sources/client/jobs.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
@@ -162,23 +187,23 @@
 <p class="last">All passed class &amp; function kwargs/args MUST be json serializable.</p>
 </div>
 <p>Usage:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">eventmq</span> <span class="kn">import</span> <span class="n">job</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">eventmq</span> <span class="kn">import</span> <span class="n">job</span>
 
-<span class="nd">@job</span><span class="p">(</span><span class="n">queue</span><span class="o">=</span><span class="s1">&#39;messaging&#39;</span><span class="p">)</span>
+<span class="nd">@job</span><span class="p">(</span><span class="n">queue</span><span class="o">=</span><span class="s">&#39;messaging&#39;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">send_email</span><span class="p">(</span><span class="n">recipient</span><span class="p">,</span> <span class="n">subject</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
     <span class="kn">from</span> <span class="nn">email.mime.text</span> <span class="kn">import</span> <span class="n">MIMEText</span>
     <span class="kn">import</span> <span class="nn">smtplib</span>
 
     <span class="n">msg</span> <span class="o">=</span> <span class="n">MIMEText</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
-    <span class="n">msg</span><span class="p">[</span><span class="s1">&#39;Subject&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">subject</span>
-    <span class="n">msg</span><span class="p">[</span><span class="s1">&#39;From&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;no-reply@foobar.io&#39;</span>
-    <span class="n">msg</span><span class="p">[</span><span class="s1">&#39;To&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">recipient</span>
+    <span class="n">msg</span><span class="p">[</span><span class="s">&#39;Subject&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">subject</span>
+    <span class="n">msg</span><span class="p">[</span><span class="s">&#39;From&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;no-reply@foobar.io&#39;</span>
+    <span class="n">msg</span><span class="p">[</span><span class="s">&#39;To&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">recipient</span>
 
-    <span class="n">s</span> <span class="o">=</span> <span class="n">smtplib</span><span class="o">.</span><span class="n">SMTP</span><span class="p">(</span><span class="s1">&#39;smtp.gmail.com&#39;</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">smtplib</span><span class="o">.</span><span class="n">SMTP</span><span class="p">(</span><span class="s">&#39;smtp.gmail.com&#39;</span><span class="p">)</span>
 
-    <span class="n">s</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="s1">&#39;me@gmail.com&#39;</span><span class="p">,</span> <span class="s1">&#39;my-app-password&#39;</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="s">&#39;me@gmail.com&#39;</span><span class="p">,</span> <span class="s">&#39;my-app-password&#39;</span><span class="p">)</span>
 
-    <span class="n">s</span><span class="o">.</span><span class="n">sendmail</span><span class="p">(</span><span class="s1">&#39;me@gmail.com&#39;</span><span class="p">,</span> <span class="p">[</span><span class="n">recipient</span><span class="p">,],</span> <span class="n">msg</span><span class="o">.</span><span class="n">as_string</span><span class="p">())</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">sendmail</span><span class="p">(</span><span class="s">&#39;me@gmail.com&#39;</span><span class="p">,</span> <span class="p">[</span><span class="n">recipient</span><span class="p">,],</span> <span class="n">msg</span><span class="o">.</span><span class="n">as_string</span><span class="p">())</span>
     <span class="n">s</span><span class="o">.</span><span class="n">quit</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -190,13 +215,13 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>queue</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Name of the queue this function should be executed
+<li><strong>queue</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) &#8211; Name of the queue this function should be executed
 in. If no queue provided <code class="docutils literal"><span class="pre">default</span></code> is used.</li>
-<li><strong>broker_addr</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Address of the broker to send the job to. If no
+<li><strong>broker_addr</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) &#8211; Address of the broker to send the job to. If no
 address is given then the value of the environment variable
 <code class="docutils literal"><span class="pre">EMQ_BROKER_ADDR</span></code> will be used, If that is undefined a
 warning will be emitted and the job will be run synchronously.</li>
-<li><strong>async</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; If you want to run all executions of a particular job
+<li><strong>async</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.7)"><em>bool</em></a>) &#8211; If you want to run all executions of a particular job
 synchronously but still decorate it with the job decorator you
 can set this to False. This is useful for unit tests.</li>
 </ul>
@@ -234,27 +259,27 @@ can set this to False. This is useful for unit tests.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>func</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#callable" title="(in Python v2.7)"><em>callable</em></a>) &#8211; the callable (or string path to calable) to be
+<li><strong>func</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#callable" title="(in Python v3.7)"><em>callable</em></a>) &#8211; the callable (or string path to calable) to be
 scheduled on a worker</li>
-<li><strong>broker_addr</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Address of the broker to send the job to. If no
+<li><strong>broker_addr</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) &#8211; Address of the broker to send the job to. If no
 address is given then the value of the environment variable
 <code class="docutils literal"><span class="pre">EMQ_BROKER_ADDR</span></code> will be used.</li>
-<li><strong>interval_secs</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; Run job every interval_secs or None if using cron</li>
-<li><strong>args</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; list of <a href="#id1"><span class="problematic" id="id2">*</span></a>args to pass to the callable</li>
-<li><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/2/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; dict of <a href="#id3"><span class="problematic" id="id4">**</span></a>kwargs to pass to the callable</li>
-<li><strong>class_args</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; list of <a href="#id5"><span class="problematic" id="id6">*</span></a>args to pass to the class (if applicable)</li>
-<li><strong>class_kwargs</strong> (<a class="reference external" href="https://docs.python.org/2/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; dict of <a href="#id7"><span class="problematic" id="id8">**</span></a>kwargs to pass to the class (if
+<li><strong>interval_secs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) &#8211; Run job every interval_secs or None if using cron</li>
+<li><strong>args</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><em>list</em></a>) &#8211; list of <a href="#id1"><span class="problematic" id="id2">*</span></a>args to pass to the callable</li>
+<li><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><em>dict</em></a>) &#8211; dict of <a href="#id3"><span class="problematic" id="id4">**</span></a>kwargs to pass to the callable</li>
+<li><strong>class_args</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><em>list</em></a>) &#8211; list of <a href="#id5"><span class="problematic" id="id6">*</span></a>args to pass to the class (if applicable)</li>
+<li><strong>class_kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><em>dict</em></a>) &#8211; dict of <a href="#id7"><span class="problematic" id="id8">**</span></a>kwargs to pass to the class (if
 applicable)</li>
-<li><strong>headers</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; list of strings denoting enabled headers. Default:
+<li><strong>headers</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><em>list</em></a>) &#8211; list of strings denoting enabled headers. Default:
 guarantee is enabled to ensure the scheduler schedules the job.</li>
-<li><strong>queue</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of the queue to use when executing the job. The
+<li><strong>queue</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) &#8211; name of the queue to use when executing the job. The
 default value is the default queue.</li>
-<li><strong>cron</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; cron formatted string used for job schedule if
+<li><strong>cron</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.7)"><em>string</em></a>) &#8211; cron formatted string used for job schedule if
 interval_secs is None, i.e. &#8216;* * * * <a href="#id9"><span class="problematic" id="id10">*</span></a>&#8216; (every minute)</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><code class="xref py py-exc docutils literal"><span class="pre">TypeError</span></code> &#8211; When one or more parameters are not JSON serializable.</p>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#TypeError" title="(in Python v3.7)"><code class="xref py py-exc docutils literal"><span class="pre">TypeError</span></code></a> &#8211; When one or more parameters are not JSON serializable.</p>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
@@ -265,7 +290,7 @@ interval_secs is None, i.e. &#8216;* * * * <a href="#id9"><span class="problemat
 </p>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)">str</a></p>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)">str</a></p>
 </td>
 </tr>
 </tbody>
@@ -285,27 +310,27 @@ interval_secs is None, i.e. &#8216;* * * * <a href="#id9"><span class="problemat
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>func</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#callable" title="(in Python v2.7)"><em>callable</em></a>) &#8211; the callable (or string path to calable) to be
+<li><strong>func</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#callable" title="(in Python v3.7)"><em>callable</em></a>) &#8211; the callable (or string path to calable) to be
 scheduled on a worker</li>
-<li><strong>broker_addr</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Address of the broker to send the job to. If no
+<li><strong>broker_addr</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) &#8211; Address of the broker to send the job to. If no
 address is given then the value of the environment variable
 <code class="docutils literal"><span class="pre">EMQ_BROKER_ADDR</span></code> will be used.</li>
-<li><strong>interval_secs</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; Run job every interval_secs or None if using cron</li>
-<li><strong>args</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; list of <a href="#id11"><span class="problematic" id="id12">*</span></a>args to pass to the callable</li>
-<li><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/2/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; dict of <a href="#id13"><span class="problematic" id="id14">**</span></a>kwargs to pass to the callable</li>
-<li><strong>class_args</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; list of <a href="#id15"><span class="problematic" id="id16">*</span></a>args to pass to the class (if applicable)</li>
-<li><strong>class_kwargs</strong> (<a class="reference external" href="https://docs.python.org/2/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; dict of <a href="#id17"><span class="problematic" id="id18">**</span></a>kwargs to pass to the class (if
+<li><strong>interval_secs</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) &#8211; Run job every interval_secs or None if using cron</li>
+<li><strong>args</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><em>list</em></a>) &#8211; list of <a href="#id11"><span class="problematic" id="id12">*</span></a>args to pass to the callable</li>
+<li><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><em>dict</em></a>) &#8211; dict of <a href="#id13"><span class="problematic" id="id14">**</span></a>kwargs to pass to the callable</li>
+<li><strong>class_args</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><em>list</em></a>) &#8211; list of <a href="#id15"><span class="problematic" id="id16">*</span></a>args to pass to the class (if applicable)</li>
+<li><strong>class_kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><em>dict</em></a>) &#8211; dict of <a href="#id17"><span class="problematic" id="id18">**</span></a>kwargs to pass to the class (if
 applicable)</li>
-<li><strong>headers</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#list" title="(in Python v2.7)"><em>list</em></a>) &#8211; list of strings denoting enabled headers. Default:
+<li><strong>headers</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><em>list</em></a>) &#8211; list of strings denoting enabled headers. Default:
 guarantee is enabled to ensure the scheduler schedules the job.</li>
-<li><strong>queue</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of the queue to use when executing the job. The
+<li><strong>queue</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) &#8211; name of the queue to use when executing the job. The
 default value is the default queue.</li>
-<li><strong>cron</strong> (<a class="reference external" href="https://docs.python.org/2/library/string.html#module-string" title="(in Python v2.7)"><em>string</em></a>) &#8211; cron formatted string used for job schedule if
+<li><strong>cron</strong> (<a class="reference external" href="https://docs.python.org/3/library/string.html#module-string" title="(in Python v3.7)"><em>string</em></a>) &#8211; cron formatted string used for job schedule if
 interval_secs is None, i.e. &#8216;* * * * <a href="#id19"><span class="problematic" id="id20">*</span></a>&#8216; (every minute)</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><code class="xref py py-exc docutils literal"><span class="pre">TypeError</span></code> &#8211; When one or more parameters are not JSON serializable.</p>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#TypeError" title="(in Python v3.7)"><code class="xref py py-exc docutils literal"><span class="pre">TypeError</span></code></a> &#8211; When one or more parameters are not JSON serializable.</p>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><dl class="docutils">
@@ -316,7 +341,7 @@ interval_secs is None, i.e. &#8216;* * * * <a href="#id19"><span class="problema
 </p>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)">str</a></p>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)">str</a></p>
 </td>
 </tr>
 </tbody>
@@ -327,15 +352,18 @@ interval_secs is None, i.e. &#8216;* * * * <a href="#id19"><span class="problema
 
 
            </div>
+           <div class="articleComments">
+            
+           </div>
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="../exceptions.html" class="btn btn-neutral float-right" title="exceptions – Exceptions" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="../exceptions.html" class="btn btn-neutral float-right" title="exceptions – Exceptions" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="messages.html" class="btn btn-neutral" title="messages – Client Messaging" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="messages.html" class="btn btn-neutral" title="messages – Client Messaging" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -369,7 +397,8 @@ interval_secs is None, i.e. &#8216;* * * * <a href="#id19"><span class="problema
             VERSION:'0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
         };
     </script>
       <script type="text/javascript" src="../_static/jquery.js"></script>

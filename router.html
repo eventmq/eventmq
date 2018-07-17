@@ -13,6 +13,8 @@
 
   
   
+  
+  
 
   
 
@@ -45,6 +47,7 @@
 
 <body class="wy-body-for-nav" role="document">
 
+   
   <div class="wy-grid-for-nav">
 
     
@@ -64,7 +67,7 @@
             
             
               <div class="version">
-                0.3.3
+                0.3.6
               </div>
             
           
@@ -85,7 +88,10 @@
           
             
             
-                <ul class="current">
+              
+            
+            
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="using.html">Using EventMQ</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="api.html">API Documentation</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="client.html"><code class="docutils literal"><span class="pre">client</span></code> &#8211; Client Utilities</a></li>
@@ -111,8 +117,10 @@
 
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="index.html">EventMQ</a>
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">EventMQ</a>
+        
       </nav>
 
 
@@ -121,25 +129,42 @@
         <div class="rst-content">
           
 
- 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="index.html">Docs</a> &raquo;</li>
-      
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
           <li><a href="api.html">API Documentation</a> &raquo;</li>
-      
-    <li><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</li>
+        
+      <li><code class="docutils literal"><span class="pre">router</span></code> &#8211; Router</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
+            
             <a href="_sources/router.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
@@ -160,7 +185,7 @@
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>scheduler_id</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; unique id of the scheduler to add</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>scheduler_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) &#8211; unique id of the scheduler to add</td>
 </tr>
 </tbody>
 </table>
@@ -175,7 +200,7 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>worker_id</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; unique id of the worker to add</li>
+<li><strong>worker_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) &#8211; unique id of the worker to add</li>
 <li><strong>queues</strong> &#8211; queue or queues this worker should be a member of</li>
 </ul>
 </td>
@@ -198,14 +223,6 @@ the router hasn&#8217;t received a heartbeat in HEARTBEAT_TIMEOUT</p>
 responded in HEARTBEAT_TIMEOUT</p>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="eventmq.router.Router.executed_functions">
-<code class="descname">executed_functions</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.router.Router.executed_functions" title="Permalink to this definition">¶</a></dt>
-<dd><p>Excecuted function tracking dictionary
-Key: msgid of msg each REQUEST received and forwarded to a worker
-Value: (function_name, queue_name)</p>
-</dd></dl>
-
 <dl class="method">
 <dt id="eventmq.router.Router.get_available_worker">
 <code class="descname">get_available_worker</code><span class="sig-paren">(</span><em>queue_name='default'</em><span class="sig-paren">)</span><a class="headerlink" href="#eventmq.router.Router.get_available_worker" title="Permalink to this definition">¶</a></dt>
@@ -215,7 +232,7 @@ queue.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>queue_name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Name of the queue</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>queue_name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) &#8211; Name of the queue</p>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><ul class="first simple">
@@ -229,7 +246,7 @@ self.queues</li>
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">uuid of the job manager with an available worker slot</p>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">(<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)">str</a>)</p>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">(<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)">str</a>)</p>
 </td>
 </tr>
 </tbody>
@@ -284,8 +301,8 @@ and announces itself.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>sender</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; The id of the sender</li>
-<li><strong>msgid</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Unique identifier for this message</li>
+<li><strong>sender</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) &#8211; The id of the sender</li>
+<li><strong>msgid</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) &#8211; Unique identifier for this message</li>
 <li><strong>msg</strong> &#8211; The actual message that was sent</li>
 </ul>
 </td>
@@ -313,7 +330,7 @@ measurements</p>
 <li><strong>sender</strong> &#8211; </li>
 <li><strong>msgid</strong> &#8211; </li>
 <li><strong>msgid</strong> &#8211; </li>
-<li><strong>depth</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; The recusion depth in retrying when PeerGoneAwayError
+<li><strong>depth</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><em>int</em></a>) &#8211; The recusion depth in retrying when PeerGoneAwayError
 is raised.</li>
 </ul>
 </td>
@@ -330,7 +347,7 @@ is raised.</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>unprioritized_iterable</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#iter" title="(in Python v2.7)"><em>iter</em></a>) &#8211; Any list, tuple, etc where the
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>unprioritized_iterable</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#iter" title="(in Python v3.7)"><em>iter</em></a>) &#8211; Any list, tuple, etc where the
 0-index key is an integer to use as priority. Largest numbers
 come first.</td>
 </tr>
@@ -393,7 +410,10 @@ worker slot, so you may see duplicate addresses.</p>
 <dl class="attribute">
 <dt id="eventmq.router.Router.received_disconnect">
 <code class="descname">received_disconnect</code><em class="property"> = None</em><a class="headerlink" href="#eventmq.router.Router.received_disconnect" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set to True when the router should die.</p>
+<dd><p>Excecuted function tracking dictionary
+Key: msgid of msg each REQUEST received and forwarded to a worker
+Value: (function_name, queue_name)
+Set to True when the router should die.</p>
 </dd></dl>
 
 <dl class="method">
@@ -445,8 +465,8 @@ Contains dictionaries:</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/2/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; The socket to use for this ack</li>
-<li><strong>recipient</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; The recipient id for the ack</li>
+<li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/3/library/socket.html#module-socket" title="(in Python v3.7)"><em>socket</em></a>) &#8211; The socket to use for this ack</li>
+<li><strong>recipient</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) &#8211; The recipient id for the ack</li>
 <li><strong>msgid</strong> &#8211; The unique id that we are acknowledging</li>
 </ul>
 </td>
@@ -471,8 +491,8 @@ needed when building messages</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/2/library/socket.html#module-socket" title="(in Python v2.7)"><em>socket</em></a>) &#8211; the socket to send the heartbeat with</li>
-<li><strong>recipient</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Worker I</li>
+<li><strong>socket</strong> (<a class="reference external" href="https://docs.python.org/3/library/socket.html#module-socket" title="(in Python v3.7)"><em>socket</em></a>) &#8211; the socket to send the heartbeat with</li>
+<li><strong>recipient</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) &#8211; Worker I</li>
 </ul>
 </td>
 </tr>
@@ -514,9 +534,9 @@ process receives a SIGHUP from the system.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>frontend_addr</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; connection string to listen for requests</li>
-<li><strong>backend_addr</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; connection string to listen for workers</li>
-<li><strong>administrative_addr</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; connection string to listen for emq-cli
+<li><strong>frontend_addr</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) &#8211; connection string to listen for requests</li>
+<li><strong>backend_addr</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) &#8211; connection string to listen for workers</li>
+<li><strong>administrative_addr</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><em>str</em></a>) &#8211; connection string to listen for emq-cli
 commands on.</li>
 </ul>
 </td>
@@ -558,15 +578,18 @@ process.</li>
 
 
            </div>
+           <div class="articleComments">
+            
+           </div>
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="sender.html" class="btn btn-neutral float-right" title="sender – Sender" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="sender.html" class="btn btn-neutral float-right" title="sender – Sender" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="receiver.html" class="btn btn-neutral" title="receiver – Receiver" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="receiver.html" class="btn btn-neutral" title="receiver – Receiver" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -600,7 +623,8 @@ process.</li>
             VERSION:'0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
         };
     </script>
       <script type="text/javascript" src="_static/jquery.js"></script>

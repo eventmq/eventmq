@@ -14,6 +14,8 @@
 
   
   
+  
+  
 
   
 
@@ -43,6 +45,7 @@
 
 <body class="wy-body-for-nav" role="document">
 
+   
   <div class="wy-grid-for-nav">
 
     
@@ -62,7 +65,7 @@
             
             
               <div class="version">
-                0.3.3
+                0.3.6
               </div>
             
           
@@ -83,7 +86,10 @@
           
             
             
-                <ul>
+              
+            
+            
+              <ul>
 <li class="toctree-l1"><a class="reference internal" href="using.html">Using EventMQ</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Documentation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to EventMQ</a></li>
@@ -99,8 +105,10 @@
 
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="index.html">EventMQ</a>
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">EventMQ</a>
+        
       </nav>
 
 
@@ -113,17 +121,34 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="index.html">Docs</a> &raquo;</li>
-      
-    <li>Index</li>
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li></li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
+            
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
@@ -270,10 +295,10 @@
 </li>
       <li><a href="receiver.html#module-eventmq.receiver">eventmq.receiver (module)</a>
 </li>
-      <li><a href="router.html#module-eventmq.router">eventmq.router (module)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="router.html#module-eventmq.router">eventmq.router (module)</a>
+</li>
       <li><a href="sender.html#module-eventmq.sender">eventmq.sender (module)</a>
 </li>
       <li><a href="utils/index.html#module-eventmq.utils">eventmq.utils (module)</a>
@@ -289,8 +314,6 @@
       <li><a href="utils/timeutils.html#module-eventmq.utils.timeutils">eventmq.utils.timeutils (module)</a>
 </li>
       <li><a href="exceptions.html#eventmq.exceptions.EventMQError">EventMQError</a>
-</li>
-      <li><a href="router.html#eventmq.router.Router.executed_functions">executed_functions (eventmq.router.Router attribute)</a>
 </li>
       <li><a href="utils/classes.html#eventmq.utils.classes.EMQdeque.extend">extend() (eventmq.utils.classes.EMQdeque method)</a>
 </li>
@@ -323,6 +346,10 @@
 
 <h2 id="H">H</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="jobmanager.html#eventmq.jobmanager.JobManager.handle_response">handle_response() (eventmq.jobmanager.JobManager method)</a>
+</li>
+  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="utils/classes.html#eventmq.utils.classes.HeartbeatMixin">HeartbeatMixin (class in eventmq.utils.classes)</a>
 </li>
@@ -360,13 +387,15 @@
 </li>
       <li><a href="client/jobs.html#eventmq.client.jobs.job">job() (in module eventmq.client.jobs)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="router.html#eventmq.router.Router.job_latencies">job_latencies (eventmq.router.Router attribute)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="jobmanager.html#eventmq.jobmanager.JobManager">JobManager (class in eventmq.jobmanager)</a>
 </li>
       <li><a href="jobmanager.html#eventmq.jobmanager.JobManager.jobmanager_main">jobmanager_main() (eventmq.jobmanager.JobManager method)</a>
+</li>
+      <li><a href="jobmanager.html#eventmq.jobmanager.JobManager.jobs_in_flight">jobs_in_flight (eventmq.jobmanager.JobManager attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -458,6 +487,8 @@
 </li>
       <li><a href="exceptions.html#eventmq.exceptions.PeerGoneAwayError">PeerGoneAwayError</a>
 </li>
+      <li><a href="jobmanager.html#eventmq.jobmanager.JobManager.pid_distribution">pid_distribution (eventmq.jobmanager.JobManager attribute)</a>
+</li>
       <li><a href="poller.html#eventmq.poller.Poller.poll">poll() (eventmq.poller.Poller method)</a>
 </li>
   </ul></td>
@@ -467,6 +498,8 @@
       <li><a href="utils/classes.html#eventmq.utils.classes.EMQdeque.pop">pop() (eventmq.utils.classes.EMQdeque method)</a>
 </li>
       <li><a href="utils/classes.html#eventmq.utils.classes.EMQdeque.popleft">popleft() (eventmq.utils.classes.EMQdeque method)</a>
+</li>
+      <li><a href="jobmanager.html#eventmq.jobmanager.JobManager.premature_death">premature_death() (eventmq.jobmanager.JobManager method)</a>
 </li>
       <li><a href="router.html#eventmq.router.Router.prioritize_queue_list">prioritize_queue_list() (eventmq.router.Router class method)</a>
 </li>
@@ -517,8 +550,6 @@
       <li><a href="poller.html#eventmq.poller.Poller.register">register() (eventmq.poller.Poller method)</a>
 </li>
       <li><a href="utils/classes.html#eventmq.utils.classes.EMQdeque.remove">remove() (eventmq.utils.classes.EMQdeque method)</a>
-</li>
-      <li><a href="jobmanager.html#eventmq.jobmanager.JobManager.request_queue">request_queue (eventmq.jobmanager.JobManager attribute)</a>
 </li>
       <li><a href="router.html#eventmq.router.Router.requeue_worker">requeue_worker() (eventmq.router.Router method)</a>
 </li>
@@ -602,8 +633,12 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="utils/timeutils.html#eventmq.utils.timeutils.timestamp">timestamp() (in module eventmq.utils.timeutils)</a>
 </li>
+      <li><a href="jobmanager.html#eventmq.jobmanager.JobManager.total_ready_sent">total_ready_sent (eventmq.jobmanager.JobManager attribute)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="jobmanager.html#eventmq.jobmanager.JobManager.total_requests">total_requests (eventmq.jobmanager.JobManager attribute)</a>
+</li>
       <li><a href="utils/index.html#eventmq.utils.tuplify">tuplify() (in module eventmq.utils)</a>
 </li>
   </ul></td>
@@ -634,8 +669,14 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="router.html#eventmq.router.Router.waiting_messages">waiting_messages (eventmq.router.Router attribute)</a>
 </li>
+      <li><a href="jobmanager.html#eventmq.jobmanager.JobManager.worker_death">worker_death() (eventmq.jobmanager.JobManager method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="jobmanager.html#eventmq.jobmanager.JobManager.worker_done">worker_done() (eventmq.jobmanager.JobManager method)</a>
+</li>
+      <li><a href="jobmanager.html#eventmq.jobmanager.JobManager.worker_done_with_reply">worker_done_with_reply() (eventmq.jobmanager.JobManager method)</a>
+</li>
       <li><a href="router.html#eventmq.router.Router.workers">workers (eventmq.router.Router attribute)</a>
 </li>
   </ul></td>
@@ -667,6 +708,9 @@
 
 
 
+           </div>
+           <div class="articleComments">
+            
            </div>
           </div>
           <footer>
@@ -701,7 +745,8 @@
             VERSION:'0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
         };
     </script>
       <script type="text/javascript" src="_static/jquery.js"></script>

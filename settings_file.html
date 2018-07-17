@@ -13,6 +13,8 @@
 
   
   
+  
+  
 
   
 
@@ -45,6 +47,7 @@
 
 <body class="wy-body-for-nav" role="document">
 
+   
   <div class="wy-grid-for-nav">
 
     
@@ -64,7 +67,7 @@
             
             
               <div class="version">
-                0.3.3
+                0.3.6
               </div>
             
           
@@ -85,16 +88,22 @@
           
             
             
-                <ul class="current">
+              
+            
+            
+              <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="using.html">Using EventMQ</a><ul class="current">
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Server Settings (eventmq.conf)</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#global">Global</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#super-debug">super_debug</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#max-sockets">max_sockets</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#router">Router</a><ul>
 <li class="toctree-l4"><a class="reference internal" href="#frontend-addr">frontend_addr</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#backend-addr">backend_addr</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#wal">wal</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#wal-enabled">wal_enabled</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#scheduler">Scheduler</a><ul>
@@ -131,8 +140,10 @@
 
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="index.html">EventMQ</a>
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">EventMQ</a>
+        
       </nav>
 
 
@@ -141,25 +152,42 @@
         <div class="rst-content">
           
 
- 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="index.html">Docs</a> &raquo;</li>
-      
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
           <li><a href="using.html">Using EventMQ</a> &raquo;</li>
-      
-    <li>Server Settings (eventmq.conf)</li>
+        
+      <li>Server Settings (eventmq.conf)</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
+            
             <a href="_sources/settings_file.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
@@ -175,6 +203,11 @@
 <p>Default: False</p>
 <p>Enable most verbose level of debug statements</p>
 </div>
+<div class="section" id="max-sockets">
+<h3>max_sockets<a class="headerlink" href="#max-sockets" title="Permalink to this headline">¶</a></h3>
+<p>Default: 1024</p>
+<p>Define the max sockets for a process/context</p>
+</div>
 </div>
 <div class="section" id="router">
 <h2>Router<a class="headerlink" href="#router" title="Permalink to this headline">¶</a></h2>
@@ -187,6 +220,18 @@
 <h3>backend_addr<a class="headerlink" href="#backend-addr" title="Permalink to this headline">¶</a></h3>
 <p>Default: &#8216;<a class="reference external" href="tcp://127.0.0.1:47291">tcp://127.0.0.1:47291</a>&#8216;</p>
 <p>The address used to listen for connections from workers</p>
+</div>
+<div class="section" id="wal">
+<h3>wal<a class="headerlink" href="#wal" title="Permalink to this headline">¶</a></h3>
+<p>Default: &#8216;/var/log/eventmq/wal.log&#8217;</p>
+<p>Write-ahead Log for replaying messages received by the Router.  Will
+try to create the directory specified and append to the filename given.
+Requires correct permissions to write to the given file.</p>
+</div>
+<div class="section" id="wal-enabled">
+<h3>wal_enabled<a class="headerlink" href="#wal-enabled" title="Permalink to this headline">¶</a></h3>
+<p>Default: False</p>
+<p>Enable or disable the Write-ahead Log</p>
 </div>
 </div>
 <div class="section" id="scheduler">
@@ -270,15 +315,18 @@ MultiProcessWorker, and is useful for pulling any global state into memory.</p>
 
 
            </div>
+           <div class="articleComments">
+            
+           </div>
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="api.html" class="btn btn-neutral float-right" title="API Documentation" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="api.html" class="btn btn-neutral float-right" title="API Documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="using.html" class="btn btn-neutral" title="Using EventMQ" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="using.html" class="btn btn-neutral" title="Using EventMQ" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -312,7 +360,8 @@ MultiProcessWorker, and is useful for pulling any global state into memory.</p>
             VERSION:'0',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
         };
     </script>
       <script type="text/javascript" src="_static/jquery.js"></script>
