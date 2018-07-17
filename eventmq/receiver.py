@@ -21,7 +21,7 @@ import logging
 
 import zmq
 
-from . import constants
+from . import conf, constants
 from .utils.classes import ZMQReceiveMixin, ZMQSendMixin
 from .utils.devices import generate_device_name
 
@@ -53,7 +53,12 @@ class Receiver(ZMQReceiveMixin, ZMQSendMixin):
         Raises:
             :class:`TypeError`: when `callable` is not callable
         """
+        from .utils import settings
+        settings.import_settings()
+
         self.zcontext = kwargs.get('context', zmq.Context.instance())
+        self.zcontext.set(zmq.MAX_SOCKETS, conf.MAX_SOCKETS)
+
         self.name = kwargs.get('name', generate_device_name())
 
         self.zsocket = kwargs.get('socket', self.zcontext.socket(zmq.ROUTER))

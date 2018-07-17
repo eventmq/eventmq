@@ -23,7 +23,7 @@ import uuid
 
 import zmq
 
-from . import constants, exceptions
+from . import conf, constants, exceptions
 from .utils.classes import ZMQReceiveMixin, ZMQSendMixin
 
 logger = logging.getLogger(__name__)
@@ -55,7 +55,11 @@ class Sender(ZMQSendMixin, ZMQReceiveMixin):
                 socket
 
         """
+        from .utils import settings
+        settings.import_settings()
+
         self.zcontext = kwargs.pop('context', zmq.Context.instance())
+        self.zcontext.set(zmq.MAX_SOCKETS, conf.MAX_SOCKETS)
 
         # Set zsocket to none so we can check if it exists and close it before
         # rebuilding it later.

@@ -26,6 +26,9 @@ SUPER_DEBUG = False
 #: Default: True
 HIDE_HEARTBEAT_LOGS = True
 
+#: The maximum number of sockets to open per-process/context
+MAX_SOCKETS = 1024
+
 # When a queue name isn't specified use this queue name for the default. It
 # would be a good idea to have a handful of workers listening on this queue
 # unless you're positive that everything specifies a queue with workers.
