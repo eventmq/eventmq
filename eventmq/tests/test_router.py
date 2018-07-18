@@ -12,6 +12,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
+from imp import reload
 import json
 import unittest
 
@@ -35,6 +36,10 @@ class TestCase(unittest.TestCase):
     @mock.patch('eventmq.receiver.zmq.Socket.bind')
     @mock.patch('eventmq.router.Router._start_event_loop')
     def test_start(self, event_loop_mock, zsocket_bind_mock):
+        # set the config file back to defaults. prevents tests from failing
+        # when there is a config file on the filesystem
+        reload(conf)
+
         # Test default args
         self.router.start()
         self.router.incoming.listen.assert_called_with(conf.FRONTEND_ADDR)
@@ -671,11 +676,9 @@ class TestCase(unittest.TestCase):
         self.router.process_client_message(
             (s1, '', constants.PROTOCOL_VERSION, command, msgid) +
             msg)
-        self.assertNotIn(s1, self.router.scheduler_queue,
-                         'Scheduler not '
-                         'removed. {'
-                         '}'.format(
-                             self.router.scheduler_queue))
+        self.assertNotIn(
+            s1, self.router.scheduler_queue,
+            'Scheduler not removed. {}'.format(self.router.scheduler_queue))
 
     def test_handle_kbye_from_worker(self):
         msgid = 'msg10'

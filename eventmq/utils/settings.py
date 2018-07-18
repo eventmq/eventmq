@@ -16,7 +16,7 @@
 :mod:`settings` -- Settings Utilities
 =====================================
 """
-from configparser import ConfigParser
+from configparser import ConfigParser, NoOptionError
 import json
 import logging
 import os
@@ -30,26 +30,51 @@ logger = logging.getLogger(__name__)
 
 def import_settings(section='global'):
     """
-    Import settings and apply to configuration globals
+    Import settings and apply to configuration globals. This function will
+    also read from the environment variables and override any value defined
+    in the file.
 
     Args:
        section (str): Name of the INI section to import
     """
     config = ConfigParser()
 
-    if os.path.exists(conf.CONFIG_FILE):
-        config.read(conf.CONFIG_FILE)
+    config_path = os.environ.get('EVENTMQ_CONFIG_FILE', conf.CONFIG_FILE)
+    use_config_file = False
 
-        if not config.has_section(section):
+    if os.path.exists(config_path):
+        config.read(config_path)
+        if config.has_section(section):
+            use_config_file = True
+        else:
             logger.warning(
-                'Tried to read nonexistent section {}'.format(section))
-            return
+                'Tried to read nonexistent section {} from {}'.format(
+                    section, config_path))
 
-        for name, value in config.items(section):
-            if hasattr(conf, name.upper()):
-                default_value = getattr(conf, name.upper())
-                t = type(default_value)
-                if isinstance(default_value, (list, tuple)):
+        for name in dir(conf):
+            if name.startswith('_'):
+                continue
+
+            value = None
+            found_value = False
+            default_value = getattr(conf, name)
+
+            # Favor environment variables over the config file definition
+            try:
+                value = os.environ['EVENTMQ_{}'.format(name)]
+                found_value = True
+            except KeyError:
+                if use_config_file:
+                    try:
+                        value = config.get(section, name)
+                        found_value = True
+                    except NoOptionError:
+                        found_value = False
+
+            if found_value:
+                t = type(getattr(conf, name))
+
+                if t in (list, tuple):
                     try:
                         value = t(json.loads(value))
                     except ValueError:
@@ -60,19 +85,14 @@ def import_settings(section='global'):
                     # convert those elements, otherwise whatever it's type is
                     # correct
                     if isinstance(default_value[0], tuple):
-                        setattr(conf, name.upper(),
-                                t(map(tuplify, value)))
+                        setattr(conf, name, t(map(tuplify, value)))
                     else:
-                        setattr(conf, name.upper(), t(value))
+                        setattr(conf, name, t(value))
                 elif isinstance(default_value, bool):
-                    setattr(conf, name.upper(),
+                    setattr(conf, name,
                             True if 't' in value.lower() else False)
                 else:
-                    setattr(conf, name.upper(), t(value))
-                logger.debug("Setting conf.{} to {}".format(
-                    name.upper(), getattr(conf, name.upper())))
-            else:
-                logger.warning('Tried to set invalid setting: %s' % name)
-    else:
-        logger.warning('Config file at {} not found. Continuing with '
-                       'defaults.'.format(conf.CONFIG_FILE))
+                    setattr(conf, name, t(value))
+
+            logger.debug("Setting conf.{} to {}".format(
+                name, getattr(conf, name)))
