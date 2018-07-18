@@ -2,12 +2,20 @@
 EventMQ setup.py file for distribution
 
 """
+import ast
 
 from setuptools import find_packages, setup
 
+version = 'unknown'
+with open('eventmq/__init__.py') as f:
+    for line in f:
+        if line.startswith('__version__'):
+            version = ast.parse(line).body[0].value.s
+            break
+
 setup(
     name='eventmq',
-    version='0.3.8',
+    version=version,
     description='EventMQ job execution and messaging system based on ZeroMQ',
     packages=find_packages(),
     install_requires=['pyzmq==15.4.0',
