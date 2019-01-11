@@ -88,6 +88,8 @@ RQ_HOST = 'localhost'
 RQ_PORT = 6379
 RQ_DB = 0
 RQ_PASSWORD = ''
+REDIS_CLIENT_CLASS = 'redis.StrictRedis'
+REDIS_CLIENT_CLASS_KWARGS = {}
 
 MAX_JOB_COUNT = 1024
 
