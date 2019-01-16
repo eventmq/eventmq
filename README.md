@@ -4,7 +4,7 @@ EventMQ
 [![Coverage Status](https://coveralls.io/repos/github/eventmq/eventmq/badge.svg)](https://coveralls.io/github/eventmq/eventmq)
 
 # Overview
-EventMQ is a message passing system built on [ZeroMQ](https://zeromq.org)
+EventMQ is a message passing system focused on asynchronous job execution for Python built on [ZeroMQ](https://zeromq.org)
 
 # Installation
 
