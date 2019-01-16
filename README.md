@@ -19,11 +19,6 @@ pip install eventmq
 
 [Documentation](https://eventmq.github.io/eventmq/)
 
-## Mailing Lists
-User Support: http://lists.eventmq.io/mailman/listinfo/eventmq-users_lists.eventmq.io
-
-Development Discussion: http://lists.eventmq.io/mailman/listinfo/eventmq-devel_lists.eventmq.io
-
 ## IRC
 
  #eventmq on [irc.freenode.net](https://webchat.freenode.net/?channels=#eventmq)
