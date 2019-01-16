@@ -12,52 +12,62 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
+from configparser import ConfigParser
 from imp import reload
 import io
+import os
 import random
 import sys
 import unittest
 
 import mock
 
+from .. import conf
 from .. import constants
 from .. import exceptions
 from ..utils import classes, messages, settings
 
 
 class SettingsTestCase(unittest.TestCase):
-    settings_ini = "\n".join(
-        ("[global]",
-         "super_debug=TRuE",
-         "frontend_addr=tcp://0.0.0.0:47291",
-         "",
-         "[jobmanager]",
-         "super_debug=FalSe",
+    settings_ini = '\n'.join(
+        ('[global]',
+         'super_debug=TRuE',
+         'frontend_addr=tcp://0.0.0.0:47291',
+         '',
+         '[jobmanager]',
+         'super_debug=FalSe',
          'queues=[[50,"google"], [40,"pushes"], [10,"default"]]',
-         "worker_addr=tcp://160.254.23.88:47290",
-         "concurrent_jobs=9283",))
+         'worker_addr=tcp://160.254.23.88:47290',
+         'concurrent_jobs=9283',
+         '',
+         '[scheduler]',
+         'redis_client_class_kwargs={"test_kwarg": true}',
+         '',
+         '[section_with_bad_list]',
+         'queues=[[10,asdf],]',
+         '',
+         '[section_with_bad_dict]',
+         'redis_client_class_kwargs={asdf, 39}'))
 
-    @mock.patch('eventmq.utils.settings.os.path.exists')
-    def test_import_settings_default(self, pathexists_mock):
-        from configparser import ConfigParser
-        from .. import conf
+    def setUp(self):
+        self._config = ConfigParser()
+
+        if sys.version_info[0] == 3:
+            self._config.read_string(self.settings_ini)
+        else:
+            self._config.readfp(io.BytesIO(self.settings_ini))
+
         # sometimes the tests step on each other with this module. reloading
         # ensures fresh test data
         reload(conf)
+
+    @mock.patch('eventmq.utils.settings.os.path.exists')
+    def test_import_settings_default(self, pathexists_mock):
         pathexists_mock.return_value = True
 
-        _config = ConfigParser()
-
-        if sys.version_info[0] == 3:
-            _config.read_string(self.settings_ini)
-        else:
-            _config.readfp(io.BytesIO(self.settings_ini))
-
-        # Global section
-        # --------------
         with mock.patch('eventmq.utils.settings.ConfigParser',
-                        return_value=_config):
-            with mock.patch.object(_config, 'read'):
+                        return_value=self._config):
+            with mock.patch.object(self._config, 'read'):
                 settings.import_settings()
 
         # Changed. Default is false
@@ -75,25 +85,19 @@ class SettingsTestCase(unittest.TestCase):
         # Default is (10, 'default')
         self.assertEqual(conf.QUEUES, [(10, conf.DEFAULT_QUEUE_NAME), ])
 
-        # Job Manager Section
-        # -------------------
-        from configparser import ConfigParser
-        _config = ConfigParser()
-        if sys.version_info[0] == 3:
-            _config.read_string(self.settings_ini)
-        else:
-            _config.readfp(io.BytesIO(self.settings_ini))
+    @mock.patch('eventmq.utils.settings.os.path.exists')
+    def test_import_settings_jobmanager(self, pathexists_mock):
+        pathexists_mock.return_value = True
 
-        # Global section
-        # --------------
         with mock.patch('eventmq.utils.settings.ConfigParser',
-                        return_value=_config):
-            with mock.patch.object(ConfigParser, 'read'):
+                        return_value=self._config):
+            with mock.patch.object(self._config, 'read'):
+                settings.import_settings()
                 settings.import_settings('jobmanager')
 
-        # Changed
+        # Changed from True (in global) to False
         self.assertFalse(conf.SUPER_DEBUG)
-        # Changed
+        # Override default value
         self.assertEqual(conf.CONCURRENT_JOBS, 9283)
 
         # Changed
@@ -102,27 +106,72 @@ class SettingsTestCase(unittest.TestCase):
 
         self.assertEqual(conf.WORKER_ADDR, 'tcp://160.254.23.88:47290')
 
-        # Invalid section
-        # ---------------
-        # This shouldn't fail, and nothing should change
-        _config = ConfigParser()
+    @mock.patch('eventmq.utils.settings.os.path.exists')
+    def test_load_invalid_section_uses_defaults(self, pathexists_mock):
+        pathexists_mock.return_value = True
 
-        if sys.version_info[0] == 3:
-            _config.read_string(self.settings_ini)
-        else:
-            _config.readfp(io.BytesIO(self.settings_ini))
-
-        # Global section
-        # --------------
         with mock.patch('eventmq.utils.settings.ConfigParser',
-                        return_value=_config):
-            with mock.patch.object(ConfigParser, 'read'):
+                        return_value=self._config):
+            with mock.patch.object(self._config, 'read'):
+                settings.import_settings('jobmanager')
                 settings.import_settings('nonexistent_section')
 
         self.assertEqual(conf.CONCURRENT_JOBS, 9283)
         self.assertEqual(conf.QUEUES,
                          [(50, 'google'), (40, 'pushes'), (10, 'default')])
         self.assertEqual(conf.WORKER_ADDR, 'tcp://160.254.23.88:47290')
+
+    @mock.patch('eventmq.utils.settings.os.path.exists')
+    def test_dictionary(self, pathexists_mock):
+        pathexists_mock.return_value = True
+
+        with mock.patch('eventmq.utils.settings.ConfigParser',
+                        return_value=self._config):
+            with mock.patch.object(self._config, 'read'):
+                settings.import_settings('scheduler')
+
+        # Dictionary should be dictionary
+        self.assertTrue(isinstance(conf.REDIS_CLIENT_CLASS_KWARGS, dict))
+        # Dictionary should be dictionary
+        self.assertTrue(conf.REDIS_CLIENT_CLASS_KWARGS['test_kwarg'])
+
+    @mock.patch('eventmq.utils.settings.os.path.exists')
+    def test_favor_environment_variables(self, pathexists_mock):
+        pathexists_mock.return_value = True
+
+        # frontend_addr has been defined in global, but should be the following
+        # value
+        value = 'from environment variable'
+        os.environ['EVENTMQ_FRONTEND_ADDR'] = value
+        try:
+            with mock.patch('eventmq.utils.settings.ConfigParser',
+                            return_value=self._config):
+                with mock.patch.object(self._config, 'read'):
+                    settings.import_settings()
+        finally:
+            del os.environ['EVENTMQ_FRONTEND_ADDR']
+
+        self.assertEqual(conf.FRONTEND_ADDR, value)
+
+    @mock.patch('eventmq.utils.settings.os.path.exists')
+    def test_valueerror_on_invalid_json_list(self, pathexists_mock):
+        pathexists_mock.return_value = True
+
+        with mock.patch('eventmq.utils.settings.ConfigParser',
+                        return_value=self._config):
+            with mock.patch.object(self._config, 'read'):
+                with self.assertRaises(ValueError):
+                    settings.import_settings('section_with_bad_list')
+
+    @mock.patch('eventmq.utils.settings.os.path.exists')
+    def test_valueerror_on_invalid_json_dict(self, pathexists_mock):
+        pathexists_mock.return_value = True
+
+        with mock.patch('eventmq.utils.settings.ConfigParser',
+                        return_value=self._config):
+            with mock.patch.object(self._config, 'read'):
+                with self.assertRaises(ValueError):
+                    settings.import_settings('section_with_bad_dict')
 
 
 class EMQPServiceTestCase(unittest.TestCase):

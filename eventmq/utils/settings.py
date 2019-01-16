@@ -79,7 +79,7 @@ def import_settings(section='global'):
                     value = t(json.loads(value))
                 except ValueError:
                     raise ValueError(
-                        "Invalid JSON syntax for {} setting".format(name))
+                        'Invalid JSON syntax for {} setting'.format(name))
                 # json.loads coverts all arrays to lists, but if the first
                 # element in the default is a tuple (like in QUEUES) then
                 # convert those elements, otherwise whatever it's type is
@@ -91,8 +91,12 @@ def import_settings(section='global'):
             elif isinstance(default_value, bool):
                 setattr(conf, name,
                         True if 't' in value.lower() else False)
+            elif t == dict:
+                try:
+                    value = json.loads(value)
+                except ValueError:
+                    raise ValueError(
+                        'Invalid JSON syntax for {} setting'.format(name))
+                setattr(conf, name, value)
             else:
                 setattr(conf, name, t(value))
-
-        logger.debug("Setting conf.{} to {}".format(
-                name, getattr(conf, name)))
