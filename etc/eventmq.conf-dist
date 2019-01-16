@@ -19,6 +19,7 @@ scheduler_addr=tcp://eventmq:47291
 [router]
 
 [scheduler]
+redis_client_class = redis.StrictRedis
 
 [jobmanager]
 worker_addr=tcp://127.0.0.1:47290

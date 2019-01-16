@@ -226,14 +226,14 @@ def send_request(socket, message, reply_requested=False, guarantee=False,
         }
     }
     Args:
-        socket (socket): Socket to use when sending `message`
+        socket: Socket (Sender or Receiver) to use when sending `message`
         message: message to send to `socket`
         reply_requested (bool): request the return value of func as a reply
         guarantee (bool): (Give your best effort) to guarantee that func is
             executed. Exceptions and things will be logged.
         retry_count (int): How many times should be retried when encountering
             an Exception or some other failure before giving up. (default: 0
-            or immediatly fail)
+            or immediately fail)
         timeout (int): How many seconds should we wait before killing the job
             default: 0 which means infinite timeout
         queue (str): Name of queue to use when executing the job. Default: is

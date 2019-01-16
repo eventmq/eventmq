@@ -18,14 +18,15 @@
 Handles cron and other scheduled tasks
 """
 from hashlib import sha1 as emq_hash
+import importlib
 import json
 from json import dumps as serialize
 from json import loads as deserialize
 import logging
+import sys
 
 from croniter import croniter
-import redis
-from six import next
+from six import iteritems, next
 
 from eventmq.log import setup_logger
 
@@ -56,7 +57,6 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
         logger.info('EventMQ Version {}'.format(__version__))
         logger.info('Initializing Scheduler...')
-        import_settings()
         super(Scheduler, self).__init__(*args, **kwargs)
         self.outgoing = Sender()
         self._redis_server = None
@@ -85,30 +85,28 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
         self.poller = Poller()
 
-        self.load_jobs()
-
         self._setup()
 
     def load_jobs(self):
         """
-        Loads the jobs that need to be scheduled
+        Loads the jobs from redis that need to be scheduled
         """
-        try:
-            interval_job_list = self.redis_server.lrange(
-                'interval_jobs', 0, -1)
-            if interval_job_list is not None:
-                for i in interval_job_list:
-                    logger.debug('Restoring job with hash %s' % i)
-                    if (self.redis_server.get(i)):
-                        self.load_job_from_redis(
-                            message=deserialize(self.redis_server.get(i)))
-                    else:
-                        logger.warning('Expected scheduled job in redis,' +
-                                       'but none was found with hash %s' % i)
-        except redis.ConnectionError:
-            logger.warning('Could not contact redis server')
-        except Exception as e:
-            logger.warning(str(e))
+        if self.redis_server:
+            try:
+                interval_job_list = self.redis_server.lrange(
+                    'interval_jobs', 0, -1)
+                if interval_job_list is not None:
+                    for i in interval_job_list:
+                        logger.debug('Restoring job with hash %s' % i)
+                        if self.redis_server.get(i):
+                            self.load_job_from_redis(
+                                message=deserialize(self.redis_server.get(i)))
+                        else:
+                            logger.warning(
+                                'Expected scheduled job in redis, but none '
+                                'was found with hash {}'.format(i))
+            except Exception as e:
+                logger.warning(str(e), exc_info=True)
 
     def _start_event_loop(self):
         """
@@ -126,7 +124,6 @@ class Scheduler(HeartbeatMixin, EMQPService):
                 msg = self.outgoing.recv_multipart()
                 self.process_message(msg)
 
-            # TODO: distribute me!
             for hash_, cron in self.cron_jobs.items():
                 # If the time is now, or passed
                 if cron[0] <= ts_now:
@@ -145,10 +142,9 @@ class Scheduler(HeartbeatMixin, EMQPService):
                                  seconds_until(cron[0]))
 
             cancel_jobs = []
-            for k, v in self.interval_jobs.iteritems():
-                # TODO: Refactor this entire loop to be readable by humankind
-                # The schedule time has elapsed
+            for k, v in iteritems(self.interval_jobs):
                 if v[0] <= m_now:
+                    # The schedule time has elapsed
                     msg = v[1]
                     queue = v[3]
 
@@ -168,23 +164,25 @@ class Scheduler(HeartbeatMixin, EMQPService):
                                 v[0] = next(v[2])
                                 # Persist the change to redis if there are run
                                 # counts still left
-                                try:
-                                    message = deserialize(
-                                        self.redis_server.get(k))
-                                    new_headers = []
-                                    for header in message[1].split(','):
-                                        if 'run_count:' in header:
-                                            new_headers.append(
-                                                'run_count:{}'.format(v[4]))
-                                        else:
-                                            new_headers.append(header)
-                                    message[1] = ",".join(new_headers)
-                                    self.redis_server.set(
-                                        k, serialize(message))
-                                except Exception as e:
-                                    logger.warning(
-                                        'Unable to update key in redis '
-                                        'server: {}'.format(e))
+                                if self.redis_server:
+                                    try:
+                                        message = deserialize(
+                                            self.redis_server.get(k))
+                                        new_headers = []
+                                        for header in message[1].split(','):
+                                            if 'run_count:' in header:
+                                                new_headers.append(
+                                                    'run_count:{}'.format(
+                                                        v[4]))
+                                            else:
+                                                new_headers.append(header)
+                                        message[1] = ",".join(new_headers)
+                                        self.redis_server.set(
+                                            k, serialize(message))
+                                    except Exception as e:
+                                        logger.warning(
+                                            'Unable to update key in redis '
+                                            'server: {}'.format(e))
                             else:
                                 cancel_jobs.append(k)
 
@@ -204,21 +202,45 @@ class Scheduler(HeartbeatMixin, EMQPService):
 
     @property
     def redis_server(self):
-        # Open connection to redis server for persistance
         if self._redis_server is None:
+            # Open connection to redis server for persistence
+            cls_split = conf.REDIS_CLIENT_CLASS.split('.')
+            cls_path, cls_name = '.'.join(cls_split[:-1]), cls_split[-1]
+            try:
+                mod = importlib.import_module(cls_path)
+                redis_cls = getattr(mod, cls_name)
+            except (ImportError, AttributeError) as e:
+                errmsg = 'Unable to import redis_client_class {} ({})'.format(
+                    conf.REDIS_CLIENT_CLASS, e)
+                logger.warning(errmsg)
+
+                if conf.REDIS_STARTUP_ERROR_HARD_KILL:
+                    sys.exit(1)
+                return None
+
+            url = 'redis://{}:{}/{}'.format(
+                conf.RQ_HOST, conf.RQ_PORT, conf.RQ_DB)
+
+            logger.info('Connecting to redis: {}{}'.format(
+                url, ' with password' if conf.RQ_PASSWORD else ''))
+
+            if conf.RQ_PASSWORD:
+                url = 'redis://:{}@{}:{}/{}'.format(
+                    conf.RQ_PASSWORD, conf.RQ_HOST, conf.RQ_PORT,
+                    conf.RQ_DB)
+
             try:
                 self._redis_server = \
-                    redis.StrictRedis(host=conf.RQ_HOST,
-                                      port=conf.RQ_PORT,
-                                      db=conf.RQ_DB,
-                                      password=conf.RQ_PASSWORD)
-                return self._redis_server
-
+                    redis_cls.from_url(url, **conf.REDIS_CLIENT_CLASS_KWARGS)
             except Exception as e:
                 logger.warning('Unable to connect to redis server: {}'.format(
                     e))
-        else:
-            return self._redis_server
+                if conf.REDIS_STARTUP_ERROR_HARD_KILL:
+                    sys.exit(1)
+
+            return None
+
+        return self._redis_server
 
     def send_request(self, jobmsg, queue=None):
         """
@@ -238,21 +260,28 @@ class Scheduler(HeartbeatMixin, EMQPService):
         return msgid
 
     def on_disconnect(self, msgid, message):
+        """Process request to shut down."""
         logger.info("Received DISCONNECT request: {}".format(message))
-        self._redis_server.connection_pool.disconnect()
         sendmsg(self.outgoing, KBYE)
         self.outgoing.unbind(conf.SCHEDULER_ADDR)
+
+        if self._redis_server:
+            # Check the internal var. No need to connect if we haven't already
+            # connected by this point
+            try:
+                self._redis_server.connection_pool.disconnect()
+            except Exception:
+                pass
         super(Scheduler, self).on_disconnect(msgid, message)
 
     def on_kbye(self, msgid, msg):
+        """Process router going offline"""
         if not self.is_heartbeat_enabled:
             self.reset()
 
     def on_unschedule(self, msgid, message):
-        """
-           Unschedule an existing schedule job, if it exists
-        """
-        logger.info("Received new UNSCHEDULE request: {}".format(message))
+        """Unschedule an existing schedule job, if it exists."""
+        logger.debug("Received new UNSCHEDULE request: {}".format(message))
 
         schedule_hash = self.schedule_hash(message)
         # TODO: Notify router whether or not this succeeds
@@ -263,11 +292,10 @@ class Scheduler(HeartbeatMixin, EMQPService):
         Cancels a job if it exists
 
         Args:
-            schedule_hash (str): The schedule's unique hash. See
-                :meth:`Scheduler.schedule_hash`
+            schedule_hash (str): The schedule's unique hash.
+                See :meth:`Scheduler.schedule_hash`
         """
         if schedule_hash in self.interval_jobs:
-
             # If the hash wasn't found in either `cron_jobs` or `interval_jobs`
             # then it's safe to assume it's already deleted.
             try:
@@ -282,18 +310,18 @@ class Scheduler(HeartbeatMixin, EMQPService):
         # Double check the redis server even if we didn't find the hash
         # in memory
         try:
-            if (self.redis_server.get(schedule_hash)):
-                self.redis_server.delete(schedule_hash)
+            if self.redis_server:
                 self.redis_server.lrem('interval_jobs', 0, schedule_hash)
-                self.redis_server.save()
-        except redis.ConnectionError as e:
-            logger.warning('Could not contact redis server: {}'.format(e))
+        except Exception as e:
+            logger.warning(str(e), exc_info=True)
+        try:
+            if self.redis_server and self.redis_server.get(schedule_hash):
+                self.redis_server.delete(schedule_hash)
         except Exception as e:
             logger.warning(str(e), exc_info=True)
 
     def load_job_from_redis(self, message):
-        """
-        """
+        """Parses and loads a message from redis as a scheduler job."""
         from .utils.timeutils import IntervalIter
 
         queue = message[0].encode('utf-8')
@@ -329,8 +357,7 @@ class Scheduler(HeartbeatMixin, EMQPService):
             self.cron_jobs[schedule_hash] = [c_next, message[3], c, queue]
 
     def on_schedule(self, msgid, message):
-        """
-        """
+        """Create a new scheduled job."""
         logger.info("Received new SCHEDULE request: {}".format(message))
 
         queue = message[0]
@@ -380,19 +407,16 @@ class Scheduler(HeartbeatMixin, EMQPService):
                 self.interval_jobs.pop(schedule_hash)
 
         # Persist the scheduled job
-        try:
-            if schedule_hash not in self.redis_server.lrange(
-                    'interval_jobs', 0, -1):
-                self.redis_server.lpush('interval_jobs', schedule_hash)
-            self.redis_server.set(schedule_hash, serialize(message))
-            self.redis_server.save()
-            logger.debug('Saved job {} with hash {} to redis'.format(
-                message, schedule_hash))
-        except redis.ConnectionError:
-            logger.warning('Could not contact redis server. Unable to '
-                           'guarantee persistence.')
-        except Exception as e:
-            logger.warning(str(e))
+        if self.redis_server:
+            try:
+                if schedule_hash not in self.redis_server.lrange(
+                        'interval_jobs', 0, -1):
+                    self.redis_server.lpush('interval_jobs', schedule_hash)
+                    self.redis_server.set(schedule_hash, serialize(message))
+                logger.debug('Saved job {} with hash {} to redis'.format(
+                    message, schedule_hash))
+            except Exception as e:
+                logger.warning(str(e))
 
         # Send a request in haste mode, decrement run_count if needed
         if 'nohaste' not in headers:
@@ -410,21 +434,17 @@ class Scheduler(HeartbeatMixin, EMQPService):
         return run_count
 
     def on_heartbeat(self, msgid, message):
-        """
-        Noop command. The logic for heartbeating is in the event loop.
-        """
+        """Noop command. The logic for heart beating is in the event loop."""
 
     @classmethod
     def schedule_hash(cls, message):
-        """
-        Create a unique identifier for this message for storing
-        and referencing later
+        """Create a unique identifier to store and reference a message later.
 
         Args:
             message (str): The serialized message passed to the scheduler
 
         Returns:
-            int: unique hash for the job
+            str: unique hash for the job
         """
 
         # Get the job portion of the message
@@ -452,18 +472,17 @@ class Scheduler(HeartbeatMixin, EMQPService):
         """
         setup_logger("eventmq")
         import_settings()
-        self.__init__()
+        import_settings('scheduler')
+
+        self.load_jobs()
         self.start(addr=conf.SCHEDULER_ADDR)
-
-
-# Entry point for pip console scripts
-def scheduler_main():
-    s = Scheduler()
-    s.scheduler_main()
 
 
 def test_job(*args, **kwargs):
     """
     Simple test job for use with the scheduler
     """
+    from pprint import pprint
     print("hello!")  # noqa
+    pprint(args)  # noqa
+    pprint(kwargs)  # noqa
