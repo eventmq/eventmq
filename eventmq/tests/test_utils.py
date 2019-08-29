@@ -12,7 +12,16 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
-from configparser import ConfigParser
+
+#
+
+# ConfigParser was renamed to configparser in python 3. Do this try...except
+# to maintain python 2/3 compatability
+try:
+    from configparser import ConfigParser
+except ImportError:
+    import ConfigParser
+
 from imp import reload
 import io
 import os

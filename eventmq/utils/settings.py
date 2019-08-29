@@ -16,7 +16,14 @@
 :mod:`settings` -- Settings Utilities
 =====================================
 """
-from configparser import ConfigParser, NoOptionError
+
+# ConfigParser was renamed to configparser in python 3. Do this try...except
+# to maintain python 2/3 compatability
+try:
+    from configparser import ConfigParser, NoOptionError
+except ImportError:
+    from ConfigParser import ConfigParser, NoOptionError
+
 import json
 import logging
 import os
