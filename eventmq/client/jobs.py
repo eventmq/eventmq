@@ -59,7 +59,7 @@ class Job(object):
            s.sendmail('me@gmail.com', [recipient,], msg.as_string())
            s.quit()
     """
-    def __init__(self, broker_addr=None, queue=None, async=True, *args,
+    def __init__(self, broker_addr=None, queue=None, async_=True, *args,
                  **kwargs):
         """
         Args:
@@ -69,20 +69,20 @@ class Job(object):
                 address is given then the value of the environment variable
                 ``EMQ_BROKER_ADDR`` will be used, If that is undefined a
                 warning will be emitted and the job will be run synchronously.
-            async (bool): If you want to run all executions of a particular job
-                synchronously but still decorate it with the job decorator you
-                can set this to False. This is useful for unit tests.
+            async_ (bool): If you want to run all executions of a particular
+                job synchronously but still decorate it with the job decorator
+                you can set this to False. This is useful for unit tests.
 
         """
         # conf.BROKER_ADDR isn't used because /etc/eventmq.conf is for the
         # daemons.
         self.broker_addr = broker_addr or os.environ.get(ENV_BROKER_ADDR)
         self.queue = queue
-        self.async = async
+        self.async_ = async_
 
     def __call__(self, f):
         def delay(*args, **kwargs):
-            if self.async and self.broker_addr:
+            if self.async_ and self.broker_addr:
                 socket = Sender()
                 socket.connect(addr=self.broker_addr)
 
@@ -91,7 +91,7 @@ class Job(object):
 
                 return msgid
             else:
-                if self.async and not self.broker_addr:
+                if self.async_ and not self.broker_addr:
                     logger.warning('No EMQ_BROKER_ADDR defined. Running '
                                    'function `{}` synchronously'.format(
                                        f.__name__))
@@ -101,13 +101,13 @@ class Job(object):
         return f
 
 
-def job(func, broker_addr=None, queue=None, async=True, *args,
+def job(func, broker_addr=None, queue=None, async_=True, *args,
         **kwargs):
     """
     Functional decorator helper for creating a deferred eventmq job. See
     :class:`Job` for more information.
     """
-    decorator = Job(queue=queue, broker_addr=broker_addr, async=async)
+    decorator = Job(queue=queue, broker_addr=broker_addr, async_=async_)
 
     if callable(func):
         return decorator(func)
