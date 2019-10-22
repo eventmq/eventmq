@@ -1,0 +1,43 @@
+version: 2.1
+
+executors:
+  python:
+    parameters:
+      version:
+        type: string
+        default: "3.8"
+    docker:
+      - image: circleci/python:<< parameters.version >>
+
+commands:
+  setup:
+    description: install dependencies
+    steps:
+      - run: sudo apt-get update && sudo apt-get -y dist-upgrade
+      - run: sudo pip install -e .[testing]
+
+jobs:
+  test:
+    parameters:
+      version:
+        type: string
+        default: "2.7"
+    executor:
+      name: python
+      version: << parameters.version >>
+    steps:
+      - checkout
+      - setup
+      - run: python --version
+      - run: python -m unittest discover
+      - run: find . -name \*.py -print | xargs flake8 --show-source --statistics
+
+workflows:
+  test:
+    jobs:
+      - test:
+          name: "python 2.7"
+          version: "2.7"
+      - test:
+          name: "python 3.5"
+          version: "3.5"
