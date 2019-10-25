@@ -19,7 +19,7 @@ setup(
     description='EventMQ job execution and messaging system based on ZeroMQ',
     packages=find_packages(),
     install_requires=[
-        'pyzmq==15.4.0',
+        'pyzmq==18.1.0',
         'six==1.10.0',
         'monotonic==0.4',
         'croniter==0.3.10',
@@ -60,6 +60,8 @@ setup(
         # that you indicate whether you support Python 2, Python 3 or both.
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
     scripts=[
         'bin/emq-cli',
