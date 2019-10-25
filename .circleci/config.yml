@@ -41,3 +41,9 @@ workflows:
       - test:
           name: "python 3.5"
           version: "3.5"
+      - test:
+          name: "python 3.6"
+          version: "3.5"
+      - test:
+          name: "python 3.7"
+          version: "3.5"
