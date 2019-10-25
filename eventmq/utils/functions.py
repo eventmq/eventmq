@@ -2,6 +2,7 @@ import hashlib
 import importlib
 import inspect
 import json
+import sys
 
 from .. import log
 from ..exceptions import CallableFromPathError
@@ -188,7 +189,10 @@ def callable_from_name(callable_name, *args, **kwargs):
 
     try:
         package = importlib.import_module(s_package)
-        reload(package)
+        if sys.version[0] == '2':
+            reload(package)  # noqa - flake8 fails here on py3
+        else:
+            importlib.reload(package)
     except Exception as e:
         raise CallableFromPathError(str(e))
 

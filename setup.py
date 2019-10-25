@@ -18,20 +18,20 @@ setup(
     version=version,
     description='EventMQ job execution and messaging system based on ZeroMQ',
     packages=find_packages(),
-    install_requires=['pyzmq==15.4.0',
-                      'six==1.10.0',
-                      'monotonic==0.4',
-                      'croniter==0.3.10',
-                      'future==0.15.2',
-                      'psutil==5.0.0',
-                      'python-dateutil>=2.1,<3.0.0'],
+    install_requires=[
+        'pyzmq==15.4.0',
+        'six==1.10.0',
+        'monotonic==0.4',
+        'croniter==0.3.10',
+        'future==0.15.2',
+        'psutil==5.0.0',
+    ],
     extras_require={
           'docs': ['Sphinx==1.5.2', ],
           'testing': [
               'flake8==3.2.1',
               'flake8-import-order==0.11',
               'flake8-print==2.0.2',
-              'nose',
               'coverage==4.0.3',
               'testfixtures==4.7.0',
               'freezegun==0.3.7',
@@ -58,9 +58,7 @@ setup(
         'Operating System :: OS Independent',
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
     ],
     scripts=[

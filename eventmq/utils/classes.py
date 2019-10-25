@@ -22,6 +22,7 @@ import json
 import logging
 import sys
 
+import six
 import zmq.error
 
 from .. import conf, constants, exceptions, poller, utils
@@ -468,7 +469,7 @@ class EMQdeque(object):
         return "{}".format(str(self._queue))
 
     def __unicode__(self):
-        return "{}".format(unicode(self._queue))
+        return "{}".format(six.u(self._queue))
 
     def __repr__(self):
         return "{}".format(repr(self._queue))
