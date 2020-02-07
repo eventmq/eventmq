@@ -28,6 +28,8 @@ import json
 import logging
 import os
 
+from six.moves import map
+
 from . import tuplify
 from .. import conf
 

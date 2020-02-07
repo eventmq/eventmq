@@ -19,6 +19,7 @@ The receiver is responsible for receiveing messages
 """
 import logging
 
+import six
 import zmq
 
 from . import conf, constants
@@ -59,7 +60,8 @@ class Receiver(ZMQReceiveMixin, ZMQSendMixin):
         self.zcontext = kwargs.get('context', zmq.Context.instance())
         self.zcontext.set(zmq.MAX_SOCKETS, conf.MAX_SOCKETS)
 
-        self.name = kwargs.get('name', generate_device_name())
+        self.name = six.ensure_binary(kwargs.get('name',
+                                                 generate_device_name()))
 
         self.zsocket = kwargs.get('socket', self.zcontext.socket(zmq.ROUTER))
         self.zsocket.setsockopt(zmq.IDENTITY, self.name)

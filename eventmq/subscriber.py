@@ -1,7 +1,10 @@
 """
 derp subscriber
 """
+from __future__ import print_function
+
 from past.builtins import xrange
+import six
 import zmq
 
 
@@ -11,7 +14,7 @@ if __name__ == "__main__":
         ctx = zmq.Context()
         s = ctx.socket(zmq.SUB)
         s.linger = 0
-        s.setsockopt(zmq.SUBSCRIBE, str(i))
+        s.setsockopt(zmq.SUBSCRIBE, six.ensure_binary(str(i)))
         s.connect('tcp://127.0.0.1:47299')
         sockets.append(s)
 

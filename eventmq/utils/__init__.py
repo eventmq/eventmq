@@ -27,6 +27,7 @@ like creating message more simple.
    settings
    timeutils
 """
+from six.moves import map
 
 
 def random_characters():

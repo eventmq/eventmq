@@ -422,7 +422,7 @@ class ZMQSendMixin(object):
             self.zsocket.send_multipart(msg,
                                         flags=zmq.NOBLOCK)
         except zmq.error.ZMQError as e:
-            if 'No route' in e.message:
+            if 'No route' in str(e):
                 raise exceptions.PeerGoneAwayError(e)
 
     def send(self, message, protocol_version):
@@ -469,7 +469,7 @@ class EMQdeque(object):
         return "{}".format(str(self._queue))
 
     def __unicode__(self):
-        return "{}".format(six.u(self._queue))
+        return "{}".format(six.text_type(self._queue))
 
     def __repr__(self):
         return "{}".format(repr(self._queue))
@@ -519,7 +519,7 @@ class EMQdeque(object):
             bool: True if the deque contains at least ``full`` items. False
             otherwise
         """
-        if self.full and self.full is not 0:
+        if self.full and self.full != 0:
             return len(self._queue) >= self.full
         else:
             return False
@@ -541,7 +541,7 @@ class EMQdeque(object):
             bool: True if the deque contains at least ``pfull`` items.
             False otherwise
         """
-        if self.pfull and self.pfull is not 0:
+        if self.pfull and self.pfull != 0:
             return len(self._queue) >= self.pfull
         else:
             return False

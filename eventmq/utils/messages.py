@@ -170,8 +170,8 @@ def fwd_emqp_router_message(socket, recipient_id, payload):
                                       flags=zmq.NOBLOCK)
     except zmq.error.ZMQError as e:
         if e.errno in errnos:
-            e.message = e.message + " {}".format(recipient_id)
-            raise exceptions.PeerGoneAwayError(e)
+            e_message = str(e) + " {}".format(recipient_id)
+            raise exceptions.PeerGoneAwayError(e_message)
         else:
             raise exceptions.EventMQError("errno {}: {}".format(e.errno,
                                                                 str(e)))

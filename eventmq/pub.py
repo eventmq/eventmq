@@ -20,7 +20,6 @@ Publishes messages to subscribers
 import logging
 
 from eventmq.log import setup_logger
-
 from . import conf, poller, publisher, receiver
 from .constants import STATUS
 from .utils.classes import HeartbeatMixin
