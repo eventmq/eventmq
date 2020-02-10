@@ -411,6 +411,10 @@ class ZMQSendMixin(object):
 
         msg = encodify(headers + message)
 
+        # Decode bytes to strings in python3
+        if sys.version[0] == '3' and type(msg[0] in (bytes,)):
+            msg = [m.decode() for m in msg]
+
         # If it's not at least 4 frames long then most likely it isn't an
         # eventmq message
         if len(msg) > 4 and \
@@ -419,7 +423,7 @@ class ZMQSendMixin(object):
             logger.debug('Sending message: %s' % str(msg))
 
         try:
-            self.zsocket.send_multipart(msg,
+            self.zsocket.send_multipart([six.ensure_binary(m) for m in msg],
                                         flags=zmq.NOBLOCK)
         except zmq.error.ZMQError as e:
             if 'No route' in str(e):

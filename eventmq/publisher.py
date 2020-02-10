@@ -67,7 +67,8 @@ class Publisher():
 
     def publish(self, topic, msg):
         logger.debug("Notifying topic: {}".format(topic))
-        return self.zsocket.send_multipart([topic, msg])
+        return self.zsocket.send_multipart([six.ensure_binary(topic),
+                                            six.ensure_binary(msg)])
 
     @property
     def ready(self):
