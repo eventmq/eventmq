@@ -17,6 +17,8 @@
 =============================
 Handles cron and other scheduled tasks
 """
+from __future__ import print_function
+
 from hashlib import sha1 as emq_hash
 import importlib
 import json
@@ -29,7 +31,6 @@ from croniter import croniter
 from six import iteritems, next
 
 from eventmq.log import setup_logger
-
 from . import __version__
 from . import conf, constants
 from .client.messages import send_request

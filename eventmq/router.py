@@ -22,6 +22,8 @@ import json  # deserialize queues in on_inform. should be refactored
 import logging
 import signal
 
+from six.moves import map
+
 from eventmq.log import setup_logger, setup_wal_logger
 from . import __version__
 from . import conf, constants, exceptions, poller, receiver
@@ -407,7 +409,7 @@ class Router(HeartbeatMixin):
         # Assumes the highest priority queue comes first
         for queue in queue_names:
             queue_name = queue[1]
-            if queue_name in self.waiting_messages.keys():
+            if queue_name in list(self.waiting_messages.keys()):
                 logger.debug('Found waiting message in the %s waiting_messages'
                              ' queue' % queue_name)
                 msg = self.waiting_messages[queue_name].peekleft()
@@ -476,7 +478,7 @@ class Router(HeartbeatMixin):
                     total_mem = psutil.virtual_memory().total
                     # Set queue limit to be 75% of total memory with ~100 byte
                     # messages
-                    limit = int((total_mem / 100) * 0.75)
+                    limit = int(int(total_mem / 100) * 0.75)
                     self.waiting_messages[queue_name] = EMQdeque(
                         full=limit, on_full=router_on_full)
                 else:
@@ -866,7 +868,7 @@ class Router(HeartbeatMixin):
         for queue in worker['queues']:
             name = queue[1]
             workers = self.queues[name]
-            revised_list = filter(lambda x: x[1] != worker_id, workers)
+            revised_list = [x for x in workers if x[1] != worker_id]
             self.queues[name] = revised_list
             logger.debug('Removed worker - {} from {}'.format(worker_id, name))
 
@@ -879,8 +881,8 @@ class Router(HeartbeatMixin):
         """
         self.schedulers.pop(scheduler_id)
         schedulers_to_remove = self.scheduler_queue
-        self.scheduler_queue = filter(lambda x: x != scheduler_id,
-                                      schedulers_to_remove)
+        self.scheduler_queue = \
+            [x for x in schedulers_to_remove if x != scheduler_id]
         logger.debug('Removed scheduler - {} from known schedulers'.format(
             scheduler_id))
 

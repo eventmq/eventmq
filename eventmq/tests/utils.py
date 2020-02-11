@@ -14,6 +14,7 @@
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
 import uuid
 
+import six
 import zmq
 
 from .. import conf, constants
@@ -48,12 +49,12 @@ def send_raw_INFORM(sock, type_, queues=(conf.DEFAULT_QUEUE_NAME,)):
     """
     msgid = str(uuid.uuid4())
     tracker = sock.zsocket.send_multipart((
-        '',
-        constants.PROTOCOL_VERSION,
-        'INFORM',
-        msgid,
-        ','.join(queues),
-        type_
+        b'',
+        six.ensure_binary(constants.PROTOCOL_VERSION),
+        b'INFORM',
+        six.ensure_binary(msgid),
+        six.ensure_binary(','.join(queues)),
+        six.ensure_binary(type_)
     ), copy=False, track=True)
     tracker.wait(1)
 
@@ -72,10 +73,10 @@ def send_raw_READY(sock):
     """
     msgid = str(uuid.uuid4())
     tracker = sock.zsocket.send_multipart((
-        '',
-        constants.PROTOCOL_VERSION,
-        'READY',
-        msgid
+        b'',
+        six.ensure_binary(constants.PROTOCOL_VERSION),
+        b'READY',
+        six.ensure_binary(msgid)
     ), copy=False, track=True)
     tracker.wait(1)
 

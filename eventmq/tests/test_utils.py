@@ -30,6 +30,7 @@ import sys
 import unittest
 
 import mock
+from six.moves import range
 
 from .. import conf
 from .. import constants

@@ -411,6 +411,10 @@ class ZMQSendMixin(object):
 
         msg = encodify(headers + message)
 
+        # Decode bytes to strings in python3
+        if sys.version[0] == '3' and type(msg[0] in (bytes,)):
+            msg = [m.decode() for m in msg]
+
         # If it's not at least 4 frames long then most likely it isn't an
         # eventmq message
         if len(msg) > 4 and \
@@ -419,10 +423,10 @@ class ZMQSendMixin(object):
             logger.debug('Sending message: %s' % str(msg))
 
         try:
-            self.zsocket.send_multipart(msg,
+            self.zsocket.send_multipart([six.ensure_binary(m) for m in msg],
                                         flags=zmq.NOBLOCK)
         except zmq.error.ZMQError as e:
-            if 'No route' in e.message:
+            if 'No route' in str(e):
                 raise exceptions.PeerGoneAwayError(e)
 
     def send(self, message, protocol_version):
@@ -469,7 +473,7 @@ class EMQdeque(object):
         return "{}".format(str(self._queue))
 
     def __unicode__(self):
-        return "{}".format(six.u(self._queue))
+        return "{}".format(six.text_type(self._queue))
 
     def __repr__(self):
         return "{}".format(repr(self._queue))
@@ -519,7 +523,7 @@ class EMQdeque(object):
             bool: True if the deque contains at least ``full`` items. False
             otherwise
         """
-        if self.full and self.full is not 0:
+        if self.full and self.full != 0:
             return len(self._queue) >= self.full
         else:
             return False
@@ -541,7 +545,7 @@ class EMQdeque(object):
             bool: True if the deque contains at least ``pfull`` items.
             False otherwise
         """
-        if self.pfull and self.pfull is not 0:
+        if self.pfull and self.pfull != 0:
             return len(self._queue) >= self.pfull
         else:
             return False

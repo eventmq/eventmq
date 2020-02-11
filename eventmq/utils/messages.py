@@ -18,6 +18,8 @@
 """
 import logging
 
+import six
+
 from . import random_characters
 from .. import conf, constants, exceptions
 
@@ -153,7 +155,7 @@ def fwd_emqp_router_message(socket, recipient_id, payload):
     Args:
         socket: socket to send the message with
         recipient_id (str): the id of the connected device to reply to
-        payload (tuple): The message to send. The first frame should be an
+        payload (list): The message to send. The first frame should be an
             empty string
     """
     import zmq
@@ -166,12 +168,12 @@ def fwd_emqp_router_message(socket, recipient_id, payload):
     if conf.SUPER_DEBUG:
         logger.debug('Forwarding message: {}'.format(str(payload)))
     try:
-        socket.zsocket.send_multipart(payload,
+        socket.zsocket.send_multipart([six.ensure_binary(x) for x in payload],
                                       flags=zmq.NOBLOCK)
     except zmq.error.ZMQError as e:
         if e.errno in errnos:
-            e.message = e.message + " {}".format(recipient_id)
-            raise exceptions.PeerGoneAwayError(e)
+            e_message = str(e) + " {}".format(recipient_id)
+            raise exceptions.PeerGoneAwayError(e_message)
         else:
             raise exceptions.EventMQError("errno {}: {}".format(e.errno,
                                                                 str(e)))

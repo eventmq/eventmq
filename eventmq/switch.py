@@ -5,5 +5,5 @@ if __name__ == "__main__":
     # switch.listen('tcp://127.0.0.1:47331', 'tcp://127.0.0.1:47330')
     try:
         switch.start()
-    except:
+    except Exception:
         switch.stop()

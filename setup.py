@@ -20,7 +20,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'pyzmq==18.1.0',
-        'six==1.10.0',
+        'six==1.14.0',
         'monotonic==0.4',
         'croniter==0.3.10',
         'future==0.15.2',
@@ -29,9 +29,9 @@ setup(
     extras_require={
           'docs': ['Sphinx==1.5.2', ],
           'testing': [
-              'flake8==3.2.1',
-              'flake8-import-order==0.11',
-              'flake8-print==2.0.2',
+              'flake8==3.7.8',
+              'flake8-import-order==0.18.1',
+              'flake8-print==3.1.0',
               'coverage==4.0.3',
               'testfixtures==4.7.0',
               'freezegun==0.3.7',

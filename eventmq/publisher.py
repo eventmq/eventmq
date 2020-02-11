@@ -19,6 +19,7 @@ Publishes messages to subscribers
 """
 import logging
 
+import six
 import zmq
 
 from . import constants
@@ -36,7 +37,8 @@ class Publisher():
 
     def __init__(self, *args, **kwargs):
         self.zcontext = kwargs.get('context', zmq.Context.instance())
-        self.name = kwargs.get('name', generate_device_name())
+        self.name = six.ensure_binary(kwargs.get('name',
+                                                 generate_device_name()))
 
         self.zsocket = kwargs.get('socket', self.zcontext.socket(zmq.PUB))
         self.zsocket.setsockopt(zmq.IDENTITY, self.name)
@@ -65,7 +67,8 @@ class Publisher():
 
     def publish(self, topic, msg):
         logger.debug("Notifying topic: {}".format(topic))
-        return self.zsocket.send_multipart([topic, msg])
+        return self.zsocket.send_multipart([six.ensure_binary(topic),
+                                            six.ensure_binary(msg)])
 
     @property
     def ready(self):

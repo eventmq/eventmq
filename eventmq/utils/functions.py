@@ -4,6 +4,8 @@ import inspect
 import json
 import sys
 
+import six
+
 from .. import log
 from ..exceptions import CallableFromPathError
 
@@ -70,7 +72,7 @@ def arguments_hash(*args, **kwargs):
     }
 
     data = json.dumps(args, cls=IgnoreJSONEncoder)
-    return hashlib.sha1(data).hexdigest()
+    return hashlib.sha1(six.ensure_binary(data)).hexdigest()
 
 
 def name_from_callable(func):

@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with eventmq.  If not, see <http://www.gnu.org/licenses/>.
 from past.builtins import basestring
+from six.moves import range
 
 from .. import conf
 

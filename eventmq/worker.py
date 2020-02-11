@@ -93,7 +93,7 @@ class MultiprocessWorker(Process):
                 if os.getppid() != self.ppid:
                     break
                 continue
-            except Exception as e:
+            except Exception:
                 break
             finally:
                 # If I'm an orphan, die

@@ -18,7 +18,6 @@
 Ensures things about jobs and spawns the actual tasks
 """
 from json import dumps as serializer, loads as deserializer
-
 import logging
 from multiprocessing import Manager as MPManager
 import os
@@ -26,6 +25,7 @@ import signal
 import sys
 import time
 
+from six.moves import range
 import zmq
 
 from eventmq.log import setup_logger
@@ -142,7 +142,7 @@ class JobManager(HeartbeatMixin, EMQPService):
                 w.start()
                 self._workers[w.pid] = w
 
-        return self._workers.values()
+        return list(self._workers.values())
 
     def _start_event_loop(self):
         """
@@ -333,7 +333,7 @@ class JobManager(HeartbeatMixin, EMQPService):
         Worker died of natural causes, ensure its death and
         remove from tracking, will be replaced on next heartbeat
         """
-        if pid in self._workers.keys():
+        if pid in list(self._workers.keys()):
             del self._workers[pid]
 
     def worker_ready(self, reply, msgid, death, pid):

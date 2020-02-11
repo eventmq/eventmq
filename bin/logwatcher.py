@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import zmq
 
 s = zmq.Context.instance().socket(zmq.SUB)
-s.setsockopt(zmq.SUBSCRIBE, '')
+s.setsockopt(zmq.SUBSCRIBE, b'')
 s.connect('tcp://127.0.0.1:33445')
 
 poller = zmq.Poller()

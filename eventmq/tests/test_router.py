@@ -18,6 +18,7 @@ import unittest
 
 from freezegun import freeze_time
 import mock
+from six.moves import range
 from testfixtures import LogCapture
 import zmq
 
@@ -318,7 +319,7 @@ class TestCase(unittest.TestCase):
 
         # There should be no keys because the code checks for their existence
         # to know if there is a waiting message
-        self.assertEqual(0, len(self.router.waiting_messages.keys()))
+        self.assertEqual(0, len(list(self.router.waiting_messages.keys())))
 
         # No waiting messages
         self.router.on_ready(worker1_id, ready_msgid1, ['READY', ready_msgid1])
