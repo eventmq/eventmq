@@ -51,6 +51,7 @@ class Router(HeartbeatMixin):
     """
     A simple router of messages
     """
+
     def __init__(self, *args, **kwargs):
         super(Router, self).__init__(*args, **kwargs)  # Creates _meta
 
@@ -532,7 +533,7 @@ class Router(HeartbeatMixin):
             # Recursively try again. TODO: are there better options?
             self.process_client_message(
                 [sender, '', PROTOCOL_VERSION, 'REQUEST', msgid] + msg,
-                depth=depth+1)
+                depth=depth + 1)
 
     def clean_up_dead_workers(self):
         """
@@ -601,7 +602,7 @@ class Router(HeartbeatMixin):
             self.queues[q[1]] = self.prioritize_queue_list(self.queues[q[1]])
 
         logger.debug('Added worker {} to the queues {}'.format(
-                 worker_id, queues))
+            worker_id, queues))
 
     def get_available_worker(self, queue_name=conf.DEFAULT_QUEUE_NAME):
         """
@@ -799,7 +800,7 @@ class Router(HeartbeatMixin):
             except exceptions.PeerGoneAwayError:
                 logger.debug("Scheduler {} has unexpectedly gone away. Trying "
                              "another scheduler.".format(scheduler_addr))
-                self.process_client_message(original_msg[1:], depth+1)
+                self.process_client_message(original_msg[1:], depth + 1)
 
         elif command == "UNSCHEDULE":
             # Forward the unschedule message to all schedulers
@@ -817,7 +818,7 @@ class Router(HeartbeatMixin):
                     logger.debug("Scheduler {} has unexpectedly gone away."
                                  " Schedule may still exist.".
                                  format(scheduler_addr))
-                    self.process_client_message(original_msg[1:], depth+1)
+                    self.process_client_message(original_msg[1:], depth + 1)
 
         elif command == DISCONNECT:
             self.on_disconnect(msgid, msg)
@@ -909,16 +910,48 @@ class Router(HeartbeatMixin):
         Return
            (str) Serialized information about the current state of the router.
         """
+        queue_latency_list = {}
+        queue_latency_count = {}
+        queue_max_latency_list = {}
+        queue_waiting_list = {}
+
+        now = monotonic()
+
+        for job in self.job_latencies:
+            queue = self.job_latencies[job][1]
+            latency = self.job_latencies[job][0]
+
+            if queue not in queue_latency_list:
+                queue_latency_list[queue] = latency
+                queue_latency_count[queue] = 1
+            else:
+                queue_latency_list[queue] += latency
+                queue_latency_count[queue] += 1
+
+            if queue not in queue_max_latency_list:
+                queue_max_latency_list[queue] = latency
+            else:
+                if queue_max_latency_list[queue] > latency:
+                    queue_max_latency_list[queue] = latency
+
+        for queue in queue_latency_list:
+            queue_latency_list[queue] = int(
+                (now - (queue_latency_list[queue] / max(queue_latency_count[queue], 1))) * 1000)
+
+        for queue in queue_max_latency_list:
+            queue_max_latency_list[queue] = int(
+                (now - queue_max_latency_list[queue]) * 1000)
+
+        for queue in self.waiting_messages:
+            queue_waiting_list[queue] = len(self.waiting_messages[queue])
+
         return json.dumps({
-            'job_latencies_count': len(self.job_latencies),
-            'processed_messages': self.processed_message_counts,
-            'processed_messages_by_worker':
-                self.processed_message_counts_by_worker,
-            'waiting_message_counts': [
-                '{}: {}'.
-                format(q,
-                       len(self.waiting_messages[q]))
-                for q in self.waiting_messages]
+            'inflight_messages_by_queue': queue_latency_count,
+            'latency_messages_by_queue': queue_latency_list,
+            'max_latency_messages_by_queue': queue_max_latency_list,
+            'waiting_messages_by_queue': queue_waiting_list,
+            'processed_messages_by_queue': self.processed_message_counts,
+            'processed_messages_by_worker': self.processed_message_counts_by_worker
         })
 
     def get_workers_status(self):
