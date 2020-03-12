@@ -24,7 +24,7 @@ setup(
         'monotonic==0.4',
         'croniter==0.3.10',
         'future==0.15.2',
-        'psutil==5.0.0',
+        'psutil==5.6.6',
     ],
     extras_require={
           'docs': ['Sphinx==1.5.2', ],
