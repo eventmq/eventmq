@@ -936,7 +936,8 @@ class Router(HeartbeatMixin):
 
         for queue in queue_latency_list:
             queue_latency_list[queue] = int(
-                (now - (queue_latency_list[queue] / max(queue_latency_count[queue], 1))) * 1000)
+                (now - (queue_latency_list[queue] /
+                        max(queue_latency_count[queue], 1))) * 1000)
 
         for queue in queue_max_latency_list:
             queue_max_latency_list[queue] = int(
@@ -951,7 +952,7 @@ class Router(HeartbeatMixin):
             'max_latency_messages_by_queue': queue_max_latency_list,
             'waiting_messages_by_queue': queue_waiting_list,
             'processed_messages_by_queue': self.processed_message_counts,
-            'processed_messages_by_worker': self.processed_message_counts_by_worker
+            'processed_messages_by_worker': self.processed_message_counts_by_worker  # noqa
         })
 
     def get_workers_status(self):
