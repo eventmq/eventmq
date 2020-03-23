@@ -464,6 +464,8 @@ class TestCase(unittest.TestCase):
         queue2_id = 'jimjam'
         nonexistent_queue1 = 'nonexistent'
 
+        t = monotonic()
+
         # To ensure the value was changed later because monotonic() is hard to
         # mock
         self.assertEqual(self.router._meta['last_worker_cleanup'], 0)
@@ -479,20 +481,20 @@ class TestCase(unittest.TestCase):
             # 3 in the future
             worker1_id: {
                 'queues': [(10, queue1_id), ],
-                'hb': monotonic() + 3,
+                'hb': t + 3,
                 'available_slots': 0,
             },
             # below the timeout
 
             worker2_id: {
                 'queues': [(10, queue2_id), (0, queue1_id)],
-                'hb': 0,
+                'hb': t - 2,
                 'available_slots': 2,
             },
             # below the timeout and a queue missing from self.router.queues
             worker3_id: {
                 'queues': [(10, queue2_id), (3, nonexistent_queue1)],
-                'hb': 0,
+                'hb': t - 2,
                 'available_slots': 0,
             },
         }
@@ -778,16 +780,19 @@ class TestCase(unittest.TestCase):
 
         # hacky, but the serialize/deserialize converts the keys to unicode
         # correctly and what not.
+        expected_object = {
+            'inflight_messages_by_queue': {},
+            'latency_messages_by_queue': {},
+            'max_latency_messages_by_queue': {},
+            'processed_messages_by_queue': {},
+            'processed_messages_by_worker': {},
+            'waiting_messages_by_queue': {
+                q: len(self.router.waiting_messages[q])
+                for q in self.router.waiting_messages
+            }
+        }
         self.assertEqual(
-            json.loads(json.dumps({
-                'job_latencies_count': len(self.router.job_latencies),
-                'processed_messages': {},
-                'processed_messages_by_worker': {},
-                'waiting_message_counts': [
-                    '{}: {}'.format(
-                        q,
-                        len(self.router.waiting_messages[q])) for q in self.router.waiting_messages]  # noqa
-            })),
+            json.loads(json.dumps(expected_object)),
             json.loads(self.router.get_status()))
 
         self.assertEqual(
