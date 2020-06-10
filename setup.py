@@ -20,7 +20,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'pyzmq==18.1.0',
-        'six==1.14.0',
+        'six>=1.14,<2',
         'monotonic==0.4',
         'croniter==0.3.10',
         'future==0.15.2',
